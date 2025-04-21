@@ -102,70 +102,64 @@ class TestPigLatin(unittest.TestCase):
         input = list(reversed(range(5000)))
         self.assertEqual(sorter(input), list(range(5000)))
 """
-    expected = """import gc
-import os
-import sqlite3
-import time
-import unittest
-
-import dill as pickle
-import timeout_decorator
-
-from code_to_optimize.bubble_sort import sorter
-
-
-def codeflash_wrap(wrapped, test_module_name, test_class_name, test_name, function_name, line_id, loop_index, codeflash_cur, codeflash_con, *args, **kwargs):
-    test_id = f'{{test_module_name}}:{{test_class_name}}:{{test_name}}:{{line_id}}:{{loop_index}}'
-    if not hasattr(codeflash_wrap, 'index'):
-        codeflash_wrap.index = {{}}
-    if test_id in codeflash_wrap.index:
-        codeflash_wrap.index[test_id] += 1
-    else:
-        codeflash_wrap.index[test_id] = 0
-    codeflash_test_index = codeflash_wrap.index[test_id]
-    invocation_id = f'{{line_id}}_{{codeflash_test_index}}'
-    """
-    if sys.version_info < (3, 12):
-        expected += """print(f"!######{{test_module_name}}:{{(test_class_name + '.' if test_class_name else '')}}{{test_name}}:{{function_name}}:{{loop_index}}:{{invocation_id}}######!")"""
-    else:
-        expected += """print(f'!######{{test_module_name}}:{{(test_class_name + '.' if test_class_name else '')}}{{test_name}}:{{function_name}}:{{loop_index}}:{{invocation_id}}######!')"""
-    expected += """
-    exception = None
-    gc.disable()
-    try:
-        counter = time.perf_counter_ns()
-        return_value = wrapped(*args, **kwargs)
-        codeflash_duration = time.perf_counter_ns() - counter
-    except Exception as e:
-        codeflash_duration = time.perf_counter_ns() - counter
-        exception = e
-    gc.enable()
-    pickled_return_value = pickle.dumps(exception) if exception else pickle.dumps(return_value)
-    codeflash_cur.execute('INSERT INTO test_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (test_module_name, test_class_name, test_name, function_name, loop_index, invocation_id, codeflash_duration, pickled_return_value, 'function_call'))
-    codeflash_con.commit()
-    if exception:
-        raise exception
-    return return_value
-
-class TestPigLatin(unittest.TestCase):
-
-    @timeout_decorator.timeout(15)
-    def test_sort(self):
-        codeflash_loop_index = int(os.environ['CODEFLASH_LOOP_INDEX'])
-        codeflash_iteration = os.environ['CODEFLASH_TEST_ITERATION']
-        codeflash_con = sqlite3.connect(f'{tmp_dir_path}_{{codeflash_iteration}}.sqlite')
-        codeflash_cur = codeflash_con.cursor()
-        codeflash_cur.execute('CREATE TABLE IF NOT EXISTS test_results (test_module_path TEXT, test_class_name TEXT, test_function_name TEXT, function_getting_tested TEXT, loop_index INTEGER, iteration_id TEXT, runtime INTEGER, return_value BLOB, verification_type TEXT)')
-        input = [5, 4, 3, 2, 1, 0]
-        output = codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '1', codeflash_loop_index, codeflash_cur, codeflash_con, input)
-        self.assertEqual(output, [0, 1, 2, 3, 4, 5])
-        input = [5.0, 4.0, 3.0, 2.0, 1.0, 0.0]
-        output = codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '4', codeflash_loop_index, codeflash_cur, codeflash_con, input)
-        self.assertEqual(output, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
-        input = list(reversed(range(5000)))
-        self.assertEqual(codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '7', codeflash_loop_index, codeflash_cur, codeflash_con, input), list(range(5000)))
-        codeflash_con.close()
-"""
+    expected = (
+        "import gc\n"
+        "import os\n"
+        "import sqlite3\n"
+        "import time\n"
+        "import unittest\n\n"
+        "import dill as pickle\n"
+        "import timeout_decorator\n\n"
+        "from code_to_optimize.bubble_sort import sorter\n\n\n"
+        "def codeflash_wrap(wrapped, test_module_name, test_class_name, test_name, function_name, line_id, loop_index, codeflash_cur, codeflash_con, *args, **kwargs):\n"
+        "    test_id = f'{test_module_name}:{test_class_name}:{test_name}:{line_id}:{loop_index}'\n"
+        "    if not hasattr(codeflash_wrap, 'index'):\n"
+        "        codeflash_wrap.index = {}\n"
+        "    if test_id in codeflash_wrap.index:\n"
+        "        codeflash_wrap.index[test_id] += 1\n"
+        "    else:\n"
+        "        codeflash_wrap.index[test_id] = 0\n"
+        "    codeflash_test_index = codeflash_wrap.index[test_id]\n"
+        "    invocation_id = f'{line_id}_{codeflash_test_index}'\n"
+        + (
+            "    print(f\"!######{test_module_name}:{(test_class_name + '.' if test_class_name else '')}{test_name}:{function_name}:{loop_index}:{invocation_id}######!\")\n"
+            if sys.version_info < (3, 12)
+            else "    print(f'!######{test_module_name}:{(test_class_name + \".\" if test_class_name else \"\")}{test_name}:{function_name}:{loop_index}:{invocation_id}######!')\n"
+        ) +
+        "    exception = None\n"
+        "    gc.disable()\n"
+        "    try:\n"
+        "        counter = time.perf_counter_ns()\n"
+        "        return_value = wrapped(*args, **kwargs)\n"
+        "        codeflash_duration = time.perf_counter_ns() - counter\n"
+        "    except Exception as e:\n"
+        "        codeflash_duration = time.perf_counter_ns() - counter\n"
+        "        exception = e\n"
+        "    gc.enable()\n"
+        "    pickled_return_value = pickle.dumps(exception) if exception else pickle.dumps(return_value)\n"
+        "    codeflash_cur.execute('INSERT INTO test_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (test_module_name, test_class_name, test_name, function_name, loop_index, invocation_id, codeflash_duration, pickled_return_value, 'function_call'))\n"
+        "    codeflash_con.commit()\n"
+        "    if exception:\n"
+        "        raise exception\n"
+        "    return return_value\n\n"
+        "class TestPigLatin(unittest.TestCase):\n\n"
+        "    @timeout_decorator.timeout(15)\n"
+        "    def test_sort(self):\n"
+        "        codeflash_loop_index = int(os.environ['CODEFLASH_LOOP_INDEX'])\n"
+        "        codeflash_iteration = os.environ['CODEFLASH_TEST_ITERATION']\n"
+        "        codeflash_con = sqlite3.connect(f'{tmp_dir_path}_{codeflash_iteration}.sqlite')\n"
+        "        codeflash_cur = codeflash_con.cursor()\n"
+        "        codeflash_cur.execute('CREATE TABLE IF NOT EXISTS test_results (test_module_path TEXT, test_class_name TEXT, test_function_name TEXT, function_getting_tested TEXT, loop_index INTEGER, iteration_id TEXT, runtime INTEGER, return_value BLOB, verification_type TEXT)')\n"
+        "        input = [5, 4, 3, 2, 1, 0]\n"
+        "        output = codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '1', codeflash_loop_index, codeflash_cur, codeflash_con, input)\n"
+        "        self.assertEqual(output, [0, 1, 2, 3, 4, 5])\n"
+        "        input = [5.0, 4.0, 3.0, 2.0, 1.0, 0.0]\n"
+        "        output = codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '4', codeflash_loop_index, codeflash_cur, codeflash_con, input)\n"
+        "        self.assertEqual(output, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0])\n"
+        "        input = list(reversed(range(5000)))\n"
+        "        self.assertEqual(codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '7', codeflash_loop_index, codeflash_cur, codeflash_con, input), list(range(5000)))\n"
+        "        codeflash_con.close()\n"
+    )
     with tempfile.NamedTemporaryFile(mode="w") as f:
         f.write(code)
         f.flush()
@@ -229,7 +223,7 @@ def codeflash_wrap(wrapped, test_module_name, test_class_name, test_name, functi
     if sys.version_info < (3, 12):
         expected += """print(f"!######{{test_module_name}}:{{(test_class_name + '.' if test_class_name else '')}}{{test_name}}:{{function_name}}:{{loop_index}}:{{invocation_id}}######!")"""
     else:
-        expected += """print(f'!######{{test_module_name}}:{{(test_class_name + '.' if test_class_name else '')}}{{test_name}}:{{function_name}}:{{loop_index}}:{{invocation_id}}######!')"""
+        expected += r"print(f'!######{{test_module_name}}:{{(test_class_name + '.' if test_class_name else '')}}{{test_name}}:{{function_name}}:{{loop_index}}:{{invocation_id}}######!')"
     expected += """
     exception = None
     gc.disable()
