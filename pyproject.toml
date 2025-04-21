@@ -90,7 +90,6 @@ isort = ">=5.11.0"
 dill = ">=0.3.8"
 rich = ">=13.8.1"
 lxml = ">=5.3.0"
-crosshair-tool = ">=0.0.78"
 coverage = ">=7.6.4"
 line_profiler=">=4.2.0" #this is the minimum version which supports python 3.13
 [tool.poetry.group.dev]
