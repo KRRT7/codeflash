@@ -16,7 +16,7 @@ class Graph:
             if visited[i] == False:
                 self.topologicalSortUtil(i, visited, stack)
 
-        stack.insert(0, v)
+        stack.append(v)
 
     def topologicalSort(self):
         visited = [False] * self.V
@@ -26,5 +26,5 @@ class Graph:
             if visited[i] == False:
                 self.topologicalSortUtil(i, visited, stack)
 
-        # Print contents of stack
+        stack.reverse()
         return stack
