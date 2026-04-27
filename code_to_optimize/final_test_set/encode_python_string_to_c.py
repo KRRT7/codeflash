@@ -5,7 +5,7 @@ def _encodePythonStringToC(value):
     """
     assert type(value) is bytes, type(value)
 
-    result = ""
+    parts = []
     octal = False
 
     for c in value:
@@ -15,21 +15,18 @@ def _encodePythonStringToC(value):
             cv = c
 
         if c in b'\\\t\r\n"?':
-            result += r"\%03o" % cv
-
+            parts.append(r"\%03o" % cv)
             octal = True
         elif 32 <= cv <= 127:
             if octal and c in b"0123456789":
-                result += '" "'
-
-            result += chr(cv)
-
+                parts.append('" "')
+            parts.append(chr(cv))
             octal = False
         else:
-            result += r"\%o" % cv
-
+            parts.append(r"\%o" % cv)
             octal = True
 
+    result = "".join(parts)
     result = result.replace('" "\\', "\\")
 
     return '"%s"' % result
