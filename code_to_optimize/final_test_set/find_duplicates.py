@@ -1,7 +1,13 @@
 def find_duplicates(lst):
+    seen = {}
     duplicates = []
-    for i in range(len(lst)):
-        for j in range(i + 1, len(lst)):
-            if lst[i] == lst[j] and lst[i] not in duplicates:
-                duplicates.append(lst[i])
-    return duplicates
+    duplicates_set = set()
+    for idx, item in enumerate(lst):
+        if item in seen:
+            if item not in duplicates_set:
+                duplicates.append((seen[item], item))
+                duplicates_set.add(item)
+        else:
+            seen[item] = idx
+    duplicates.sort()
+    return [item for _, item in duplicates]
