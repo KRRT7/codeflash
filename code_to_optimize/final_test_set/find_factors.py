@@ -1,7 +1,14 @@
 def find_factors(product):
+    if product <= 0:
+        return []
     answers = []
-    for factor in range(1, product + 1):
-        if not product % factor:
-            factor2 = int(product / factor)
-            answers.append((factor, factor2))
+    i = 1
+    while i * i <= product:
+        if product % i == 0:
+            answers.append((i, product // i))
+        i += 1
+    for j in range(len(answers) - 1, -1, -1):
+        a, b = answers[j]
+        if a != b:
+            answers.append((b, a))
     return answers
