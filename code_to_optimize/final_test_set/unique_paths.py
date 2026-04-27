@@ -1,3 +1,7 @@
+from functools import lru_cache
+
+
+@lru_cache(maxsize=None)
 def uniquePaths(m, n, i=0, j=0):
     if i >= m or j >= n:
         return 0
