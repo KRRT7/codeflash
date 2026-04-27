@@ -3,13 +3,13 @@ def translate(word):
     if word[0] in vowels:
         return word + "way"
     else:
-        consonants = ""
+        consonant_count = 0
         for letter in word:
             if letter not in vowels:
-                consonants += letter
+                consonant_count += 1
             else:
                 break
-        return word[len(consonants) :] + consonants + "ay"
+        return word[consonant_count:] + word[:consonant_count] + "ay"
 
 
 def pig_latin(text):
