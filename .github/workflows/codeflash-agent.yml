@@ -53,13 +53,3 @@ jobs:
           CODEFLASH_API_KEY: ${{ secrets.CODEFLASH_API_KEY }}
         run: uv run codeflash-agent optimize ${{ github.workspace }}/target
 
-      - name: Upload session logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: codeflash-session-logs
-          path: |
-            target/.codeflash/logs/
-            ~/.claude/projects/*/
-          retention-days: 7
-          if-no-files-found: ignore
