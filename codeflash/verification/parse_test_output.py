@@ -586,8 +586,8 @@ def merge_test_results(
 ) -> TestResults:
     merged_test_results = TestResults()
 
-    grouped_xml_results: defaultdict[tuple[str, str, str, int], TestResults] = defaultdict(TestResults)
-    grouped_bin_results: defaultdict[tuple[str, str, str, int], TestResults] = defaultdict(TestResults)
+    grouped_xml_results: defaultdict[tuple[str, str, str, int], list[FunctionTestInvocation]] = defaultdict(list)
+    grouped_bin_results: defaultdict[tuple[str, str, str, int], list[FunctionTestInvocation]] = defaultdict(list)
 
     # This is done to match the right iteration_id which might not be available in the xml
     for result in xml_test_results:
@@ -612,7 +612,7 @@ def merge_test_results(
                 test_function_name or "",
                 result.loop_index,
             )
-        ].add(result)
+        ].append(result)
 
     for result in bin_test_results:
         grouped_bin_results[
@@ -622,20 +622,20 @@ def merge_test_results(
                 result.id.test_function_name or "",
                 result.loop_index,
             )
-        ].add(result)
+        ].append(result)
 
-    for result_id in grouped_xml_results:
-        xml_results = grouped_xml_results[result_id]
-        bin_results = grouped_bin_results.get(result_id)
-        if not bin_results:
-            merged_test_results.merge(xml_results)
+    for result_id, xml_results_list in grouped_xml_results.items():
+        bin_results_list = grouped_bin_results.get(result_id)
+        if not bin_results_list:
+            for xml_result in xml_results_list:
+                merged_test_results.add(xml_result)
             continue
 
-        if len(xml_results) == 1:
-            xml_result = xml_results[0]
+        if len(xml_results_list) == 1:
+            xml_result = xml_results_list[0]
             # This means that we only have one FunctionTestInvocation for this test xml. Match them to the bin results
             # Either a whole test function fails or passes.
-            for result_bin in bin_results:
+            for result_bin in bin_results_list:
                 # Prefer XML runtime (from stdout markers) if bin runtime is None/0
                 # This is important for Jest perf tests which output timing to stdout, not SQLite
                 merged_runtime = result_bin.runtime if result_bin.runtime else xml_result.runtime
@@ -656,14 +656,13 @@ def merge_test_results(
                         stdout=xml_result.stdout,
                     )
                 )
-        elif xml_results.test_results[0].id.iteration_id is not None:
+        elif xml_results_list[0].id.iteration_id is not None:
             # This means that we have multiple iterations of the same test function
             # We need to match the iteration_id to the bin results
-            for xml_result in xml_results.test_results:
-                try:
-                    bin_result = bin_results.get_by_unique_invocation_loop_id(xml_result.unique_invocation_loop_id)
-                except AttributeError:
-                    bin_result = None
+            # Build a lookup dict for bin results by unique_invocation_loop_id
+            bin_lookup: dict[str, FunctionTestInvocation] = {r.unique_invocation_loop_id: r for r in bin_results_list}
+            for xml_result in xml_results_list:
+                bin_result = bin_lookup.get(xml_result.unique_invocation_loop_id)
                 if bin_result is None:
                     merged_test_results.add(xml_result)
                     continue
@@ -691,11 +690,8 @@ def merge_test_results(
                 )
         else:
             # Should happen only if the xml did not have any test invocation id info
-            for i, bin_result in enumerate(bin_results.test_results):
-                try:
-                    xml_result = xml_results.test_results[i]
-                except IndexError:
-                    xml_result = None
+            for i, bin_result in enumerate(bin_results_list):
+                xml_result = xml_results_list[i] if i < len(xml_results_list) else None
                 if xml_result is None:
                     merged_test_results.add(bin_result)
                     continue
