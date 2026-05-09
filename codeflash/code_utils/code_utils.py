@@ -427,10 +427,20 @@ def get_run_tmp_file(file_path: Path | str) -> Path:
     return get_run_tmp_file.tmpdir_path / file_path
 
 
+_RESOLVED_SITE_PACKAGES: tuple[Path, ...] | None = None
+
+
+def _get_resolved_site_packages() -> tuple[Path, ...]:
+    global _RESOLVED_SITE_PACKAGES
+    if _RESOLVED_SITE_PACKAGES is None:
+        _RESOLVED_SITE_PACKAGES = tuple(Path(p).resolve() for p in site.getsitepackages())
+    return _RESOLVED_SITE_PACKAGES
+
+
+@lru_cache(maxsize=4096)
 def path_belongs_to_site_packages(file_path: Path) -> bool:
     file_path_resolved = file_path.resolve()
-    site_packages = [Path(p).resolve() for p in site.getsitepackages()]
-    return any(file_path_resolved.is_relative_to(site_package_path) for site_package_path in site_packages)
+    return any(file_path_resolved.is_relative_to(sp) for sp in _get_resolved_site_packages())
 
 
 def is_class_defined_in_file(class_name: str, file_path: Path) -> bool:
