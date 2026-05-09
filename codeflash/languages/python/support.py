@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import logging
 import platform
 from pathlib import Path
@@ -24,7 +25,6 @@ from codeflash.languages.registry import register_language
 from codeflash.models.function_types import FunctionParent
 
 if TYPE_CHECKING:
-    import ast
     from collections.abc import Sequence
 
     from libcst import CSTNode
@@ -256,38 +256,96 @@ class PythonSupport:
     ) -> list[FunctionToOptimize]:
         criteria = filter_criteria or FunctionFilterCriteria()
 
-        tree = cst.parse_module(source)
-
-        wrapper = cst.metadata.MetadataWrapper(tree)
-        function_visitor = FunctionVisitor(file_path=file_path)
-        wrapper.visit(function_visitor)
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            return []
 
         functions: list[FunctionToOptimize] = []
-        for func in function_visitor.functions:
-            if not criteria.include_async and func.is_async:
-                continue
-
-            if not criteria.include_methods and func.parents:
-                continue
-
-            if criteria.require_return and func.starting_line is None:
-                continue
-
-            func_with_is_method = FunctionToOptimize(
-                function_name=func.function_name,
-                file_path=file_path,
-                parents=func.parents,
-                starting_line=func.starting_line,
-                ending_line=func.ending_line,
-                starting_col=func.starting_col,
-                ending_col=func.ending_col,
-                is_async=func.is_async,
-                is_method=len(func.parents) > 0 and any(p.type == "ClassDef" for p in func.parents),
-                language="python",
-            )
-            functions.append(func_with_is_method)
-
+        self._visit_ast_body(tree.body, file_path, criteria, functions, parents=[])
         return functions
+
+    def _visit_ast_body(
+        self,
+        body: list[ast.stmt],
+        file_path: Path,
+        criteria: FunctionFilterCriteria,
+        functions: list[FunctionToOptimize],
+        parents: list[FunctionParent],
+    ) -> None:
+        _FIXTURE_NAMES = {"fixture"}
+        _PROPERTY_NAMES = {"property", "cached_property"}
+
+        for node in body:
+            if isinstance(node, ast.ClassDef):
+                class_parent = FunctionParent(node.name, "ClassDef")
+                self._visit_ast_body(node.body, file_path, criteria, functions, parents + [class_parent])
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                is_async = isinstance(node, ast.AsyncFunctionDef)
+
+                if not criteria.include_async and is_async:
+                    continue
+
+                if not criteria.include_methods and parents:
+                    continue
+
+                if self._is_ast_pytest_fixture(node, _FIXTURE_NAMES):
+                    continue
+
+                if self._is_ast_property(node, _PROPERTY_NAMES):
+                    continue
+
+                if not self._ast_has_return(node):
+                    if criteria.require_return:
+                        continue
+                    starting_line = None
+                    ending_line = None
+                else:
+                    starting_line = node.lineno
+                    ending_line = node.end_lineno
+
+                if criteria.require_return and starting_line is None:
+                    continue
+
+                is_method = len(parents) > 0 and any(p.type == "ClassDef" for p in parents)
+                functions.append(
+                    FunctionToOptimize(
+                        function_name=node.name,
+                        file_path=file_path,
+                        parents=list(parents),
+                        starting_line=starting_line,
+                        ending_line=ending_line,
+                        is_async=is_async,
+                        is_method=is_method,
+                        language="python",
+                    )
+                )
+
+    @staticmethod
+    def _is_ast_pytest_fixture(node: ast.FunctionDef | ast.AsyncFunctionDef, fixture_names: set[str]) -> bool:
+        for dec in node.decorator_list:
+            if isinstance(dec, ast.Call):
+                dec = dec.func
+            if isinstance(dec, ast.Attribute) and dec.attr == "fixture":
+                if isinstance(dec.value, ast.Name) and dec.value.id == "pytest":
+                    return True
+            if isinstance(dec, ast.Name) and dec.id in fixture_names:
+                return True
+        return False
+
+    @staticmethod
+    def _is_ast_property(node: ast.FunctionDef | ast.AsyncFunctionDef, property_names: set[str]) -> bool:
+        for dec in node.decorator_list:
+            if isinstance(dec, ast.Name) and dec.id in property_names:
+                return True
+        return False
+
+    @staticmethod
+    def _ast_has_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        for child in ast.walk(node):
+            if isinstance(child, ast.Return):
+                return True
+        return False
 
     def discover_tests(
         self, test_root: Path, source_functions: Sequence[FunctionToOptimize]
