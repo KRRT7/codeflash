@@ -15,7 +15,7 @@ jobs:
         with:
           path: target
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CF_AGENT_REPO_TOKEN }}
 
       - name: Checkout codeflash-agent
         uses: actions/checkout@v6
@@ -48,5 +48,5 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
           AWS_REGION: us-east-1
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CF_AGENT_REPO_TOKEN }}
         run: uv run codeflash-agent optimize ${{ github.workspace }}/target
