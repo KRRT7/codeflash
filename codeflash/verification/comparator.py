@@ -223,7 +223,37 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         if orig_type is list or orig_type is tuple:
             if len(orig) != len(new):
                 return False
-            return all(comparator(elem1, elem2, superset_obj) for elem1, elem2 in zip(orig, new))
+            for elem1, elem2 in zip(orig, new):
+                if elem1 is elem2:
+                    continue
+                e1_type = type(elem1)
+                if e1_type is not type(elem2):
+                    if not comparator(elem1, elem2, superset_obj):
+                        return False
+                    continue
+                if e1_type is int or e1_type is bool or e1_type is type(None):
+                    if elem1 != elem2:
+                        return False
+                elif e1_type is str:
+                    if elem1 != elem2:
+                        if not (
+                            _is_temp_path(elem1)
+                            and _is_temp_path(elem2)
+                            and _normalize_temp_path(elem1) == _normalize_temp_path(elem2)
+                        ):
+                            return False
+                elif e1_type is float:
+                    if not (elem1 == elem2 or (math.isnan(elem1) and math.isnan(elem2)) or math.isclose(elem1, elem2)):
+                        return False
+                elif e1_type is list or e1_type is tuple or e1_type is dict:
+                    if not comparator(elem1, elem2, superset_obj):
+                        return False
+                elif e1_type in _IDENTITY_EQ_TYPES:
+                    if elem1 != elem2:
+                        return False
+                elif not comparator(elem1, elem2, superset_obj):
+                    return False
+            return True
         if orig_type is dict:
             if superset_obj:
                 return all(k in new and comparator(v, new[k], superset_obj) for k, v in orig.items())
