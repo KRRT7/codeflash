@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: codeflash-ai/codeflash-agent
+          ref: codeflash-agent-apm
           path: agent
           token: ${{ secrets.CF_AGENT_REPO_TOKEN }}
 
