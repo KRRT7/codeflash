@@ -49,4 +49,5 @@ jobs:
           AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
           AWS_REGION: us-east-1
           GITHUB_TOKEN: ${{ secrets.CF_AGENT_REPO_TOKEN }}
+          CODEFLASH_API_KEY: ${{ secrets.CODEFLASH_API_KEY }}
         run: uv run codeflash-agent optimize ${{ github.workspace }}/target
