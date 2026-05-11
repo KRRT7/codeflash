@@ -222,7 +222,7 @@ def test_picklepatch_loads_dill_pickle():
     assert reloaded["nested"]["another_function"](4) == 16
 
 
-def test_run_and_parse_picklepatch() -> None:
+def test_run_and_parse_picklepatch(tmp_path: Path) -> None:
     """Test the end to end functionality of picklepatch, from tracing benchmarks to running the replay tests.
 
     The first example has an argument (an object containing a socket) that is not pickleable  However, the socket attributs is not used, so we are able to compare the test results with the optimized test results.
@@ -237,7 +237,7 @@ def test_run_and_parse_picklepatch() -> None:
     tests_root = project_root / "code_to_optimize" / "tests" / "pytest"
     benchmarks_root = project_root / "code_to_optimize" / "tests" / "pytest" / "benchmarks_socket_test"
     replay_tests_dir = benchmarks_root / "codeflash_replay_tests"
-    output_file = (benchmarks_root / Path("test_trace_benchmarks.trace")).resolve()
+    output_file = (tmp_path / "test_trace_benchmarks.trace").resolve()
     fto_unused_socket_path = (
         project_root / "code_to_optimize" / "bubble_sort_picklepatch_test_unused_socket.py"
     ).resolve()
@@ -538,8 +538,6 @@ def bubble_sort_with_used_socket(data_container):
         match, _ = compare_test_results(test_results_used_socket, optimized_test_results_used_socket)
         assert not match
     finally:
-        # cleanup
-        output_file.unlink(missing_ok=True)
         shutil.rmtree(replay_tests_dir, ignore_errors=True)
-        fto_unused_socket_path.write_text(original_fto_unused_socket_code)
-        fto_used_socket_path.write_text(original_fto_used_socket_code)
+        fto_unused_socket_path.write_text(original_fto_unused_socket_code, encoding="utf-8")
+        fto_used_socket_path.write_text(original_fto_used_socket_code, encoding="utf-8")
