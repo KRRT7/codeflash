@@ -96,8 +96,8 @@ def target_function():
     """
 
     expected_output = """import json
-from typing import Dict as MyDict, Optional
 from collections import defaultdict
+from typing import Dict as MyDict, Optional
 
 def target_function():
     data = json.loads('{"key": "value"}')
