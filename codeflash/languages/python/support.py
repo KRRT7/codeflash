@@ -363,10 +363,7 @@ class PythonSupport:
 
     @staticmethod
     def _is_ast_property(node: ast.FunctionDef | ast.AsyncFunctionDef, property_names: frozenset[str]) -> bool:
-        for dec in node.decorator_list:
-            if isinstance(dec, ast.Name) and dec.id in property_names:
-                return True
-        return False
+        return any(isinstance(dec, ast.Name) and dec.id in property_names for dec in node.decorator_list)
 
     @staticmethod
     def _ast_has_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
