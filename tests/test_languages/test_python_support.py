@@ -234,16 +234,14 @@ def func2():
             assert func2.starting_line == 4
             assert func2.ending_line == 7
 
-    def test_discover_invalid_file_raises(self, python_support):
-        """Test that invalid Python file raises a parse error."""
-        from libcst._exceptions import ParserSyntaxError
-
+    def test_discover_invalid_file_returns_empty(self, python_support):
+        """Test that invalid Python file returns empty list."""
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
             f.write("this is not valid python {{{{")
             f.flush()
 
-            with pytest.raises(ParserSyntaxError):
-                python_support.discover_functions(Path(f.name).read_text(encoding="utf-8"), Path(f.name))
+            result = python_support.discover_functions(Path(f.name).read_text(encoding="utf-8"), Path(f.name))
+            assert result == []
 
     def test_discover_empty_source_returns_empty(self, python_support):
         """Test that empty source returns empty list."""

@@ -256,7 +256,12 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             return True
         if orig_type is dict:
             if superset_obj:
-                return all(k in new and comparator(v, new[k], superset_obj) for k, v in orig.items())
+                for k, v in orig.items():
+                    if k not in new:
+                        return False
+                    if not comparator(v, new[k], superset_obj):
+                        return False
+                return True
             if len(orig) != len(new):
                 return False
             for key in orig:

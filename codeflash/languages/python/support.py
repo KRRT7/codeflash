@@ -38,6 +38,9 @@ _CACHE: dict[str, bool] = {}
 
 _CACHE_MAX: int = 4096
 
+_FIXTURE_NAMES: frozenset[str] = frozenset({"fixture"})
+_PROPERTY_NAMES: frozenset[str] = frozenset({"property", "cached_property"})
+
 logger = logging.getLogger(__name__)
 
 
@@ -273,13 +276,12 @@ class PythonSupport:
         functions: list[FunctionToOptimize],
         parents: list[FunctionParent],
     ) -> None:
-        _FIXTURE_NAMES = {"fixture"}
-        _PROPERTY_NAMES = {"property", "cached_property"}
-
         for node in body:
             if isinstance(node, ast.ClassDef):
                 class_parent = FunctionParent(node.name, "ClassDef")
-                self._visit_ast_body(node.body, file_path, criteria, functions, parents + [class_parent])
+                parents.append(class_parent)
+                self._visit_ast_body(node.body, file_path, criteria, functions, parents)
+                parents.pop()
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 is_async = isinstance(node, ast.AsyncFunctionDef)
 
@@ -307,7 +309,7 @@ class PythonSupport:
                 if criteria.require_return and starting_line is None:
                     continue
 
-                is_method = len(parents) > 0 and any(p.type == "ClassDef" for p in parents)
+                is_method = bool(parents)
                 functions.append(
                     FunctionToOptimize(
                         function_name=node.name,
@@ -342,10 +344,27 @@ class PythonSupport:
 
     @staticmethod
     def _ast_has_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-        for child in ast.walk(node):
-            if isinstance(child, ast.Return):
+        return _check_body_for_return(node.body)
+
+
+def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
+    """Check statements for returns, excluding nested function/class definitions."""
+    for stmt in stmts:
+        if isinstance(stmt, ast.Return):
+            return True
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        if hasattr(stmt, "body") and _check_body_for_return(stmt.body):
+            return True
+        if hasattr(stmt, "orelse") and _check_body_for_return(stmt.orelse):
+            return True
+        if isinstance(stmt, ast.Try):
+            for handler in stmt.handlers:
+                if _check_body_for_return(handler.body):
+                    return True
+            if _check_body_for_return(stmt.finalbody):
                 return True
-        return False
+    return False
 
     def discover_tests(
         self, test_root: Path, source_functions: Sequence[FunctionToOptimize]
