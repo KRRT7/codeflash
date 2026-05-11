@@ -264,7 +264,12 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return True
             if len(orig) != len(new):
                 return False
-            for key in orig:
+            for key, val in orig.items():
+                try:
+                    if not comparator(val, new[key], superset_obj):
+                        return False
+                except KeyError:
+                    return False
                 if key not in new:
                     return False
                 if not comparator(orig[key], new[key], superset_obj):
