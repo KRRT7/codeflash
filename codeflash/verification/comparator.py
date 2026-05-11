@@ -270,10 +270,6 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                         return False
                 except KeyError:
                     return False
-                if key not in new:
-                    return False
-                if not comparator(orig[key], new[key], superset_obj):
-                    return False
             return True
         if orig_type is float:
             if math.isnan(orig) and math.isnan(new):
@@ -387,10 +383,11 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return all(k in new and comparator(v, new[k], superset_obj) for k, v in orig.items())
             if len(orig) != len(new):
                 return False
-            for key in orig:
-                if key not in new:
-                    return False
-                if not comparator(orig[key], new[key], superset_obj):
+            for key, val in orig.items():
+                try:
+                    if not comparator(val, new[key], superset_obj):
+                        return False
+                except KeyError:
                     return False
             return True
 
@@ -567,14 +564,14 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             # Handle numba typed Dict
             if isinstance(orig, NumbaDict):
                 if superset_obj:
-                    # Allow new dict to have more keys, but all orig keys must exist with equal values
-                    return all(key in new and comparator(orig[key], new[key], superset_obj) for key in orig)
+                    return all(k in new and comparator(v, new[k], superset_obj) for k, v in orig.items())
                 if len(orig) != len(new):
                     return False
-                for key in orig:
-                    if key not in new:
-                        return False
-                    if not comparator(orig[key], new[key], superset_obj):
+                for key, val in orig.items():
+                    try:
+                        if not comparator(val, new[key], superset_obj):
+                            return False
+                    except KeyError:
                         return False
                 return True
 
