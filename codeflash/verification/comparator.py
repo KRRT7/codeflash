@@ -16,7 +16,7 @@ import weakref
 import xml.etree.ElementTree as ET
 from collections import ChainMap, OrderedDict, deque
 from importlib.util import find_spec
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import sentry_sdk
 
@@ -55,10 +55,10 @@ if HAS_PANDAS:
 if HAS_TORCH:
     import torch  # type: ignore  # noqa: PGH003
 if HAS_NUMBA:
-    import numba  # type: ignore  # noqa: PGH003
-    from numba.core.dispatcher import Dispatcher  # type: ignore  # noqa: PGH003
-    from numba.typed import Dict as NumbaDict  # type: ignore  # noqa: PGH003
-    from numba.typed import List as NumbaList  # type: ignore  # noqa: PGH003
+    import numba
+    from numba.core.dispatcher import Dispatcher  # type: ignore[import-not-found]
+    from numba.typed import Dict as NumbaDict  # type: ignore[import-not-found]
+    from numba.typed import List as NumbaList
 if HAS_PYRSISTENT:
     import pyrsistent  # type: ignore  # noqa: PGH003
 
@@ -70,9 +70,9 @@ PYTEST_TEMP_PATH_PATTERN = re.compile(r"/tmp/pytest-of-[^/]+/pytest-\d+/")  # no
 # Created by tempfile.mkdtemp() or tempfile.TemporaryDirectory()
 PYTHON_TEMPFILE_PATTERN = re.compile(r"/tmp/tmp[a-zA-Z0-9_]+/")  # noqa: S108
 
-_DICT_KEYS_TYPE = type({}.keys())
-_DICT_VALUES_TYPE = type({}.values())
-_DICT_ITEMS_TYPE = type({}.items())
+_DICT_KEYS_TYPE: type = type({}.keys())
+_DICT_VALUES_TYPE: type = type({}.values())
+_DICT_ITEMS_TYPE: type = type({}.items())
 
 _IDENTITY_EQ_TYPES: frozenset[type[Any]] = frozenset(
     {
@@ -149,7 +149,7 @@ def _extract_exception_from_message(msg: str) -> Optional[BaseException]:  # noq
 
         exc_class = getattr(builtins, exc_name, None)
         if exc_class is not None and isinstance(exc_class, type) and issubclass(exc_class, BaseException):
-            return exc_class()
+            return cast("BaseException", exc_class())
     return None
 
 
@@ -167,7 +167,7 @@ def _get_wrapped_exception(exc: BaseException) -> Optional[BaseException]:  # no
     if hasattr(exc, "exceptions"):
         exceptions = exc.exceptions
         if len(exceptions) == 1:
-            return exceptions[0]
+            return cast("BaseException", exceptions[0])
     # Check for explicit exception chaining (__cause__)
     if exc.__cause__ is not None:
         return exc.__cause__
@@ -277,7 +277,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             return math.isclose(orig, new)
         # O(1) frozenset lookup for remaining common types (int, bool, None, Decimal, etc.)
         if orig_type in _IDENTITY_EQ_TYPES:
-            return orig == new
+            return orig == new  # type: ignore[no-any-return]
 
         # Slower isinstance path for subclasses (deque, ChainMap, etc.)
         if isinstance(orig, (list, tuple, deque, ChainMap)):
@@ -295,7 +295,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
 
         # enum.Enum subclasses and UnionType fall through from the frozenset fast-path
         if isinstance(orig, _EQUALITY_TYPES):
-            return orig == new
+            return orig == new  # type: ignore[no-any-return]
 
         # Handle weak references (e.g., found in torch.nn.LSTM/GRU modules)
         if isinstance(orig, weakref.ref):
@@ -320,7 +320,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         # Handle xarray objects before numpy to avoid boolean context errors
         if HAS_XARRAY:
             if isinstance(orig, (xarray.Dataset, xarray.DataArray)):
-                return orig.identical(new)
+                return orig.identical(new)  # type: ignore[no-any-return]
 
         # Handle TensorFlow objects early to avoid boolean context errors
         if HAS_TENSORFLOW:
@@ -340,10 +340,10 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return comparator(orig.numpy(), new.numpy(), superset_obj)
 
             if isinstance(orig, tf.dtypes.DType):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, tf.TensorShape):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, tf.SparseTensor):
                 if not comparator(orig.dense_shape.numpy(), new.dense_shape.numpy(), superset_obj):
@@ -397,11 +397,11 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
 
         # Handle dict view types (dict_keys, dict_values, dict_items)
         if isinstance(orig, _DICT_KEYS_TYPE):
-            return comparator(set(orig), set(new))
+            return comparator(set(orig), set(new))  # type: ignore[call-overload]
         if isinstance(orig, _DICT_VALUES_TYPE):
-            return comparator(list(orig), list(new))
+            return comparator(list(orig), list(new))  # type: ignore[call-overload]
         if isinstance(orig, _DICT_ITEMS_TYPE):
-            return comparator(dict(orig), dict(new), superset_obj)
+            return comparator(dict(orig), dict(new), superset_obj)  # type: ignore[call-overload]
 
         if HAS_NUMPY:
             if isinstance(orig, (np.datetime64, np.timedelta64)):
@@ -410,7 +410,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     return True
                 if np.isnat(orig) or np.isnat(new):
                     return False
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, np.ndarray):
                 if orig.dtype != new.dtype:
@@ -427,22 +427,25 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     return np.allclose(orig, new, equal_nan=True)
                 except Exception:
                     # fails at "ufunc 'isfinite' not supported for the input types"
-                    return np.all([comparator(x, y, superset_obj) for x, y in zip(orig, new)])
+                    return bool(np.all([comparator(x, y, superset_obj) for x, y in zip(orig, new)]))
 
             if isinstance(orig, (np.floating, np.complexfloating)):
-                return np.isclose(orig, new, equal_nan=True)
+                return bool(np.isclose(orig, new, equal_nan=True))
 
             if isinstance(orig, (np.integer, np.bool_, np.byte)):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, np.void):
                 if orig.dtype != new.dtype:
                     return False
-                return all(comparator(orig[field], new[field], superset_obj) for field in orig.dtype.fields)
+                fields = orig.dtype.fields
+                if fields is None:
+                    return orig == new  # type: ignore[no-any-return]
+                return all(comparator(orig[field], new[field], superset_obj) for field in fields)
 
             # Handle np.dtype instances (including numpy.dtypes.* classes like Float64DType, Int64DType, etc.)
             if isinstance(orig, np.dtype):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             # Handle numpy random generators
             if isinstance(orig, np.random.Generator):
@@ -462,7 +465,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return False
             if orig.get_shape() != new.get_shape():
                 return False
-            return (orig != new).nnz == 0
+            return (orig != new).nnz == 0  # type: ignore[no-any-return]
 
         if HAS_PYARROW:
             if isinstance(orig, pa.Table):
@@ -510,10 +513,10 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             if isinstance(
                 orig, (pandas.DataFrame, pandas.Series, pandas.Index, pandas.Categorical, pandas.arrays.SparseArray)
             ):
-                return bool(orig.equals(new))
+                return bool(orig.equals(new))  # type: ignore[union-attr]
 
             if isinstance(orig, (pandas.CategoricalDtype, pandas.Interval, pandas.Period)):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
             if pandas.isna(orig) and pandas.isna(new):
                 return True
 
@@ -527,12 +530,12 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         # This should be at the end of all numpy checking
         try:
             if HAS_NUMPY and np.isnan(orig):
-                return np.isnan(new)
+                return bool(np.isnan(new))
         except Exception:
             pass
         try:
             if HAS_NUMPY and np.isinf(orig):
-                return np.isinf(new)
+                return bool(np.isinf(new))
         except Exception:
             pass
 
@@ -546,13 +549,13 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     return False
                 if orig.device != new.device:
                     return False
-                return torch.allclose(orig, new, equal_nan=True)
+                return bool(torch.allclose(orig, new, equal_nan=True))
 
             if isinstance(orig, torch.dtype):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, torch.device):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
         if HAS_NUMBA:
             # Handle numba typed List
@@ -577,7 +580,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
 
             # Handle numba type objects (e.g., numba.int64, numba.float64, numba.Array, etc.)
             if isinstance(orig, numba.core.types.Type):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             # Handle numba JIT-compiled functions (CPUDispatcher, etc.)
             if isinstance(orig, Dispatcher):
@@ -599,7 +602,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     pyrsistent.PDeque,
                 ),
             ):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
         if hasattr(orig, "__attrs_attrs__") and hasattr(new, "__attrs_attrs__"):
             orig_dict = {}
@@ -644,7 +647,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     new_reduce = new.__reduce__()
                 orig_remaining = list(orig_reduce[1][0])
                 new_remaining = list(new_reduce[1][0])
-                orig_saved, orig_started = orig_reduce[2]
+                orig_saved, orig_started = orig_reduce[2]  # type: ignore[str-unpack]
                 new_saved, new_started = new_reduce[2]
                 if orig_started != new_started:
                     return False
@@ -675,13 +678,13 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         if isinstance(
             orig, (datetime.datetime, datetime.date, datetime.timedelta, datetime.time, datetime.timezone, re.Pattern)
         ):
-            return orig == new
+            return orig == new  # type: ignore[no-any-return]
 
         # If the object passed has a user defined __eq__ method, use that
         # This could fail if the user defined __eq__ is defined with C-extensions
         try:
             if hasattr(orig, "__eq__") and isinstance(orig.__eq__, types.MethodType):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
         except Exception:
             pass
 
@@ -720,7 +723,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             return comparator(orig_vals, new_vals, superset_obj)
 
         if type(orig) in {types.BuiltinFunctionType, types.BuiltinMethodType}:
-            return new == orig
+            return new == orig  # type: ignore[no-any-return]
         if isinstance(orig, ET.Element):
             return isinstance(new, ET.Element) and ET.tostring(orig) == ET.tostring(new)
         if isinstance(

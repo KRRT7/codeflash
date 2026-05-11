@@ -3,12 +3,11 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
-import subprocess
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-import dill as pickle
+import dill as pickle  # type: ignore[import-untyped]
 from lxml.etree import XMLParser, parse
 
 from codeflash.cli_cmds.console import DEBUG_MODE, console, logger
@@ -19,7 +18,7 @@ from codeflash.code_utils.code_utils import (
 )
 from codeflash.discovery.discover_unit_tests import discover_parameters_unittest
 from codeflash.languages.current import current_language_support
-from codeflash.models.models import (
+from codeflash.models.models import (  # type: ignore[attr-defined]
     ConcurrencyMetrics,
     FunctionTestInvocation,
     InvocationId,
@@ -31,11 +30,13 @@ from codeflash.models.models import (
 if TYPE_CHECKING:
     import subprocess
 
+    from lxml.etree import _ElementTree
+
     from codeflash.models.models import CodeOptimizationContext, CoverageData, TestFiles
     from codeflash.verification.verification_utils import TestConfig
 
 
-def parse_func(file_path: Path) -> XMLParser:
+def parse_func(file_path: Path) -> _ElementTree:
     """Parse the XML file with lxml.etree.XMLParser as the backend."""
     xml_parser = XMLParser(huge_tree=True)
     return parse(file_path, xml_parser)
@@ -435,7 +436,8 @@ def parse_sqlite_test_results(sqlite_file_path: Path, test_files: TestFiles, tes
             db.close()
         return test_results
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
     # Check serialization format: JavaScript uses JSON, Python uses pickle
     from codeflash.languages.current import current_language_support
@@ -506,6 +508,7 @@ def parse_sqlite_test_results(sqlite_file_path: Path, test_files: TestFiles, tes
             iteration_id = val[5]
             runtime = val[6]
             verification_type = val[8]
+            test_type: TestType | None
             if verification_type in {VerificationType.INIT_STATE_FTO, VerificationType.INIT_STATE_HELPER}:
                 test_type = TestType.INIT_STATE_TEST
             else:
@@ -530,7 +533,7 @@ def parse_sqlite_test_results(sqlite_file_path: Path, test_files: TestFiles, tes
             # Deserialize return value
             # For Jest: Skip deserialization - comparison happens via language-specific comparator
             # For Python: Use pickle to deserialize
-            ret_val = None
+            ret_val: tuple[Any, ...] | None = None
             if loop_index == 1 and val[7]:
                 try:
                     if is_json_format:
@@ -576,9 +579,9 @@ def parse_test_xml(
     test_xml_file_path: Path,
     test_files: TestFiles,
     test_config: TestConfig,
-    run_result: subprocess.CompletedProcess | None = None,
+    run_result: subprocess.CompletedProcess[bytes] | None = None,
 ) -> TestResults:
-    return current_language_support().parse_test_xml(test_xml_file_path, test_files, test_config, run_result)
+    return current_language_support().parse_test_xml(test_xml_file_path, test_files, test_config, run_result)  # type: ignore[no-any-return]
 
 
 def merge_test_results(
@@ -591,14 +594,16 @@ def merge_test_results(
 
     # This is done to match the right iteration_id which might not be available in the xml
     for result in xml_test_results:
+        tfn = result.id.test_function_name
+        test_function_name: str | None
         if test_framework == "pytest":
-            if result.id.test_function_name.endswith("]") and "[" in result.id.test_function_name:  # parameterized test
-                test_function_name = result.id.test_function_name[: result.id.test_function_name.index("[")]
+            if tfn is not None and tfn.endswith("]") and "[" in tfn:  # parameterized test
+                test_function_name = tfn[: tfn.index("[")]
             else:
-                test_function_name = result.id.test_function_name
+                test_function_name = tfn
         elif test_framework == "unittest":
-            test_function_name = result.id.test_function_name
-            is_parameterized, new_test_function_name, _ = discover_parameters_unittest(test_function_name)
+            test_function_name = tfn
+            is_parameterized, new_test_function_name, _ = discover_parameters_unittest(test_function_name or "")
             if is_parameterized:  # handle parameterized test
                 test_function_name = new_test_function_name
         else:
@@ -691,13 +696,13 @@ def merge_test_results(
         else:
             # Should happen only if the xml did not have any test invocation id info
             for i, bin_result in enumerate(bin_results_list):
-                xml_result = xml_results_list[i] if i < len(xml_results_list) else None
-                if xml_result is None:
+                matched_xml = xml_results_list[i] if i < len(xml_results_list) else None
+                if matched_xml is None:
                     merged_test_results.add(bin_result)
                     continue
                 # Prefer XML runtime (from stdout markers) if bin runtime is None/0
                 # This is important for Jest perf tests which output timing to stdout, not SQLite
-                merged_runtime = bin_result.runtime if bin_result.runtime else xml_result.runtime
+                merged_runtime = bin_result.runtime if bin_result.runtime else matched_xml.runtime
                 merged_test_results.add(
                     FunctionTestInvocation(
                         loop_index=bin_result.loop_index,
@@ -708,11 +713,11 @@ def merge_test_results(
                         did_pass=bin_result.did_pass,
                         test_type=bin_result.test_type,
                         return_value=bin_result.return_value,
-                        timed_out=xml_result.timed_out,  # only the xml gets the timed_out flag
+                        timed_out=matched_xml.timed_out,  # only the xml gets the timed_out flag
                         verification_type=VerificationType(bin_result.verification_type)
                         if bin_result.verification_type
                         else None,
-                        stdout=xml_result.stdout,
+                        stdout=matched_xml.stdout,
                     )
                 )
 
@@ -782,7 +787,7 @@ def parse_test_results(
     coverage_database_file: Path | None,
     coverage_config_file: Path | None,
     code_context: CodeOptimizationContext | None = None,
-    run_result: subprocess.CompletedProcess | None = None,
+    run_result: subprocess.CompletedProcess[bytes] | None = None,
     skip_sqlite_cleanup: bool = False,
 ) -> tuple[TestResults, CoverageData | None]:
     test_results_xml = parse_test_xml(
@@ -856,7 +861,8 @@ def parse_test_results(
             coverage.log_coverage()
     if run_result:
         try:
-            failures = parse_test_failures_from_stdout(run_result.stdout)
+            stdout = run_result.stdout.decode("utf-8") if isinstance(run_result.stdout, bytes) else run_result.stdout
+            failures = parse_test_failures_from_stdout(stdout)
             results.test_failures = failures
         except Exception as e:
             logger.exception(e)
