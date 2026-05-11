@@ -58,8 +58,8 @@ def function_sources_to_helpers(sources: list[FunctionSource]) -> list[HelperFun
             qualified_name=fs.qualified_name,
             file_path=fs.file_path,
             source_code=fs.source_code,
-            start_line=fs.jedi_definition.line if fs.jedi_definition else 1,  # type: ignore[attr-defined]
-            end_line=fs.jedi_definition.line if fs.jedi_definition else 1,  # type: ignore[attr-defined]
+            start_line=fs.start_line,
+            end_line=fs.end_line,
         )
         for fs in sources
     ]

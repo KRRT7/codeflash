@@ -548,6 +548,8 @@ def get_function_to_optimize_as_function_source(
                     fully_qualified_name=name.full_name,
                     only_function_name=name.name,
                     source_code=name.get_line_code(),
+                    start_line=name.get_definition_start_position()[0],
+                    end_line=name.get_definition_end_position()[0],
                 )
         except Exception as e:
             logger.exception(f"Error while getting function source: {e}")
@@ -644,6 +646,8 @@ def get_function_sources_from_jedi(
                                 only_function_name=func_name,
                                 source_code=definition.get_line_code(),
                                 definition_type=definition.type,
+                                start_line=definition.get_definition_start_position()[0],
+                                end_line=definition.get_definition_end_position()[0],
                             )
                             file_path_to_function_source[definition_path].add(function_source)
                     # Mark as resolved regardless of validity — the same ref.full_name
