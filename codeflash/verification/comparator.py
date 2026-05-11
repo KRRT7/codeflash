@@ -178,38 +178,13 @@ def _get_wrapped_exception(exc: BaseException) -> Optional[BaseException]:  # no
 def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
     """Compare two objects for equality recursively. If superset_obj is True, the new object is allowed to have more keys than the original object. However, the existing keys/values must be equivalent."""
     try:
-        # Handle exceptions specially - before type check to allow wrapper comparison
-        if isinstance(orig, BaseException) and isinstance(new, BaseException):
-            if isinstance(orig, PicklePlaceholderAccessError) or isinstance(new, PicklePlaceholderAccessError):
-                # If this error was raised, there was an attempt to access the PicklePlaceholder, which represents an unpickleable object.
-                # The test results should be rejected as the behavior of the unpickleable object is unknown.
-                logger.debug("Unable to verify behavior of unpickleable object in replay test")
-                return False
-
-            # If types match exactly, compare attributes
-            if type(orig) is type(new):
-                orig_dict = {k: v for k, v in orig.__dict__.items() if not k.startswith("_")}
-                new_dict = {k: v for k, v in new.__dict__.items() if not k.startswith("_")}
-                return comparator(orig_dict, new_dict, superset_obj)
-
-            # Types differ - check if one is a wrapper over the other
-            # Check if orig wraps something that matches new
-            wrapped_orig = _get_wrapped_exception(orig)
-            if wrapped_orig is not None and comparator(wrapped_orig, new, superset_obj):
-                return True
-
-            # Check if new wraps something that matches orig
-            wrapped_new = _get_wrapped_exception(new)
-            if wrapped_new is not None and comparator(orig, wrapped_new, superset_obj):
-                return True
-
-            return False
-
         orig_type = type(orig)
         if orig_type is not type(new):
             # distinct type objects are created at runtime, even if the class code is exactly the same, so we can only compare the names
             if orig_type.__name__ != type(new).__name__ or orig_type.__qualname__ != type(new).__qualname__:
-                return False
+                # Exceptions get wrapper-unwrapping logic below — don't bail out early
+                if not (isinstance(orig, BaseException) and isinstance(new, BaseException)):
+                    return False
 
         # Fast-path: type identity checks for the most common return-value types.
         # `orig_type is T` is a single pointer comparison — cheaper than frozenset hash
@@ -278,6 +253,27 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         # O(1) frozenset lookup for remaining common types (int, bool, None, Decimal, etc.)
         if orig_type in _IDENTITY_EQ_TYPES:
             return orig == new  # type: ignore[no-any-return]
+
+        # BaseException check — after fast-path since exceptions are <0.1% of workload
+        if isinstance(orig, BaseException) and isinstance(new, BaseException):
+            if isinstance(orig, PicklePlaceholderAccessError) or isinstance(new, PicklePlaceholderAccessError):
+                logger.debug("Unable to verify behavior of unpickleable object in replay test")
+                return False
+
+            if type(orig) is type(new):
+                orig_dict = {k: v for k, v in orig.__dict__.items() if not k.startswith("_")}
+                new_dict = {k: v for k, v in new.__dict__.items() if not k.startswith("_")}
+                return comparator(orig_dict, new_dict, superset_obj)
+
+            wrapped_orig = _get_wrapped_exception(orig)
+            if wrapped_orig is not None and comparator(wrapped_orig, new, superset_obj):
+                return True
+
+            wrapped_new = _get_wrapped_exception(new)
+            if wrapped_new is not None and comparator(orig, wrapped_new, superset_obj):
+                return True
+
+            return False
 
         # Slower isinstance path for subclasses (deque, ChainMap, etc.)
         if isinstance(orig, (list, tuple, deque, ChainMap)):

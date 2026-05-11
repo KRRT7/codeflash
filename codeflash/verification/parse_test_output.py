@@ -157,6 +157,8 @@ def resolve_test_file_from_class_path(test_class_path: str, base_dir: Path) -> P
         >>> # Should find: /path/to/tests/unittest/test_file.py
 
     """
+    lang_support = current_language_support()
+
     # Handle file paths (contain slashes and extensions like .js/.ts)
     if "/" in test_class_path or "\\" in test_class_path:
         # This is a file path, not a Python module path
@@ -188,7 +190,7 @@ def resolve_test_file_from_class_path(test_class_path: str, base_dir: Path) -> P
         return None
 
     # Let language-specific resolution handle non-Python class paths (e.g., Java package names)
-    lang_result = current_language_support().resolve_test_file_from_class_path(test_class_path, base_dir)
+    lang_result = lang_support.resolve_test_file_from_class_path(test_class_path, base_dir)
     if lang_result is not None:
         return lang_result
 
