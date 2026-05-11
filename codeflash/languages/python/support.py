@@ -16,11 +16,12 @@ from codeflash.languages.base import (
     CodeContext,
     FunctionFilterCriteria,
     HelperFunction,
-    Language,
+    LanguageSupport,
     ReferenceInfo,
     TestInfo,
     TestResult,
 )
+from codeflash.languages.language_enum import Language
 from codeflash.languages.registry import register_language
 from codeflash.models.function_types import FunctionParent
 
@@ -57,8 +58,8 @@ def function_sources_to_helpers(sources: list[FunctionSource]) -> list[HelperFun
             qualified_name=fs.qualified_name,
             file_path=fs.file_path,
             source_code=fs.source_code,
-            start_line=fs.jedi_definition.line if fs.jedi_definition else 1,
-            end_line=fs.jedi_definition.line if fs.jedi_definition else 1,
+            start_line=fs.jedi_definition.line if fs.jedi_definition else 1,  # type: ignore[attr-defined]
+            end_line=fs.jedi_definition.line if fs.jedi_definition else 1,  # type: ignore[attr-defined]
         )
         for fs in sources
     ]
@@ -149,7 +150,7 @@ def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
 
 
 @register_language
-class PythonSupport:
+class PythonSupport(LanguageSupport):
     """Python language support implementation.
 
     This class wraps the existing Python-specific implementations to conform
@@ -1081,7 +1082,7 @@ class PythonSupport:
         )
 
     def instrument_source_for_line_profiler(
-        self, func_info: FunctionToOptimize, line_profiler_output_file: Path
+        self, func_info: FunctionToOptimize, line_profiler_output_file: Path, project_classpath: str | None = None
     ) -> bool:
         """Instrument source code for line profiling.
 
@@ -1258,6 +1259,7 @@ class PythonSupport:
         min_loops: int = 5,
         max_loops: int = 100_000,
         target_duration_seconds: float = 10.0,
+        inner_iterations: int = 1,
     ) -> tuple[Path, Any]:
 
         from codeflash.code_utils.code_utils import get_run_tmp_file

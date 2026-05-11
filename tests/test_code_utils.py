@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+import codeflash.code_utils.code_utils as code_utils_module
 from codeflash.code_utils.code_utils import (
     cleanup_paths,
     exit_with_message,
@@ -260,6 +261,16 @@ def test_get_run_tmp_file_reuses_temp_directory() -> None:
     assert tmp_file_path1.parent.exists()
 
 
+@pytest.fixture(autouse=False)
+def clear_site_packages_cache() -> Generator[None, None, None]:
+    code_utils_module._RESOLVED_SITE_PACKAGES = None
+    path_belongs_to_site_packages.cache_clear()
+    yield
+    code_utils_module._RESOLVED_SITE_PACKAGES = None
+    path_belongs_to_site_packages.cache_clear()
+
+
+@pytest.mark.usefixtures("clear_site_packages_cache")
 def test_path_belongs_to_site_packages_with_site_package_path(monkeypatch: pytest.MonkeyPatch) -> None:
     site_packages = [Path("/usr/local/lib/python3.9/site-packages").resolve()]
     monkeypatch.setattr(site, "getsitepackages", lambda: site_packages)
@@ -268,6 +279,7 @@ def test_path_belongs_to_site_packages_with_site_package_path(monkeypatch: pytes
     assert path_belongs_to_site_packages(file_path) is True
 
 
+@pytest.mark.usefixtures("clear_site_packages_cache")
 def test_path_belongs_to_site_packages_with_non_site_package_path(monkeypatch: pytest.MonkeyPatch) -> None:
     site_packages = [Path("/usr/local/lib/python3.9/site-packages")]
     monkeypatch.setattr(site, "getsitepackages", lambda: site_packages)
@@ -276,6 +288,7 @@ def test_path_belongs_to_site_packages_with_non_site_package_path(monkeypatch: p
     assert path_belongs_to_site_packages(file_path) is False
 
 
+@pytest.mark.usefixtures("clear_site_packages_cache")
 def test_path_belongs_to_site_packages_with_relative_path(monkeypatch: pytest.MonkeyPatch) -> None:
     site_packages = [Path("/usr/local/lib/python3.9/site-packages")]
     monkeypatch.setattr(site, "getsitepackages", lambda: site_packages)
@@ -284,6 +297,7 @@ def test_path_belongs_to_site_packages_with_relative_path(monkeypatch: pytest.Mo
     assert path_belongs_to_site_packages(file_path) is False
 
 
+@pytest.mark.usefixtures("clear_site_packages_cache")
 def test_path_belongs_to_site_packages_with_symlinked_site_packages(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -305,6 +319,7 @@ def test_path_belongs_to_site_packages_with_symlinked_site_packages(
     assert path_belongs_to_site_packages(symlinked_package_file) is True
 
 
+@pytest.mark.usefixtures("clear_site_packages_cache")
 def test_path_belongs_to_site_packages_with_complex_symlinks(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     real_site_packages = tmp_path / "real" / "lib" / "python3.9" / "site-packages"
     real_site_packages.mkdir(parents=True)
@@ -328,6 +343,7 @@ def test_path_belongs_to_site_packages_with_complex_symlinks(monkeypatch: pytest
     assert path_belongs_to_site_packages(file_via_links) is True
 
 
+@pytest.mark.usefixtures("clear_site_packages_cache")
 def test_path_belongs_to_site_packages_resolved_paths_normalization(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

@@ -651,7 +651,10 @@ def get_function_sources_from_jedi(
                     if name.full_name:
                         resolved_ref_names.add(name.full_name)
 
-    function_source_list = [fs for sources in file_path_to_function_source.values() for fs in sources]
+    function_source_list = sorted(
+        (fs for sources in file_path_to_function_source.values() for fs in sources),
+        key=lambda fs: fs.fully_qualified_name,
+    )
     return file_path_to_function_source, function_source_list, new_refs_cache
 
 
