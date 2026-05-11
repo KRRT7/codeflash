@@ -31,7 +31,13 @@ if TYPE_CHECKING:
     from libcst.metadata import CodeRange
 
     from codeflash.languages.base import DependencyResolver
-    from codeflash.models.models import FunctionSource, GeneratedTestsList, InvocationId, ValidCode
+    from codeflash.models.models import (
+        FunctionCalledInTest,
+        FunctionSource,
+        GeneratedTestsList,
+        InvocationId,
+        ValidCode,
+    )
     from codeflash.verification.verification_utils import TestConfig
 
 _CACHE: dict[str, bool] = {}
@@ -120,6 +126,26 @@ class FunctionVisitor(cst.CSTVisitor):
                     is_async=bool(node.asynchronous),
                 )
             )
+
+
+def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
+    """Check statements for returns, excluding nested function/class definitions."""
+    for stmt in stmts:
+        if isinstance(stmt, ast.Return):
+            return True
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        if hasattr(stmt, "body") and _check_body_for_return(stmt.body):
+            return True
+        if hasattr(stmt, "orelse") and _check_body_for_return(stmt.orelse):
+            return True
+        if isinstance(stmt, ast.Try):
+            for handler in stmt.handlers:
+                if _check_body_for_return(handler.body):
+                    return True
+            if _check_body_for_return(stmt.finalbody):
+                return True
+    return False
 
 
 @register_language
@@ -324,7 +350,7 @@ class PythonSupport:
                 )
 
     @staticmethod
-    def _is_ast_pytest_fixture(node: ast.FunctionDef | ast.AsyncFunctionDef, fixture_names: set[str]) -> bool:
+    def _is_ast_pytest_fixture(node: ast.FunctionDef | ast.AsyncFunctionDef, fixture_names: frozenset[str]) -> bool:
         for dec in node.decorator_list:
             if isinstance(dec, ast.Call):
                 dec = dec.func
@@ -336,7 +362,7 @@ class PythonSupport:
         return False
 
     @staticmethod
-    def _is_ast_property(node: ast.FunctionDef | ast.AsyncFunctionDef, property_names: set[str]) -> bool:
+    def _is_ast_property(node: ast.FunctionDef | ast.AsyncFunctionDef, property_names: frozenset[str]) -> bool:
         for dec in node.decorator_list:
             if isinstance(dec, ast.Name) and dec.id in property_names:
                 return True
@@ -345,26 +371,6 @@ class PythonSupport:
     @staticmethod
     def _ast_has_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
         return _check_body_for_return(node.body)
-
-
-def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
-    """Check statements for returns, excluding nested function/class definitions."""
-    for stmt in stmts:
-        if isinstance(stmt, ast.Return):
-            return True
-        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            continue
-        if hasattr(stmt, "body") and _check_body_for_return(stmt.body):
-            return True
-        if hasattr(stmt, "orelse") and _check_body_for_return(stmt.orelse):
-            return True
-        if isinstance(stmt, ast.Try):
-            for handler in stmt.handlers:
-                if _check_body_for_return(handler.body):
-                    return True
-            if _check_body_for_return(stmt.finalbody):
-                return True
-    return False
 
     def discover_tests(
         self, test_root: Path, source_functions: Sequence[FunctionToOptimize]
@@ -931,7 +937,7 @@ def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
         candidate_results_path: Path,
         project_root: Path | None = None,
         project_classpath: str | None = None,
-    ) -> tuple[bool, list]:
+    ) -> tuple[bool, list[Any]]:
         """Compare test results between original and candidate code.
 
         Args:
@@ -1094,7 +1100,7 @@ def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
         # This is handled through the existing infrastructure
         return True
 
-    def parse_line_profile_results(self, line_profiler_output_file: Path) -> dict:
+    def parse_line_profile_results(self, line_profiler_output_file: Path) -> dict[str, Any]:
         """Parse line profiler output for Python.
 
         Args:
@@ -1155,7 +1161,7 @@ def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
         from codeflash.code_utils.config_consts import TOTAL_LOOPING_TIME_EFFECTIVE
         from codeflash.languages.python.static_analysis.coverage_utils import prepare_coverage_files
         from codeflash.languages.python.test_runner import execute_test_subprocess
-        from codeflash.models.models import TestType
+        from codeflash.models.models import TestType  # type: ignore[attr-defined]
 
         blocklisted_plugins = ["benchmark", "codspeed", "xdist", "sugar"]
 
@@ -1335,7 +1341,7 @@ def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
 
     def generate_concolic_tests(
         self, test_cfg: Any, project_root: Path, function_to_optimize: FunctionToOptimize, function_to_optimize_ast: Any
-    ) -> tuple[dict, str]:
+    ) -> tuple[dict[str, set[FunctionCalledInTest]], str]:
         import ast
         import importlib.util
         import subprocess
@@ -1358,7 +1364,7 @@ def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
         crosshair_available = importlib.util.find_spec("crosshair") is not None
 
         start_time = time.perf_counter()
-        function_to_concolic_tests: dict = {}
+        function_to_concolic_tests: dict[str, set[FunctionCalledInTest]] = {}
         concolic_test_suite_code = ""
 
         if not crosshair_available:
