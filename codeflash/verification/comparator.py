@@ -232,14 +232,10 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         if orig_type is dict:
             if superset_obj:
                 for k, v in orig.items():
-                for k, v in orig.items():
                     try:
                         if not comparator(v, new[k], superset_obj):
                             return False
                     except KeyError:
-                        return False
-                        return False
-                    if not comparator(v, new[k], superset_obj):
                         return False
                 return True
             if len(orig) != len(new):
