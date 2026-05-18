@@ -12,12 +12,16 @@ from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING
 
 import tomlkit
 
 from codeflash.cli_cmds.console import logger, paneled_text
 from codeflash.code_utils.config_parser import find_pyproject_toml, get_all_closest_config_files
 from codeflash.lsp.helpers import is_LSP_enabled, is_subagent_mode
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 _INVALID_CHARS_NT = {"<", ">", ":", '"', "|", "?", "*"}
 
@@ -112,7 +116,7 @@ def normalize_by_max(values: list[float]) -> list[float]:
     return [v / mx for v in values]
 
 
-def create_score_dictionary_from_metrics(weights: list[float], *metrics: list[float]) -> dict[int, int]:
+def create_score_dictionary_from_metrics(weights: list[float], *metrics: list[float]) -> dict[int, float]:
     """Combine multiple metrics into a single weighted score dictionary.
 
     Each metric is a list of values (smaller = better).
@@ -205,73 +209,71 @@ def filter_args(addopts_args: list[str]) -> list[str]:
     return filtered_args
 
 
+def modify_addopts_toml(config_file: Path, content: str) -> tuple[str, bool]:
+    toml_data = tomlkit.parse(content)
+    original_addopts = toml_data.get("tool", {}).get("pytest", {}).get("ini_options", {}).get("addopts", "")
+    if original_addopts == "":
+        return content, False
+    if isinstance(original_addopts, list):
+        original_addopts = " ".join(original_addopts)
+    original_addopts = original_addopts.replace("=", " ")
+    addopts_args = original_addopts.split()
+    new_addopts_args = filter_args(addopts_args)
+    if new_addopts_args == addopts_args:
+        return content, False
+    tool = toml_data["tool"]
+    assert isinstance(tool, dict)
+    pytest_section = tool["pytest"]
+    assert isinstance(pytest_section, dict)
+    ini_options = pytest_section["ini_options"]
+    assert isinstance(ini_options, dict)
+    ini_options["addopts"] = " ".join(new_addopts_args)
+    with Path.open(config_file, "w", encoding="utf-8") as f:
+        f.write(tomlkit.dumps(toml_data))
+    return content, True
+
+
+def modify_addopts_ini(config_file: Path, content: str) -> tuple[str, bool]:
+    config = configparser.ConfigParser()
+    config.read_string(content)
+    ini_data: dict[str, dict[str, str]] = {section: dict(config[section]) for section in config.sections()}
+    if config_file.name in {"pytest.ini", ".pytest.ini", "tox.ini"}:
+        section_name = "pytest"
+        original_addopts = ini_data.get("pytest", {}).get("addopts", "")
+    else:
+        section_name = "tool:pytest"
+        original_addopts = ini_data.get("tool:pytest", {}).get("addopts", "")
+    original_addopts = original_addopts.replace("=", " ")
+    addopts_args = original_addopts.split()
+    new_addopts_args = filter_args(addopts_args)
+    if new_addopts_args == addopts_args:
+        return content, False
+    config.set(section_name, "addopts", " ".join(new_addopts_args))
+    with Path.open(config_file, "w", encoding="utf-8") as f:
+        config.write(f)
+    return content, True
+
+
 def modify_addopts(config_file: Path) -> tuple[str, bool]:
     file_type = config_file.suffix.lower()
-    filename = config_file.name
-    config = None
     if file_type not in {".toml", ".ini", ".cfg"} or not config_file.exists():
         return "", False
-    # Read original file
     with Path.open(config_file, encoding="utf-8") as f:
         content = f.read()
     try:
-        if filename == "pyproject.toml":
-            # use tomlkit
-            data = tomlkit.parse(content)
-            original_addopts = data.get("tool", {}).get("pytest", {}).get("ini_options", {}).get("addopts", "")
-            # nothing to do if no addopts present
-            if original_addopts == "":
-                return content, False
-            if isinstance(original_addopts, list):
-                original_addopts = " ".join(original_addopts)
-            original_addopts = original_addopts.replace("=", " ")
-            addopts_args = (
-                original_addopts.split()
-            )  # any number of space characters as delimiter, doesn't look at = which is fine
-        else:
-            # use configparser
-            config = configparser.ConfigParser()
-            config.read_string(content)
-            data = {section: dict(config[section]) for section in config.sections()}
-            if config_file.name in {"pytest.ini", ".pytest.ini", "tox.ini"}:
-                original_addopts = data.get("pytest", {}).get("addopts", "")  # should only be a string
-            else:
-                original_addopts = data.get("tool:pytest", {}).get("addopts", "")  # should only be a string
-            original_addopts = original_addopts.replace("=", " ")
-            addopts_args = original_addopts.split()
-        new_addopts_args = filter_args(addopts_args)
-        if new_addopts_args == addopts_args:
-            return content, False
-        # change addopts now
-        if file_type == ".toml":
-            data["tool"]["pytest"]["ini_options"]["addopts"] = " ".join(new_addopts_args)
-            # Write modified file
-            with Path.open(config_file, "w", encoding="utf-8") as f:
-                f.write(tomlkit.dumps(data))
-                return content, True
-        elif config_file.name in {"pytest.ini", ".pytest.ini", "tox.ini"}:
-            config.set("pytest", "addopts", " ".join(new_addopts_args))
-            # Write modified file
-            with Path.open(config_file, "w", encoding="utf-8") as f:
-                config.write(f)
-                return content, True
-        else:
-            config.set("tool:pytest", "addopts", " ".join(new_addopts_args))
-            # Write modified file
-            with Path.open(config_file, "w", encoding="utf-8") as f:
-                config.write(f)
-                return content, True
-
+        if config_file.name == "pyproject.toml":
+            return modify_addopts_toml(config_file, content)
+        return modify_addopts_ini(config_file, content)
     except Exception:
         logger.debug("Trouble parsing")
-        return content, False  # not modified
+        return content, False
 
 
 @contextmanager
-def custom_addopts() -> None:
+def custom_addopts() -> Generator[None, None, None]:
     closest_config_files = get_all_closest_config_files()
 
-    original_content = {}
+    original_content: dict[Path, tuple[str, bool]] = {}
 
     try:
         for config_file in closest_config_files:
@@ -279,7 +281,6 @@ def custom_addopts() -> None:
         yield
 
     finally:
-        # Restore original file
         for file, (content, was_modified) in original_content.items():
             if was_modified:
                 with Path.open(file, "w", encoding="utf-8") as f:
@@ -287,34 +288,32 @@ def custom_addopts() -> None:
 
 
 @contextmanager
-def add_addopts_to_pyproject() -> None:
+def add_addopts_to_pyproject() -> Generator[None, None, None]:
     pyproject_file = find_pyproject_toml()
-    original_content = None
+    original_content: str | None = None
     try:
-        # Read original file
         if pyproject_file.exists():
             with Path.open(pyproject_file, encoding="utf-8") as f:
                 original_content = f.read()
-                data = tomlkit.parse(original_content)
-            data["tool"]["pytest"] = {}
-            data["tool"]["pytest"]["ini_options"] = {}
-            data["tool"]["pytest"]["ini_options"]["addopts"] = [
-                "-n=auto",
-                "-n",
-                "1",
-                "-n 1",
-                "-n      1",
-                "-n      auto",
-            ]
+            toml_data = tomlkit.parse(original_content)
+            tool = toml_data["tool"]
+            assert isinstance(tool, dict)
+            tool["pytest"] = {}
+            pytest_section = tool["pytest"]
+            assert isinstance(pytest_section, dict)
+            pytest_section["ini_options"] = {}
+            ini_options = pytest_section["ini_options"]
+            assert isinstance(ini_options, dict)
+            ini_options["addopts"] = ["-n=auto", "-n", "1", "-n 1", "-n      1", "-n      auto"]
             with Path.open(pyproject_file, "w", encoding="utf-8") as f:
-                f.write(tomlkit.dumps(data))
+                f.write(tomlkit.dumps(toml_data))
 
         yield
 
     finally:
-        # Restore original file
-        with Path.open(pyproject_file, "w", encoding="utf-8") as f:
-            f.write(original_content)
+        if original_content is not None:
+            with Path.open(pyproject_file, "w", encoding="utf-8") as f:
+                f.write(original_content)
 
 
 def encoded_tokens_len(s: str) -> int:
@@ -418,19 +417,34 @@ def get_all_function_names(code: str) -> tuple[bool, list[str]]:
     return True, function_names
 
 
+run_tmpdir: TemporaryDirectory[str] | None = None
+run_tmpdir_path: Path | None = None
+
+
 def get_run_tmp_file(file_path: Path | str) -> Path:
+    global run_tmpdir, run_tmpdir_path
     if isinstance(file_path, str):
         file_path = Path(file_path)
-    if not hasattr(get_run_tmp_file, "tmpdir_path"):
-        get_run_tmp_file.tmpdir = TemporaryDirectory(prefix="codeflash_")
-        get_run_tmp_file.tmpdir_path = Path(get_run_tmp_file.tmpdir.name).resolve()
-    return get_run_tmp_file.tmpdir_path / file_path
+    if run_tmpdir_path is None:
+        run_tmpdir = TemporaryDirectory(prefix="codeflash_")
+        run_tmpdir_path = Path(run_tmpdir.name).resolve()
+    return run_tmpdir_path / file_path
 
 
+_RESOLVED_SITE_PACKAGES: tuple[Path, ...] | None = None
+
+
+def _get_resolved_site_packages() -> tuple[Path, ...]:
+    global _RESOLVED_SITE_PACKAGES
+    if _RESOLVED_SITE_PACKAGES is None:
+        _RESOLVED_SITE_PACKAGES = tuple(Path(p).resolve() for p in site.getsitepackages())
+    return _RESOLVED_SITE_PACKAGES
+
+
+@lru_cache(maxsize=4096)
 def path_belongs_to_site_packages(file_path: Path) -> bool:
     file_path_resolved = file_path.resolve()
-    site_packages = [Path(p).resolve() for p in site.getsitepackages()]
-    return any(file_path_resolved.is_relative_to(site_package_path) for site_package_path in site_packages)
+    return any(file_path_resolved.is_relative_to(sp) for sp in _get_resolved_site_packages())
 
 
 def is_class_defined_in_file(class_name: str, file_path: Path) -> bool:

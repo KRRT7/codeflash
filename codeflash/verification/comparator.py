@@ -16,7 +16,7 @@ import weakref
 import xml.etree.ElementTree as ET
 from collections import ChainMap, OrderedDict, deque
 from importlib.util import find_spec
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import sentry_sdk
 
@@ -55,10 +55,10 @@ if HAS_PANDAS:
 if HAS_TORCH:
     import torch  # type: ignore  # noqa: PGH003
 if HAS_NUMBA:
-    import numba  # type: ignore  # noqa: PGH003
-    from numba.core.dispatcher import Dispatcher  # type: ignore  # noqa: PGH003
-    from numba.typed import Dict as NumbaDict  # type: ignore  # noqa: PGH003
-    from numba.typed import List as NumbaList  # type: ignore  # noqa: PGH003
+    import numba
+    from numba.core.dispatcher import Dispatcher  # type: ignore[import-not-found]
+    from numba.typed import Dict as NumbaDict  # type: ignore[import-not-found]
+    from numba.typed import List as NumbaList
 if HAS_PYRSISTENT:
     import pyrsistent  # type: ignore  # noqa: PGH003
 
@@ -70,9 +70,9 @@ PYTEST_TEMP_PATH_PATTERN = re.compile(r"/tmp/pytest-of-[^/]+/pytest-\d+/")  # no
 # Created by tempfile.mkdtemp() or tempfile.TemporaryDirectory()
 PYTHON_TEMPFILE_PATTERN = re.compile(r"/tmp/tmp[a-zA-Z0-9_]+/")  # noqa: S108
 
-_DICT_KEYS_TYPE = type({}.keys())
-_DICT_VALUES_TYPE = type({}.values())
-_DICT_ITEMS_TYPE = type({}.items())
+_DICT_KEYS_TYPE: type = type({}.keys())
+_DICT_VALUES_TYPE: type = type({}.values())
+_DICT_ITEMS_TYPE: type = type({}.items())
 
 _IDENTITY_EQ_TYPES: frozenset[type[Any]] = frozenset(
     {
@@ -149,7 +149,7 @@ def _extract_exception_from_message(msg: str) -> Optional[BaseException]:  # noq
 
         exc_class = getattr(builtins, exc_name, None)
         if exc_class is not None and isinstance(exc_class, type) and issubclass(exc_class, BaseException):
-            return exc_class()
+            return cast("BaseException", exc_class())
     return None
 
 
@@ -167,7 +167,7 @@ def _get_wrapped_exception(exc: BaseException) -> Optional[BaseException]:  # no
     if hasattr(exc, "exceptions"):
         exceptions = exc.exceptions
         if len(exceptions) == 1:
-            return exceptions[0]
+            return cast("BaseException", exceptions[0])
     # Check for explicit exception chaining (__cause__)
     if exc.__cause__ is not None:
         return exc.__cause__
@@ -178,38 +178,13 @@ def _get_wrapped_exception(exc: BaseException) -> Optional[BaseException]:  # no
 def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
     """Compare two objects for equality recursively. If superset_obj is True, the new object is allowed to have more keys than the original object. However, the existing keys/values must be equivalent."""
     try:
-        # Handle exceptions specially - before type check to allow wrapper comparison
-        if isinstance(orig, BaseException) and isinstance(new, BaseException):
-            if isinstance(orig, PicklePlaceholderAccessError) or isinstance(new, PicklePlaceholderAccessError):
-                # If this error was raised, there was an attempt to access the PicklePlaceholder, which represents an unpickleable object.
-                # The test results should be rejected as the behavior of the unpickleable object is unknown.
-                logger.debug("Unable to verify behavior of unpickleable object in replay test")
-                return False
-
-            # If types match exactly, compare attributes
-            if type(orig) is type(new):
-                orig_dict = {k: v for k, v in orig.__dict__.items() if not k.startswith("_")}
-                new_dict = {k: v for k, v in new.__dict__.items() if not k.startswith("_")}
-                return comparator(orig_dict, new_dict, superset_obj)
-
-            # Types differ - check if one is a wrapper over the other
-            # Check if orig wraps something that matches new
-            wrapped_orig = _get_wrapped_exception(orig)
-            if wrapped_orig is not None and comparator(wrapped_orig, new, superset_obj):
-                return True
-
-            # Check if new wraps something that matches orig
-            wrapped_new = _get_wrapped_exception(new)
-            if wrapped_new is not None and comparator(orig, wrapped_new, superset_obj):
-                return True
-
-            return False
-
         orig_type = type(orig)
         if orig_type is not type(new):
             # distinct type objects are created at runtime, even if the class code is exactly the same, so we can only compare the names
             if orig_type.__name__ != type(new).__name__ or orig_type.__qualname__ != type(new).__qualname__:
-                return False
+                # Exceptions get wrapper-unwrapping logic below — don't bail out early
+                if not (isinstance(orig, BaseException) and isinstance(new, BaseException)):
+                    return False
 
         # Fast-path: type identity checks for the most common return-value types.
         # `orig_type is T` is a single pointer comparison — cheaper than frozenset hash
@@ -223,16 +198,53 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         if orig_type is list or orig_type is tuple:
             if len(orig) != len(new):
                 return False
-            return all(comparator(elem1, elem2, superset_obj) for elem1, elem2 in zip(orig, new))
+            for elem1, elem2 in zip(orig, new):
+                if elem1 is elem2:
+                    continue
+                e1_type = type(elem1)
+                if e1_type is not type(elem2):
+                    if not comparator(elem1, elem2, superset_obj):
+                        return False
+                    continue
+                if e1_type is int or e1_type is bool or e1_type is type(None):
+                    if elem1 != elem2:
+                        return False
+                elif e1_type is str:
+                    if elem1 != elem2:
+                        if not (
+                            _is_temp_path(elem1)
+                            and _is_temp_path(elem2)
+                            and _normalize_temp_path(elem1) == _normalize_temp_path(elem2)
+                        ):
+                            return False
+                elif e1_type is float:
+                    if not (elem1 == elem2 or (math.isnan(elem1) and math.isnan(elem2)) or math.isclose(elem1, elem2)):
+                        return False
+                elif e1_type is list or e1_type is tuple or e1_type is dict:
+                    if not comparator(elem1, elem2, superset_obj):
+                        return False
+                elif e1_type in _IDENTITY_EQ_TYPES:
+                    if elem1 != elem2:
+                        return False
+                elif not comparator(elem1, elem2, superset_obj):
+                    return False
+            return True
         if orig_type is dict:
             if superset_obj:
-                return all(k in new and comparator(v, new[k], superset_obj) for k, v in orig.items())
+                for k, v in orig.items():
+                    try:
+                        if not comparator(v, new[k], superset_obj):
+                            return False
+                    except KeyError:
+                        return False
+                return True
             if len(orig) != len(new):
                 return False
-            for key in orig:
-                if key not in new:
-                    return False
-                if not comparator(orig[key], new[key], superset_obj):
+            for key, val in orig.items():
+                try:
+                    if not comparator(val, new[key], superset_obj):
+                        return False
+                except KeyError:
                     return False
             return True
         if orig_type is float:
@@ -241,7 +253,28 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             return math.isclose(orig, new)
         # O(1) frozenset lookup for remaining common types (int, bool, None, Decimal, etc.)
         if orig_type in _IDENTITY_EQ_TYPES:
-            return orig == new
+            return orig == new  # type: ignore[no-any-return]
+
+        # BaseException check — after fast-path since exceptions are <0.1% of workload
+        if isinstance(orig, BaseException) and isinstance(new, BaseException):
+            if isinstance(orig, PicklePlaceholderAccessError) or isinstance(new, PicklePlaceholderAccessError):
+                logger.debug("Unable to verify behavior of unpickleable object in replay test")
+                return False
+
+            if type(orig) is type(new):
+                orig_dict = {k: v for k, v in orig.__dict__.items() if not k.startswith("_")}
+                new_dict = {k: v for k, v in new.__dict__.items() if not k.startswith("_")}
+                return comparator(orig_dict, new_dict, superset_obj)
+
+            wrapped_orig = _get_wrapped_exception(orig)
+            if wrapped_orig is not None and comparator(wrapped_orig, new, superset_obj):
+                return True
+
+            wrapped_new = _get_wrapped_exception(new)
+            if wrapped_new is not None and comparator(orig, wrapped_new, superset_obj):
+                return True
+
+            return False
 
         # Slower isinstance path for subclasses (deque, ChainMap, etc.)
         if isinstance(orig, (list, tuple, deque, ChainMap)):
@@ -259,7 +292,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
 
         # enum.Enum subclasses and UnionType fall through from the frozenset fast-path
         if isinstance(orig, _EQUALITY_TYPES):
-            return orig == new
+            return orig == new  # type: ignore[no-any-return]
 
         # Handle weak references (e.g., found in torch.nn.LSTM/GRU modules)
         if isinstance(orig, weakref.ref):
@@ -284,7 +317,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         # Handle xarray objects before numpy to avoid boolean context errors
         if HAS_XARRAY:
             if isinstance(orig, (xarray.Dataset, xarray.DataArray)):
-                return orig.identical(new)
+                return orig.identical(new)  # type: ignore[no-any-return]
 
         # Handle TensorFlow objects early to avoid boolean context errors
         if HAS_TENSORFLOW:
@@ -304,10 +337,10 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return comparator(orig.numpy(), new.numpy(), superset_obj)
 
             if isinstance(orig, tf.dtypes.DType):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, tf.TensorShape):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, tf.SparseTensor):
                 if not comparator(orig.dense_shape.numpy(), new.dense_shape.numpy(), superset_obj):
@@ -347,10 +380,11 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return all(k in new and comparator(v, new[k], superset_obj) for k, v in orig.items())
             if len(orig) != len(new):
                 return False
-            for key in orig:
-                if key not in new:
-                    return False
-                if not comparator(orig[key], new[key], superset_obj):
+            for key, val in orig.items():
+                try:
+                    if not comparator(val, new[key], superset_obj):
+                        return False
+                except KeyError:
                     return False
             return True
 
@@ -360,11 +394,11 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
 
         # Handle dict view types (dict_keys, dict_values, dict_items)
         if isinstance(orig, _DICT_KEYS_TYPE):
-            return comparator(set(orig), set(new))
+            return comparator(set(orig), set(new))  # type: ignore[call-overload]
         if isinstance(orig, _DICT_VALUES_TYPE):
-            return comparator(list(orig), list(new))
+            return comparator(list(orig), list(new))  # type: ignore[call-overload]
         if isinstance(orig, _DICT_ITEMS_TYPE):
-            return comparator(dict(orig), dict(new), superset_obj)
+            return comparator(dict(orig), dict(new), superset_obj)  # type: ignore[call-overload]
 
         if HAS_NUMPY:
             if isinstance(orig, (np.datetime64, np.timedelta64)):
@@ -373,7 +407,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     return True
                 if np.isnat(orig) or np.isnat(new):
                     return False
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, np.ndarray):
                 if orig.dtype != new.dtype:
@@ -390,22 +424,25 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     return np.allclose(orig, new, equal_nan=True)
                 except Exception:
                     # fails at "ufunc 'isfinite' not supported for the input types"
-                    return np.all([comparator(x, y, superset_obj) for x, y in zip(orig, new)])
+                    return bool(np.all([comparator(x, y, superset_obj) for x, y in zip(orig, new)]))
 
             if isinstance(orig, (np.floating, np.complexfloating)):
-                return np.isclose(orig, new, equal_nan=True)
+                return bool(np.isclose(orig, new, equal_nan=True))
 
             if isinstance(orig, (np.integer, np.bool_, np.byte)):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, np.void):
                 if orig.dtype != new.dtype:
                     return False
-                return all(comparator(orig[field], new[field], superset_obj) for field in orig.dtype.fields)
+                fields = orig.dtype.fields
+                if fields is None:
+                    return orig == new  # type: ignore[no-any-return]
+                return all(comparator(orig[field], new[field], superset_obj) for field in fields)
 
             # Handle np.dtype instances (including numpy.dtypes.* classes like Float64DType, Int64DType, etc.)
             if isinstance(orig, np.dtype):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             # Handle numpy random generators
             if isinstance(orig, np.random.Generator):
@@ -425,7 +462,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return False
             if orig.get_shape() != new.get_shape():
                 return False
-            return (orig != new).nnz == 0
+            return (orig != new).nnz == 0  # type: ignore[no-any-return]
 
         if HAS_PYARROW:
             if isinstance(orig, pa.Table):
@@ -473,10 +510,10 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             if isinstance(
                 orig, (pandas.DataFrame, pandas.Series, pandas.Index, pandas.Categorical, pandas.arrays.SparseArray)
             ):
-                return bool(orig.equals(new))
+                return bool(orig.equals(new))  # type: ignore[union-attr]
 
             if isinstance(orig, (pandas.CategoricalDtype, pandas.Interval, pandas.Period)):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
             if pandas.isna(orig) and pandas.isna(new):
                 return True
 
@@ -490,12 +527,12 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         # This should be at the end of all numpy checking
         try:
             if HAS_NUMPY and np.isnan(orig):
-                return np.isnan(new)
+                return bool(np.isnan(new))
         except Exception:
             pass
         try:
             if HAS_NUMPY and np.isinf(orig):
-                return np.isinf(new)
+                return bool(np.isinf(new))
         except Exception:
             pass
 
@@ -509,13 +546,13 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     return False
                 if orig.device != new.device:
                     return False
-                return torch.allclose(orig, new, equal_nan=True)
+                return bool(torch.allclose(orig, new, equal_nan=True))
 
             if isinstance(orig, torch.dtype):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             if isinstance(orig, torch.device):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
         if HAS_NUMBA:
             # Handle numba typed List
@@ -527,20 +564,20 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             # Handle numba typed Dict
             if isinstance(orig, NumbaDict):
                 if superset_obj:
-                    # Allow new dict to have more keys, but all orig keys must exist with equal values
-                    return all(key in new and comparator(orig[key], new[key], superset_obj) for key in orig)
+                    return all(k in new and comparator(v, new[k], superset_obj) for k, v in orig.items())
                 if len(orig) != len(new):
                     return False
-                for key in orig:
-                    if key not in new:
-                        return False
-                    if not comparator(orig[key], new[key], superset_obj):
+                for key, val in orig.items():
+                    try:
+                        if not comparator(val, new[key], superset_obj):
+                            return False
+                    except KeyError:
                         return False
                 return True
 
             # Handle numba type objects (e.g., numba.int64, numba.float64, numba.Array, etc.)
             if isinstance(orig, numba.core.types.Type):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
             # Handle numba JIT-compiled functions (CPUDispatcher, etc.)
             if isinstance(orig, Dispatcher):
@@ -562,7 +599,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     pyrsistent.PDeque,
                 ),
             ):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
 
         if hasattr(orig, "__attrs_attrs__") and hasattr(new, "__attrs_attrs__"):
             orig_dict = {}
@@ -607,7 +644,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     new_reduce = new.__reduce__()
                 orig_remaining = list(orig_reduce[1][0])
                 new_remaining = list(new_reduce[1][0])
-                orig_saved, orig_started = orig_reduce[2]
+                orig_saved, orig_started = orig_reduce[2]  # type: ignore[str-unpack]
                 new_saved, new_started = new_reduce[2]
                 if orig_started != new_started:
                     return False
@@ -638,13 +675,13 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
         if isinstance(
             orig, (datetime.datetime, datetime.date, datetime.timedelta, datetime.time, datetime.timezone, re.Pattern)
         ):
-            return orig == new
+            return orig == new  # type: ignore[no-any-return]
 
         # If the object passed has a user defined __eq__ method, use that
         # This could fail if the user defined __eq__ is defined with C-extensions
         try:
             if hasattr(orig, "__eq__") and isinstance(orig.__eq__, types.MethodType):
-                return orig == new
+                return orig == new  # type: ignore[no-any-return]
         except Exception:
             pass
 
@@ -683,7 +720,7 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             return comparator(orig_vals, new_vals, superset_obj)
 
         if type(orig) in {types.BuiltinFunctionType, types.BuiltinMethodType}:
-            return new == orig
+            return new == orig  # type: ignore[no-any-return]
         if isinstance(orig, ET.Element):
             return isinstance(new, ET.Element) and ET.tostring(orig) == ET.tostring(new)
         if isinstance(

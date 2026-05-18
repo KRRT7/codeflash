@@ -9,7 +9,7 @@ from enum import Enum, IntEnum
 from functools import lru_cache
 from pathlib import Path
 from re import Pattern
-from typing import TYPE_CHECKING, Any, NamedTuple, Optional, cast
+from typing import TYPE_CHECKING, Any, NamedTuple, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, model_validator
 from pydantic.dataclasses import dataclass
@@ -142,6 +142,8 @@ class FunctionSource:
     only_function_name: str
     source_code: str
     definition_type: str | None = None  # e.g. "function", "class"; None for non-Python languages
+    start_line: int = 1
+    end_line: int = 1
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, FunctionSource):
@@ -297,12 +299,14 @@ class CodeStringsMarkdown(BaseModel):
 
 
         """
-        if self._cache.get("flat") is not None:
-            return self._cache["flat"]
-        self._cache["flat"] = "\n".join(
+        cached: str | None = self._cache.get("flat")
+        if cached is not None:
+            return cached
+        result: str = "\n".join(
             get_code_block_splitter(block.file_path) + "\n" + block.code for block in self.code_strings
         )
-        return self._cache["flat"]
+        self._cache["flat"] = result
+        return result
 
     @property
     def markdown(self) -> str:
@@ -331,12 +335,12 @@ class CodeStringsMarkdown(BaseModel):
             dict[str, str]: Mapping from file path (as string) to code.
 
         """
-        try:
-            return self._cache["file_to_path"]
-        except KeyError:
-            mapping = {str(code_string.file_path): code_string.code for code_string in self.code_strings}
-            self._cache["file_to_path"] = mapping
-            return mapping
+        cached: dict[str, str] | None = self._cache.get("file_to_path")
+        if cached is not None:
+            return cached
+        mapping: dict[str, str] = {str(code_string.file_path): code_string.code for code_string in self.code_strings}
+        self._cache["file_to_path"] = mapping
+        return mapping
 
     @staticmethod
     def parse_markdown_code(markdown_code: str, expected_language: str = "python") -> CodeStringsMarkdown:
@@ -494,7 +498,7 @@ class TestFiles(BaseModel):
         # Only lowercase on Windows where filesystem is case-insensitive
         return resolved.lower() if sys.platform == "win32" else resolved
 
-    def __iter__(self) -> Iterator[TestFile]:
+    def __iter__(self) -> Iterator[TestFile]:  # type: ignore[override]  # Pydantic BaseModel.__iter__ returns field tuples
         return iter(self.test_files)
 
     def __len__(self) -> int:
@@ -512,11 +516,11 @@ class CandidateEvaluationContext:
 
     speedup_ratios: dict[str, float | None] = Field(default_factory=dict)
     optimized_runtimes: dict[str, float | None] = Field(default_factory=dict)
-    is_correct: dict[str, bool] = Field(default_factory=dict)
+    is_correct: dict[str, bool | None] = Field(default_factory=dict)
     optimized_line_profiler_results: dict[str, str] = Field(default_factory=dict)
-    ast_code_to_id: dict = Field(default_factory=dict)
+    ast_code_to_id: dict[str, dict[str, Any]] = Field(default_factory=dict)
     optimizations_post: dict[str, str] = Field(default_factory=dict)
-    valid_optimizations: list = Field(default_factory=list)
+    valid_optimizations: list[BestOptimization] = Field(default_factory=list)
 
     def record_failed_candidate(self, optimization_id: str) -> None:
         """Record results for a failed candidate."""
@@ -631,7 +635,7 @@ class OriginalCodeBaseline(BaseModel):
     behavior_test_results: TestResults
     benchmarking_test_results: TestResults
     replay_benchmarking_test_results: Optional[dict[BenchmarkKey, TestResults]] = None
-    line_profile_results: dict
+    line_profile_results: dict[str, Any]
     runtime: int
     coverage_results: Optional[CoverageData]
     async_throughput: Optional[int] = None
@@ -793,6 +797,9 @@ class InvocationId:
                 f"// Testing function: {self.function_getting_tested}"
             )
 
+        if not self.test_function_name:
+            return None
+
         if self.test_class_name:
             for stmt in module_node.body:
                 if isinstance(stmt, cst.ClassDef) and stmt.name.value == self.test_class_name:
@@ -884,7 +891,7 @@ class TestResults(BaseModel):  # noqa: PLW1641
         """Group TestResults by benchmark for calculating improvements for each benchmark."""
         from codeflash.code_utils.code_utils import module_name_from_file_path
 
-        test_results_by_benchmark = defaultdict(TestResults)
+        test_results_by_benchmark: defaultdict[BenchmarkKey, TestResults] = defaultdict(TestResults)
         benchmark_module_path = {}
         for benchmark_key in benchmark_keys:
             benchmark_module_path[benchmark_key] = module_name_from_file_path(
@@ -1015,7 +1022,7 @@ class TestResults(BaseModel):  # noqa: PLW1641
         return max(loop_indices) if loop_indices else 0
 
     def file_to_no_of_tests(self, test_functions_to_remove: list[str]) -> Counter[Path]:
-        map_gen_test_file_to_no_of_tests = Counter()
+        map_gen_test_file_to_no_of_tests: Counter[Path] = Counter()
         for gen_test_result in self.test_results:
             if (
                 gen_test_result.test_type == TestType.GENERATED_REGRESSION
@@ -1024,7 +1031,7 @@ class TestResults(BaseModel):  # noqa: PLW1641
                 map_gen_test_file_to_no_of_tests[gen_test_result.file_name] += 1
         return map_gen_test_file_to_no_of_tests
 
-    def __iter__(self) -> Iterator[FunctionTestInvocation]:
+    def __iter__(self) -> Iterator[FunctionTestInvocation]:  # type: ignore[override]  # Pydantic BaseModel.__iter__ returns field tuples
         return iter(self.test_results)
 
     def __len__(self) -> int:
@@ -1051,7 +1058,7 @@ class TestResults(BaseModel):  # noqa: PLW1641
         if len(self) != len(other):
             return False
         original_recursion_limit = sys.getrecursionlimit()
-        cast("TestResults", other)
+        assert isinstance(other, TestResults)
         for test_result in self:
             other_test_result = other.get_by_unique_invocation_loop_id(test_result.unique_invocation_loop_id)
             if other_test_result is None:

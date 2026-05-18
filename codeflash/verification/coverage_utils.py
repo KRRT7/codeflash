@@ -330,8 +330,10 @@ class JacocoCoverageUtils:
                         bare_name = method.get("name")
                         if bare_name:
                             all_methods[bare_name] = (method, method_line)
-                        # Match against bare name or qualified name (e.g., "computeDigest" or "Crypto.computeDigest")
-                        if bare_name == function_name or function_name.endswith("." + bare_name):
+                            # Match against bare name or qualified name (e.g., "computeDigest" or "Crypto.computeDigest")
+                        if bare_name is not None and (
+                            bare_name == function_name or function_name.endswith("." + bare_name)
+                        ):
                             method_elem = method
                             method_start_line = method_line
 
@@ -441,7 +443,7 @@ class CoverageUtils:
     @staticmethod
     def load_from_sqlite_database(
         database_path: Path,
-        config_path: Path,
+        config_path: Path | None,
         function_name: str,
         code_context: CodeOptimizationContext,
         source_code_path: Path,
@@ -450,7 +452,9 @@ class CoverageUtils:
         from coverage import Coverage
         from coverage.jsonreport import JsonReporter
 
-        cov = Coverage(data_file=database_path, config_file=config_path, data_suffix=True, auto_data=True, branch=True)
+        cov = Coverage(
+            data_file=database_path, config_file=config_path or False, data_suffix=True, auto_data=True, branch=True
+        )
 
         if not database_path.exists() or not database_path.stat().st_size:
             logger.debug(f"Coverage database {database_path} is empty or does not exist")

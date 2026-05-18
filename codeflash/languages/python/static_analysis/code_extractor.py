@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional
 
 import libcst as cst
 from libcst.codemod import CodemodContext
-from libcst.codemod.visitors import AddImportsVisitor, GatherImportsVisitor, RemoveImportsVisitor
+from libcst.codemod.visitors import GatherImportsVisitor
 from libcst.helpers import calculate_module_and_package
 
 import codeflash.code_utils._libcst_cache  # noqa: F401
@@ -618,6 +618,181 @@ def gather_source_imports(
         return None
 
 
+class _UnusedImportRemover(cst.CSTTransformer):
+    """Fast unused import remover that checks bound names against a pre-computed set.
+
+    Unlike RemoveImportsVisitor, this requires no metadata resolution (no ScopeProvider/QualifiedNameProvider),
+    making it ~100x faster on typical modules.
+    """
+
+    def __init__(self, referenced_names: set[str], removable_only: set[str] | None = None) -> None:
+        super().__init__()
+        self.referenced_names = referenced_names
+        self.removable_only = removable_only
+
+    def _should_keep(self, bound_name: str) -> bool:
+        if bound_name in self.referenced_names:
+            return True
+        if self.removable_only is not None and bound_name not in self.removable_only:
+            return True
+        return False
+
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
+        return False
+
+    def visit_ClassDef(self, node: cst.ClassDef) -> bool:
+        return False
+
+    def leave_Import(self, original_node: cst.Import, updated_node: cst.Import) -> cst.Import | cst.RemovalSentinel:
+        if isinstance(updated_node.names, cst.ImportStar):
+            return updated_node
+        new_names = [alias for alias in updated_node.names if self._should_keep(self._import_bound_name(alias))]
+        if not new_names:
+            return cst.RemovalSentinel.REMOVE
+        if len(new_names) == len(updated_node.names):
+            return updated_node
+        last = new_names[-1]
+        if last.comma != cst.MaybeSentinel.DEFAULT:
+            new_names[-1] = last.with_changes(comma=cst.MaybeSentinel.DEFAULT)
+        return updated_node.with_changes(names=new_names)
+
+    @staticmethod
+    def _import_bound_name(alias: cst.ImportAlias) -> str:
+        if alias.asname and isinstance(alias.asname, cst.AsName) and isinstance(alias.asname.name, cst.Name):
+            return alias.asname.name.value
+        node: cst.BaseExpression = alias.name
+        while isinstance(node, cst.Attribute):
+            node = node.value
+        return node.value if isinstance(node, cst.Name) else ""
+
+    @staticmethod
+    def _from_import_bound_name(alias: cst.ImportAlias) -> str:
+        if alias.asname and isinstance(alias.asname, cst.AsName) and isinstance(alias.asname.name, cst.Name):
+            return alias.asname.name.value
+        return alias.name.value if isinstance(alias.name, cst.Name) else ""
+
+    def leave_ImportFrom(
+        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
+    ) -> cst.ImportFrom | cst.RemovalSentinel:
+        if isinstance(updated_node.names, cst.ImportStar):
+            return updated_node
+        if isinstance(updated_node.module, cst.Attribute):
+            mod_node: cst.BaseExpression = updated_node.module
+            while isinstance(mod_node, cst.Attribute):
+                mod_node = mod_node.value
+            if isinstance(mod_node, cst.Name) and mod_node.value == "__future__":
+                return updated_node
+        elif isinstance(updated_node.module, cst.Name) and updated_node.module.value == "__future__":
+            return updated_node
+        new_names = [alias for alias in updated_node.names if self._should_keep(self._from_import_bound_name(alias))]
+        if not new_names:
+            return cst.RemovalSentinel.REMOVE
+        if len(new_names) == len(updated_node.names):
+            return updated_node
+        last = new_names[-1]
+        if last.comma != cst.MaybeSentinel.DEFAULT:
+            new_names[-1] = last.with_changes(comma=cst.MaybeSentinel.DEFAULT)
+        return updated_node.with_changes(names=new_names)
+
+
+def _remove_unused_imports_fast(
+    module: cst.Module, referenced_names: set[str], removable_only: set[str] | None = None
+) -> cst.Module:
+    return module.visit(_UnusedImportRemover(referenced_names, removable_only))
+
+
+def _insert_imports_direct(
+    module: cst.Module,
+    module_imports: list[str],
+    module_aliases: dict[str, str],
+    from_imports: dict[str, list[tuple[str, str | None]]],
+    future_imports: list[tuple[str, str | None]],
+) -> cst.Module:
+    """Insert import statements directly into module body without a full CST traversal."""
+    if not module_imports and not module_aliases and not from_imports and not future_imports:
+        return module
+
+    config = module.config_for_parsing
+    new_stmts: list[cst.BaseCompoundStatement | cst.SimpleStatementLine] = []
+
+    # __future__ imports must come first
+    if future_imports:
+        names_str = ", ".join(obj if alias is None else f"{obj} as {alias}" for obj, alias in sorted(future_imports))
+        new_stmts.append(cst.parse_statement(f"from __future__ import {names_str}", config=config))
+
+    # `import module` statements
+    for mod in sorted(module_imports):
+        new_stmts.append(cst.parse_statement(f"import {mod}", config=config))
+
+    # `import module as alias` statements
+    for mod, asname in sorted(module_aliases.items()):
+        new_stmts.append(cst.parse_statement(f"import {mod} as {asname}", config=config))
+
+    # `from module import obj` statements (sorted by module for determinism)
+    for mod in sorted(from_imports):
+        aliases_sorted = sorted(from_imports[mod])
+        names_str = ", ".join(obj if alias is None else f"{obj} as {alias}" for obj, alias in aliases_sorted)
+        new_stmts.append(cst.parse_statement(f"from {mod} import {names_str}", config=config))
+
+    if not new_stmts:
+        return module
+
+    # Find insertion point: after existing imports, before code
+    body = list(module.body)
+    insert_idx = 0
+    for i, stmt in enumerate(body):
+        if (
+            isinstance(stmt, cst.SimpleStatementLine)
+            and any(isinstance(child, (cst.Import, cst.ImportFrom)) for child in stmt.body)
+        ) or (
+            isinstance(stmt, cst.If)
+            and all(
+                isinstance(inner, cst.SimpleStatementLine)
+                and all(isinstance(child, (cst.Import, cst.ImportFrom)) for child in inner.body)
+                for inner in stmt.body.body
+            )
+        ):
+            insert_idx = i + 1
+        elif isinstance(stmt, (cst.ClassDef, cst.FunctionDef)):
+            break
+
+    # __future__ imports always go at the very top (after module docstring if any)
+    future_stmts = []
+    other_stmts = []
+    for stmt in new_stmts:
+        if isinstance(stmt, cst.SimpleStatementLine) and any(
+            isinstance(child, cst.ImportFrom)
+            and isinstance(child.module, cst.Name)
+            and child.module.value == "__future__"
+            for child in stmt.body
+        ):
+            future_stmts.append(stmt)
+        else:
+            other_stmts.append(stmt)
+
+    # Insert future imports at position 0 (or after docstring)
+    docstring_offset = 0
+    if body and isinstance(body[0], cst.SimpleStatementLine) and isinstance(body[0].body[0], cst.Expr):
+        expr = body[0].body[0].value
+        if isinstance(expr, (cst.SimpleString, cst.ConcatenatedString, cst.FormattedString)):
+            docstring_offset = 1
+
+    new_body = list(body[:docstring_offset])
+    new_body.extend(future_stmts)
+    new_body.extend(body[docstring_offset:insert_idx])
+    new_body.extend(other_stmts)
+
+    # Ensure empty line between imports and first non-import statement
+    remaining = body[insert_idx:]
+    if remaining and (future_stmts or other_stmts):
+        first_after = remaining[0]
+        if hasattr(first_after, "leading_lines") and not first_after.leading_lines:
+            remaining[0] = first_after.with_changes(leading_lines=[cst.EmptyLine()])
+    new_body.extend(remaining)
+
+    return module.with_changes(body=new_body)
+
+
 def _collect_dst_referenced_names(dst_code: str) -> tuple[set[str], bool]:
     """Collect all names referenced in destination code for import pre-filtering.
 
@@ -669,22 +844,16 @@ def add_needed_imports_from_module(
     if isinstance(dst_module_code, str):
         dst_code_fallback = dst_module_code
     else:
-        # Keep Module-input fallback formatting aligned with transformed_module.code.lstrip("\n").
         dst_code_fallback = dst_module_code.code.lstrip("\n")
 
     dst_module_and_package: ModuleNameAndPackage = calculate_module_and_package(project_root, dst_path)
-
-    dst_context: CodemodContext = CodemodContext(
-        filename=src_path.name,
-        full_module_name=dst_module_and_package.name,
-        full_package_name=dst_module_and_package.package,
-    )
+    full_module_name = dst_module_and_package.name
 
     # Use pre-computed gatherer if provided, otherwise compute on the fly
     if gathered_imports is _SENTINEL:
-        gatherer = gather_source_imports(src_module_code, src_path, project_root)
+        gatherer: GatherImportsVisitor | None = gather_source_imports(src_module_code, src_path, project_root)
     else:
-        gatherer = gathered_imports
+        gatherer = gathered_imports  # type: ignore[assignment]
 
     if gatherer is None:
         return dst_code_fallback
@@ -702,58 +871,80 @@ def add_needed_imports_from_module(
     parsed_dst_module.visit(dotted_import_collector)
 
     # Pre-filter: collect names referenced in destination code to avoid adding unused imports.
-    # This keeps the intermediate module small so RemoveImportsVisitor's scope analysis is cheap.
     dst_code_str = parsed_dst_module.code if isinstance(parsed_dst_module, cst.Module) else dst_code_fallback
     dst_referenced_names, dst_has_imports = _collect_dst_referenced_names(dst_code_str)
 
+    # Collect imports to add directly (bypassing AddImportsVisitor's expensive CST traversal)
+    new_module_imports: list[str] = []
+    new_module_aliases: dict[str, str] = {}
+    new_from_imports: dict[str, list[tuple[str, str | None]]] = {}  # module -> [(obj, alias|None)]
+    new_future_imports: list[tuple[str, str | None]] = []
+    # Track bound names eligible for removal (only these can be removed from pre-existing imports)
+    removable_bound_names: set[str] = set()
+
     try:
         for mod in gatherer.module_imports:
-            # Skip __future__ imports as they cannot be imported directly
-            # __future__ imports should only be imported with specific objects i.e from __future__ import annotations
             if mod == "__future__":
                 continue
-            # For `import foo.bar`, the bound name is `foo`
             bound_name = mod.split(".")[0]
+            removable_bound_names.add(bound_name)
             if bound_name in dst_referenced_names and mod not in dotted_import_collector.imports:
-                AddImportsVisitor.add_needed_import(dst_context, mod)
-            RemoveImportsVisitor.remove_unused_import(dst_context, mod)
+                new_module_imports.append(mod)
+
         aliased_objects = set()
         for mod, alias_pairs in gatherer.alias_mapping.items():
             for alias_pair in alias_pairs:
-                if alias_pair[0] and alias_pair[1]:  # Both name and alias exist
+                if alias_pair[0] and alias_pair[1]:
                     aliased_objects.add(f"{mod}.{alias_pair[0]}")
+
+        # Process alias_mapping first (mirrors AddImportsVisitor insertion order)
+        for mod, alias_pairs in gatherer.alias_mapping.items():
+            for alias_pair in alias_pairs:
+                if f"{mod}.{alias_pair[0]}" in helper_functions_fqn:
+                    continue
+                if not alias_pair[0] or not alias_pair[1]:
+                    continue
+                removable_bound_names.add(alias_pair[1])
+                if (
+                    alias_pair[1] in dst_referenced_names
+                    and f"{mod}.{alias_pair[1]}" not in dotted_import_collector.imports
+                ):
+                    if mod == "__future__":
+                        new_future_imports.append((alias_pair[0], alias_pair[1]))
+                    else:
+                        new_from_imports.setdefault(mod, []).append((alias_pair[0], alias_pair[1]))
 
         for mod, obj_seq in gatherer.object_mapping.items():
             for obj in obj_seq:
-                if (
-                    f"{mod}.{obj}" in helper_functions_fqn or dst_context.full_module_name == mod  # avoid circular deps
-                ):
-                    continue  # Skip adding imports for helper functions already in the context
+                if f"{mod}.{obj}" in helper_functions_fqn or full_module_name == mod:
+                    continue
 
                 if f"{mod}.{obj}" in aliased_objects:
                     continue
 
-                # Handle star imports by resolving them to actual symbol names
                 if obj == "*":
                     resolved_symbols = resolve_star_import(mod, project_root)
                     logger.debug(f"Resolved star import from {mod}: {resolved_symbols}")
-
                     for symbol in resolved_symbols:
+                        removable_bound_names.add(symbol)
                         if (
                             symbol in dst_referenced_names
                             and f"{mod}.{symbol}" not in helper_functions_fqn
                             and f"{mod}.{symbol}" not in dotted_import_collector.imports
                         ):
-                            AddImportsVisitor.add_needed_import(dst_context, mod, symbol)
-                        RemoveImportsVisitor.remove_unused_import(dst_context, mod, symbol)
+                            if mod == "__future__":
+                                new_future_imports.append((symbol, None))
+                            else:
+                                new_from_imports.setdefault(mod, []).append((symbol, None))
                 else:
-                    # For `from foo import bar`, the bound name is `bar`
-                    # Always include __future__ imports -- they affect parsing behavior, not naming
+                    removable_bound_names.add(obj)
                     if (
                         mod == "__future__" or obj in dst_referenced_names
                     ) and f"{mod}.{obj}" not in dotted_import_collector.imports:
-                        AddImportsVisitor.add_needed_import(dst_context, mod, obj)
-                    RemoveImportsVisitor.remove_unused_import(dst_context, mod, obj)
+                        if mod == "__future__":
+                            new_future_imports.append((obj, None))
+                        else:
+                            new_from_imports.setdefault(mod, []).append((obj, None))
     except Exception as e:
         logger.exception(f"Error adding imports to destination module code: {e}")
         return dst_code_fallback
@@ -761,35 +952,22 @@ def add_needed_imports_from_module(
     for mod, asname in gatherer.module_aliases.items():
         if not asname:
             continue
-        # For `import foo as bar`, the bound name is `bar`
+        removable_bound_names.add(asname)
         if asname in dst_referenced_names and f"{mod}.{asname}" not in dotted_import_collector.imports:
-            AddImportsVisitor.add_needed_import(dst_context, mod, asname=asname)
-        RemoveImportsVisitor.remove_unused_import(dst_context, mod, asname=asname)
-
-    for mod, alias_pairs in gatherer.alias_mapping.items():
-        for alias_pair in alias_pairs:
-            if f"{mod}.{alias_pair[0]}" in helper_functions_fqn:
-                continue
-
-            if not alias_pair[0] or not alias_pair[1]:
-                continue
-
-            # For `from foo import bar as baz`, the bound name is `baz`
-            if (
-                alias_pair[1] in dst_referenced_names
-                and f"{mod}.{alias_pair[1]}" not in dotted_import_collector.imports
-            ):
-                AddImportsVisitor.add_needed_import(dst_context, mod, alias_pair[0], asname=alias_pair[1])
-            RemoveImportsVisitor.remove_unused_import(dst_context, mod, alias_pair[0], asname=alias_pair[1])
+            new_module_aliases[mod] = asname
 
     try:
-        add_imports_visitor = AddImportsVisitor(dst_context)
-        transformed_module = add_imports_visitor.transform_module(parsed_dst_module)
-        # Skip RemoveImportsVisitor when the dst had no pre-existing imports.
-        # In that case, the only imports are those just added by AddImportsVisitor,
-        # which are already pre-filtered to names referenced in the dst code.
+        # Build and insert imports directly — avoids AddImportsVisitor's full CST traversal
+        transformed_module = _insert_imports_direct(
+            parsed_dst_module, new_module_imports, new_module_aliases, new_from_imports, new_future_imports
+        )
         if dst_has_imports:
-            transformed_module = RemoveImportsVisitor(dst_context).transform_module(transformed_module)
+            # Only remove imports whose bound names came from the source gatherer AND are unused
+            removable_unused = removable_bound_names - dst_referenced_names
+            if removable_unused:
+                transformed_module = _remove_unused_imports_fast(
+                    transformed_module, dst_referenced_names, removable_unused
+                )
         return transformed_module.code.lstrip("\n")
     except Exception as e:
         logger.exception(f"Error adding imports to destination module code: {e}")

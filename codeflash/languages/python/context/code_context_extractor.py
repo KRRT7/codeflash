@@ -548,6 +548,8 @@ def get_function_to_optimize_as_function_source(
                     fully_qualified_name=name.full_name,
                     only_function_name=name.name,
                     source_code=name.get_line_code(),
+                    start_line=name.get_definition_start_position()[0],
+                    end_line=name.get_definition_end_position()[0],
                 )
         except Exception as e:
             logger.exception(f"Error while getting function source: {e}")
@@ -567,9 +569,10 @@ def get_function_sources_from_jedi(
     import jedi
 
     project = jedi_project if jedi_project is not None else get_jedi_project(str(project_root_path))
-    file_path_to_function_source = defaultdict(set)
-    function_source_list: list[FunctionSource] = []
+    file_path_to_function_source: defaultdict[Path, set[FunctionSource]] = defaultdict(set)
     new_refs_cache: dict[Path, dict[str, list[Name]]] = {} if refs_cache is None else dict(refs_cache)
+    resolved_project_root = project_root_path.resolve()
+    project_root_prefix = str(project_root_path) + os.sep
     for file_path, qualified_function_names in file_path_to_qualified_function_names.items():
         if file_path in new_refs_cache:
             refs_by_parent = new_refs_cache[file_path]
@@ -598,28 +601,31 @@ def get_function_sources_from_jedi(
 
         for qualified_function_name in qualified_function_names:
             names = refs_by_parent.get(qualified_function_name, [])
+            # Track which ref full_names have already resolved to a valid project definition
+            # to skip redundant goto() calls for references to the same symbol
+            resolved_ref_names: set[str] = set()
             for name in names:
+                if name.full_name and name.full_name in resolved_ref_names:
+                    continue
                 try:
                     definitions: list[Name] = name.goto(follow_imports=True, follow_builtin_imports=False)
                 except Exception:
                     logger.debug(f"Error while getting definitions for {qualified_function_name}")
                     definitions = []
                 if definitions:
-                    # TODO: there can be multiple definitions, see how to handle such cases
                     definition = definitions[0]
                     definition_path = definition.module_path
                     if definition_path is not None:
                         try:
-                            rel = definition_path.resolve().relative_to(project_root_path.resolve())
+                            rel = definition_path.resolve().relative_to(resolved_project_root)
                             definition_path = project_root_path / rel
                         except ValueError:
                             pass
 
-                    # The definition is part of this project and not defined within the original function
                     is_valid_definition = (
                         definition_path is not None
                         and not path_belongs_to_site_packages(definition_path)
-                        and str(definition_path).startswith(str(project_root_path) + os.sep)
+                        and str(definition_path).startswith(project_root_prefix)
                         and definition.full_name
                         and not belongs_to_function_qualified(definition, qualified_function_name)
                         and definition.full_name.startswith(definition.module_name)
@@ -632,7 +638,6 @@ def get_function_sources_from_jedi(
                             fqn = definition.full_name
                             func_name = definition.name
                         qualified_name = get_qualified_name(definition.module_name, fqn)
-                        # Avoid nested functions or classes. Only class.function is allowed
                         if len(qualified_name.split(".")) <= 2:
                             function_source = FunctionSource(
                                 file_path=definition_path,
@@ -641,10 +646,19 @@ def get_function_sources_from_jedi(
                                 only_function_name=func_name,
                                 source_code=definition.get_line_code(),
                                 definition_type=definition.type,
+                                start_line=definition.get_definition_start_position()[0],
+                                end_line=definition.get_definition_end_position()[0],
                             )
                             file_path_to_function_source[definition_path].add(function_source)
-                            function_source_list.append(function_source)
+                    # Mark as resolved regardless of validity — the same ref.full_name
+                    # will always resolve to the same definition
+                    if name.full_name:
+                        resolved_ref_names.add(name.full_name)
 
+    function_source_list = sorted(
+        (fs for sources in file_path_to_function_source.values() for fs in sources),
+        key=lambda fs: fs.fully_qualified_name,
+    )
     return file_path_to_function_source, function_source_list, new_refs_cache
 
 

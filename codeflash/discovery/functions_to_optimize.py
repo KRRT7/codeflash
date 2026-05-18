@@ -197,7 +197,8 @@ def _find_all_functions_via_language_support(file_path: Path) -> dict[Path, list
         lang_support = get_language_support(file_path)
         require_return = lang_support.language != Language.JAVA
         criteria = FunctionFilterCriteria(require_return=require_return)
-        functions[file_path] = lang_support.discover_functions(file_path, criteria)
+        source = file_path.read_text(encoding="utf-8")
+        functions[file_path] = lang_support.discover_functions(source, file_path, criteria)
     except Exception as e:
         logger.debug(f"Failed to discover functions in {file_path}: {e}")
 
@@ -849,7 +850,7 @@ def filter_functions(
     def is_test_file(file_path_normalized: str) -> bool:
         if tests_root_overlaps_source:
             file_lower = file_path_normalized.lower()
-            basename = Path(file_lower).name
+            basename = os.path.basename(file_lower)
             if basename.startswith("test_") or basename == "conftest.py":
                 return True
             if any(pattern in file_lower for pattern in test_file_name_patterns):
@@ -860,7 +861,11 @@ def filter_functions(
             return False
         return file_path_normalized.startswith(tests_root_str + os.sep)
 
-    # We desperately need Python 3.10+ only support to make this code readable with structural pattern matching
+    # Pre-normalize ignore/submodule paths for fast string prefix checks in the loop
+    ignore_paths_normalized = [os.path.normcase(str(p)) for p in ignore_paths]
+    submodule_paths_normalized = [os.path.normcase(str(p)) for p in submodule_paths]
+    resolved_project_root_str = str(resolved_project_root) + os.sep
+
     for file_path_path, functions in modified_functions.items():
         _functions = functions
         file_path = str(file_path_path)
@@ -868,29 +873,35 @@ def filter_functions(
         if is_test_file(file_path_normalized):
             test_functions_removed_count += len(_functions)
             continue
-        if file_path_path in ignore_paths or any(
-            file_path_normalized.startswith(os.path.normcase(str(ignore_path)) + os.sep) for ignore_path in ignore_paths
+        if any(
+            file_path_normalized == ip or file_path_normalized.startswith(ip + os.sep) for ip in ignore_paths_normalized
         ):
             ignore_paths_removed_count += 1
             continue
-        if file_path_path in submodule_paths or any(
-            file_path_normalized.startswith(os.path.normcase(str(submodule_path)) + os.sep)
-            for submodule_path in submodule_paths
+        if any(
+            file_path_normalized == sp or file_path_normalized.startswith(sp + os.sep)
+            for sp in submodule_paths_normalized
         ):
             submodule_ignored_paths_count += 1
             continue
-        if path_belongs_to_site_packages(Path(file_path)):
+        if path_belongs_to_site_packages(file_path_path):
             site_packages_removed_count += len(_functions)
             continue
         if not file_path_normalized.startswith(module_root_str + os.sep):
             non_modules_removed_count += len(_functions)
             continue
 
-        lang_support = get_language_support(Path(file_path))
+        lang_support = get_language_support(file_path_path)
         if lang_support.language == Language.PYTHON:
-            try:
-                ast.parse(f"import {module_name_from_file_path(Path(file_path), resolved_project_root)}")
-            except SyntaxError:
+            if file_path.startswith(resolved_project_root_str):
+                mod_name = file_path[len(resolved_project_root_str) :].removesuffix(".py").replace(os.sep, ".")
+            else:
+                try:
+                    mod_name = module_name_from_file_path(file_path_path, resolved_project_root)
+                except ValueError:
+                    malformed_paths_count += 1
+                    continue
+            if not mod_name or not all(part.isidentifier() for part in mod_name.split(".")):
                 malformed_paths_count += 1
                 continue
 

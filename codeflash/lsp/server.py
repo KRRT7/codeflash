@@ -12,6 +12,8 @@ from codeflash.either import Result
 from codeflash.models.models import CodeOptimizationContext
 
 if TYPE_CHECKING:
+    from argparse import Namespace
+
     from codeflash.optimization.optimizer import Optimizer
 
 
@@ -28,7 +30,7 @@ class CodeflashLanguageServer(LanguageServer):
         super().__init__(name, version, protocol_cls=protocol_cls)
         self.initialized: bool = False
         self.optimizer: Optimizer | None = None
-        self.args = None
+        self.args: Namespace | None = None
         self.current_optimization_init_result: tuple[bool, CodeOptimizationContext, dict[Path, str]] | None = None
 
     def prepare_optimizer_arguments(self, config_file: Path) -> None:
@@ -85,4 +87,4 @@ class CodeflashLanguageServer(LanguageServer):
     def shutdown(self) -> None:
         """Gracefully shutdown the server."""
         self.cleanup_the_optimizer()
-        super().shutdown()
+        super().shutdown()  # type: ignore[no-untyped-call]

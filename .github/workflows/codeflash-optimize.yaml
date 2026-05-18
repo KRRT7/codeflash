@@ -1,13 +1,6 @@
 name: CodeFlash
 
 on:
-  pull_request:
-    paths:
-      - 'codeflash/**'
-      - 'tests/**'
-      - 'pyproject.toml'
-      - 'uv.lock'
-
   workflow_dispatch:
 
 concurrency:

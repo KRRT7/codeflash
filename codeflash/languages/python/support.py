@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import logging
 import platform
 from pathlib import Path
@@ -15,28 +16,37 @@ from codeflash.languages.base import (
     CodeContext,
     FunctionFilterCriteria,
     HelperFunction,
-    Language,
+    LanguageSupport,
     ReferenceInfo,
     TestInfo,
     TestResult,
 )
+from codeflash.languages.language_enum import Language
 from codeflash.languages.registry import register_language
 from codeflash.models.function_types import FunctionParent
 
 if TYPE_CHECKING:
-    import ast
     from collections.abc import Sequence
 
     from libcst import CSTNode
     from libcst.metadata import CodeRange
 
     from codeflash.languages.base import DependencyResolver
-    from codeflash.models.models import FunctionSource, GeneratedTestsList, InvocationId, ValidCode
+    from codeflash.models.models import (
+        FunctionCalledInTest,
+        FunctionSource,
+        GeneratedTestsList,
+        InvocationId,
+        ValidCode,
+    )
     from codeflash.verification.verification_utils import TestConfig
 
 _CACHE: dict[str, bool] = {}
 
 _CACHE_MAX: int = 4096
+
+_FIXTURE_NAMES: frozenset[str] = frozenset({"fixture"})
+_PROPERTY_NAMES: frozenset[str] = frozenset({"property", "cached_property"})
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +58,8 @@ def function_sources_to_helpers(sources: list[FunctionSource]) -> list[HelperFun
             qualified_name=fs.qualified_name,
             file_path=fs.file_path,
             source_code=fs.source_code,
-            start_line=fs.jedi_definition.line if fs.jedi_definition else 1,
-            end_line=fs.jedi_definition.line if fs.jedi_definition else 1,
+            start_line=fs.start_line,
+            end_line=fs.end_line,
         )
         for fs in sources
     ]
@@ -119,8 +129,28 @@ class FunctionVisitor(cst.CSTVisitor):
             )
 
 
+def _check_body_for_return(stmts: list[ast.stmt]) -> bool:
+    """Check statements for returns, excluding nested function/class definitions."""
+    for stmt in stmts:
+        if isinstance(stmt, ast.Return):
+            return True
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        if hasattr(stmt, "body") and _check_body_for_return(stmt.body):
+            return True
+        if hasattr(stmt, "orelse") and _check_body_for_return(stmt.orelse):
+            return True
+        if isinstance(stmt, ast.Try):
+            for handler in stmt.handlers:
+                if _check_body_for_return(handler.body):
+                    return True
+            if _check_body_for_return(stmt.finalbody):
+                return True
+    return False
+
+
 @register_language
-class PythonSupport:
+class PythonSupport(LanguageSupport):
     """Python language support implementation.
 
     This class wraps the existing Python-specific implementations to conform
@@ -256,38 +286,89 @@ class PythonSupport:
     ) -> list[FunctionToOptimize]:
         criteria = filter_criteria or FunctionFilterCriteria()
 
-        tree = cst.parse_module(source)
-
-        wrapper = cst.metadata.MetadataWrapper(tree)
-        function_visitor = FunctionVisitor(file_path=file_path)
-        wrapper.visit(function_visitor)
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            return []
 
         functions: list[FunctionToOptimize] = []
-        for func in function_visitor.functions:
-            if not criteria.include_async and func.is_async:
-                continue
-
-            if not criteria.include_methods and func.parents:
-                continue
-
-            if criteria.require_return and func.starting_line is None:
-                continue
-
-            func_with_is_method = FunctionToOptimize(
-                function_name=func.function_name,
-                file_path=file_path,
-                parents=func.parents,
-                starting_line=func.starting_line,
-                ending_line=func.ending_line,
-                starting_col=func.starting_col,
-                ending_col=func.ending_col,
-                is_async=func.is_async,
-                is_method=len(func.parents) > 0 and any(p.type == "ClassDef" for p in func.parents),
-                language="python",
-            )
-            functions.append(func_with_is_method)
-
+        self._visit_ast_body(tree.body, file_path, criteria, functions, parents=[])
         return functions
+
+    def _visit_ast_body(
+        self,
+        body: list[ast.stmt],
+        file_path: Path,
+        criteria: FunctionFilterCriteria,
+        functions: list[FunctionToOptimize],
+        parents: list[FunctionParent],
+    ) -> None:
+        for node in body:
+            if isinstance(node, ast.ClassDef):
+                class_parent = FunctionParent(node.name, "ClassDef")
+                parents.append(class_parent)
+                self._visit_ast_body(node.body, file_path, criteria, functions, parents)
+                parents.pop()
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                is_async = isinstance(node, ast.AsyncFunctionDef)
+
+                if not criteria.include_async and is_async:
+                    continue
+
+                if not criteria.include_methods and parents:
+                    continue
+
+                if self._is_ast_pytest_fixture(node, _FIXTURE_NAMES):
+                    continue
+
+                if self._is_ast_property(node, _PROPERTY_NAMES):
+                    continue
+
+                if not self._ast_has_return(node):
+                    if criteria.require_return:
+                        continue
+                    starting_line = None
+                    ending_line = None
+                else:
+                    starting_line = node.lineno
+                    ending_line = node.end_lineno
+
+                if criteria.require_return and starting_line is None:
+                    continue
+
+                is_method = bool(parents)
+                functions.append(
+                    FunctionToOptimize(
+                        function_name=node.name,
+                        file_path=file_path,
+                        parents=list(parents),
+                        starting_line=starting_line,
+                        ending_line=ending_line,
+                        is_async=is_async,
+                        is_method=is_method,
+                        language="python",
+                    )
+                )
+
+    @staticmethod
+    def _is_ast_pytest_fixture(node: ast.FunctionDef | ast.AsyncFunctionDef, fixture_names: frozenset[str]) -> bool:
+        for dec in node.decorator_list:
+            if isinstance(dec, ast.Call):
+                dec = dec.func
+            if isinstance(dec, ast.Attribute) and dec.attr == "fixture":
+                if isinstance(dec.value, ast.Name) and dec.value.id == "pytest":
+                    return True
+            if isinstance(dec, ast.Name) and dec.id in fixture_names:
+                return True
+        return False
+
+    @staticmethod
+    def _is_ast_property(node: ast.FunctionDef | ast.AsyncFunctionDef, property_names: frozenset[str]) -> bool:
+        return any(isinstance(dec, ast.Name) and dec.id in property_names for dec in node.decorator_list)
+
+    @staticmethod
+    def _ast_has_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        return _check_body_for_return(node.body)
 
     def discover_tests(
         self, test_root: Path, source_functions: Sequence[FunctionToOptimize]
@@ -854,7 +935,7 @@ class PythonSupport:
         candidate_results_path: Path,
         project_root: Path | None = None,
         project_classpath: str | None = None,
-    ) -> tuple[bool, list]:
+    ) -> tuple[bool, list[Any]]:
         """Compare test results between original and candidate code.
 
         Args:
@@ -1001,7 +1082,7 @@ class PythonSupport:
         )
 
     def instrument_source_for_line_profiler(
-        self, func_info: FunctionToOptimize, line_profiler_output_file: Path
+        self, func_info: FunctionToOptimize, line_profiler_output_file: Path, project_classpath: str | None = None
     ) -> bool:
         """Instrument source code for line profiling.
 
@@ -1017,7 +1098,7 @@ class PythonSupport:
         # This is handled through the existing infrastructure
         return True
 
-    def parse_line_profile_results(self, line_profiler_output_file: Path) -> dict:
+    def parse_line_profile_results(self, line_profiler_output_file: Path) -> dict[str, Any]:
         """Parse line profiler output for Python.
 
         Args:
@@ -1078,7 +1159,7 @@ class PythonSupport:
         from codeflash.code_utils.config_consts import TOTAL_LOOPING_TIME_EFFECTIVE
         from codeflash.languages.python.static_analysis.coverage_utils import prepare_coverage_files
         from codeflash.languages.python.test_runner import execute_test_subprocess
-        from codeflash.models.models import TestType
+        from codeflash.models.models import TestType  # type: ignore[attr-defined]
 
         blocklisted_plugins = ["benchmark", "codspeed", "xdist", "sugar"]
 
@@ -1178,6 +1259,7 @@ class PythonSupport:
         min_loops: int = 5,
         max_loops: int = 100_000,
         target_duration_seconds: float = 10.0,
+        inner_iterations: int = 1,
     ) -> tuple[Path, Any]:
 
         from codeflash.code_utils.code_utils import get_run_tmp_file
@@ -1258,7 +1340,7 @@ class PythonSupport:
 
     def generate_concolic_tests(
         self, test_cfg: Any, project_root: Path, function_to_optimize: FunctionToOptimize, function_to_optimize_ast: Any
-    ) -> tuple[dict, str]:
+    ) -> tuple[dict[str, set[FunctionCalledInTest]], str]:
         import ast
         import importlib.util
         import subprocess
@@ -1281,7 +1363,7 @@ class PythonSupport:
         crosshair_available = importlib.util.find_spec("crosshair") is not None
 
         start_time = time.perf_counter()
-        function_to_concolic_tests: dict = {}
+        function_to_concolic_tests: dict[str, set[FunctionCalledInTest]] = {}
         concolic_test_suite_code = ""
 
         if not crosshair_available:

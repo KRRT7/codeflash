@@ -7,9 +7,9 @@ import os
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
-from codeflash.api.cfapi import get_codeflash_api_key, get_user_id
+from codeflash.api.cfapi import get_user_id
 from codeflash.cli_cmds.cli import process_pyproject_config
 from codeflash.cli_cmds.cmd_init import create_find_common_tags_file
 from codeflash.cli_cmds.init_config import (
@@ -24,6 +24,7 @@ from codeflash.cli_cmds.init_config import (
     is_valid_pyproject_toml,
 )
 from codeflash.code_utils.code_utils import validate_relative_directory_path
+from codeflash.code_utils.env_utils import get_codeflash_api_key
 from codeflash.code_utils.git_utils import git_root_dir
 from codeflash.code_utils.git_worktree_utils import create_worktree_snapshot_commit
 from codeflash.code_utils.shell_utils import save_api_key_to_rc
@@ -39,6 +40,7 @@ from codeflash.lsp.server import CodeflashLanguageServer, CodeflashLanguageServe
 
 if TYPE_CHECKING:
     from argparse import Namespace
+    from collections.abc import Generator
 
     from lsprotocol import types
 
@@ -55,13 +57,13 @@ class OptimizableFunctionsParams:
 class FunctionOptimizationInitParams:
     textDocument: types.TextDocumentIdentifier  # noqa: N815
     functionName: str  # noqa: N815
-    task_id: str
+    task_id: str | None
 
 
 @dataclass
 class FunctionOptimizationParams:
     functionName: str  # noqa: N815
-    task_id: str
+    task_id: str | None
 
 
 @dataclass
@@ -89,14 +91,14 @@ class OptimizableFunctionsInCommitParams:
 @dataclass
 class WriteConfigParams:
     config_file: str
-    config: any
+    config: Any
 
 
 server = CodeflashLanguageServer("codeflash-language-server", "v1.0", protocol_cls=CodeflashLanguageServerProtocol)
 
 
 @server.feature("server/listFeatures")
-def list_features(_params: any) -> list[str]:
+def list_features(_params: Any) -> list[str]:
     return list(server.protocol.fm.features)
 
 
@@ -115,6 +117,7 @@ def get_functions_in_commit(params: OptimizableFunctionsInCommitParams) -> dict[
 
 
 def _group_functions_by_file(functions: dict[Path, list[FunctionToOptimize]]) -> dict[str, list[str]]:
+    assert server.optimizer is not None
     file_to_funcs_to_optimize, _ = filter_functions(
         modified_functions=functions,
         tests_root=server.optimizer.test_cfg.tests_root,
@@ -130,7 +133,7 @@ def _group_functions_by_file(functions: dict[Path, list[FunctionToOptimize]]) ->
 
 
 @server.feature("getOptimizableFunctions")
-def get_optimizable_functions(params: OptimizableFunctionsParams) -> dict[str, list[str]]:
+def get_optimizable_functions(params: OptimizableFunctionsParams) -> dict[str, str | list[str]]:
     document_uri = params.textDocument.uri
     document = server.workspace.get_text_document(document_uri)
 
@@ -145,9 +148,9 @@ def get_optimizable_functions(params: OptimizableFunctionsParams) -> dict[str, l
 
     optimizable_funcs, _, _ = server.optimizer.get_optimizable_functions()
 
-    path_to_qualified_names = {}
+    path_to_qualified_names: dict[str, str | list[str]] = {}
     for functions in optimizable_funcs.values():
-        path_to_qualified_names[file_path] = [func.qualified_name for func in functions]
+        path_to_qualified_names[str(file_path)] = [func.qualified_name for func in functions]
 
     return path_to_qualified_names
 
@@ -177,7 +180,7 @@ def _find_pyproject_toml(workspace_path: str) -> tuple[Path | None, bool]:
 
 
 @server.feature("writeConfig")
-def write_config(params: WriteConfigParams) -> dict[str, any]:
+def write_config(params: WriteConfigParams) -> dict[str, Any]:
     cfg = params.config
     cfg_file = Path(params.config_file) if params.config_file else None
 
@@ -188,7 +191,7 @@ def write_config(params: WriteConfigParams) -> dict[str, any]:
     # Handle both dict and object access for config
     def get_config_value(key: str, default: str = "") -> str:
         if isinstance(cfg, dict):
-            return cfg.get(key, default)
+            return cfg.get(key, default)  # type: ignore[no-any-return]
         return getattr(cfg, key, default)
 
     tests_root = get_config_value("tests_root", "")
@@ -237,7 +240,7 @@ def write_config(params: WriteConfigParams) -> dict[str, any]:
 
 
 @server.feature("getConfigSuggestions")
-def get_config_suggestions(_params: any) -> dict[str, any]:
+def get_config_suggestions(_params: Any) -> dict[str, Any]:
     module_root_suggestions, default_module_root = get_suggestions(CommonSections.module_root)
     tests_root_suggestions, default_tests_root = get_suggestions(CommonSections.tests_root)
     formatter_suggestions, default_formatter = get_suggestions(CommonSections.formatter_cmds)
@@ -280,7 +283,7 @@ def get_config_suggestions(_params: any) -> dict[str, any]:
 
 # should be called the first thing to initialize and validate the project
 @server.feature("initProject")
-def init_project(params: ValidateProjectParams) -> dict[str, str]:
+def init_project(params: ValidateProjectParams) -> dict[str, Any]:
     # Always process args in the init project, the extension can call
     server.initialized = False
 
@@ -298,19 +301,20 @@ def init_project(params: ValidateProjectParams) -> dict[str, str]:
             return {
                 "status": "error",
                 "message": "pyproject.toml found in workspace, but no codeflash config.",
-                "pyprojectPath": pyproject_toml_path,
+                "pyprojectPath": str(pyproject_toml_path),
             }
         else:
             return {"status": "error", "message": "No pyproject.toml found in workspace."}
 
     # since we are using worktrees, optimization diffs are generated with respect to the root of the repo.
     root = str(git_root_dir())
+    assert server.args is not None
 
     if getattr(params, "skip_validation", False):
         return {
             "status": "success",
             "moduleRoot": server.args.module_root,
-            "pyprojectPath": pyproject_toml_path,
+            "pyprojectPath": str(pyproject_toml_path),
             "root": root,
         }
 
@@ -323,7 +327,7 @@ def init_project(params: ValidateProjectParams) -> dict[str, str]:
         return {
             "status": "error",
             "message": f"reason: {reason}",
-            "pyprojectPath": pyproject_toml_path,
+            "pyprojectPath": str(pyproject_toml_path),
             "existingConfig": config,
         }
 
@@ -331,7 +335,7 @@ def init_project(params: ValidateProjectParams) -> dict[str, str]:
     return {
         "status": "success",
         "moduleRoot": args.module_root,
-        "pyprojectPath": pyproject_toml_path,
+        "pyprojectPath": str(pyproject_toml_path),
         "root": root,
         "existingConfig": config,
     }
@@ -365,6 +369,7 @@ def _initialize_optimizer(args: Namespace) -> None:
 
 
 def process_args() -> Namespace:
+    assert server.args is not None
     new_args = process_pyproject_config(server.args)
     server.args = new_args
     return new_args
@@ -372,6 +377,7 @@ def process_args() -> Namespace:
 
 def _init() -> Namespace:
     if server.initialized:
+        assert server.args is not None
         return server.args
     new_args = process_args()
     _initialize_optimizer(new_args)
@@ -380,7 +386,7 @@ def _init() -> Namespace:
 
 
 @server.feature("apiKeyExistsAndValid")
-def check_api_key(_params: any) -> dict[str, str]:
+def check_api_key(_params: Any) -> dict[str, str]:
     try:
         return _initialize_optimizer_if_api_key_is_valid()
     except Exception as ex:
@@ -415,7 +421,7 @@ def provide_api_key(params: ProvideApiKeyParams) -> dict[str, str]:
 
 
 @contextlib.contextmanager
-def execution_context(**kwargs: str) -> None:
+def execution_context(**kwargs: str | None) -> Generator[None, None, None]:
     """Temporarily set context values for the current async task."""
     # Create a fresh copy per use
     current = {**execution_context_vars.get(), **kwargs}
@@ -427,7 +433,7 @@ def execution_context(**kwargs: str) -> None:
 
 
 @server.feature("cleanupCurrentOptimizerSession")
-def cleanup_optimizer(_params: any) -> dict[str, str]:
+def cleanup_optimizer(_params: Any) -> dict[str, str]:
     if not server.cleanup_the_optimizer():
         return {"status": "error", "message": "Failed to cleanup optimizer"}
     return {"status": "success"}
@@ -480,7 +486,7 @@ def _initialize_current_function_optimizer() -> Union[dict[str, str], WrappedIni
 
 
 @server.feature("initializeFunctionOptimization")
-def initialize_function_optimization(params: FunctionOptimizationInitParams) -> dict[str, str]:
+def initialize_function_optimization(params: FunctionOptimizationInitParams) -> dict[str, str | list[str]]:
     with execution_context(task_id=getattr(params, "task_id", None)):
         document_uri = params.textDocument.uri
         document = server.workspace.get_text_document(document_uri)
@@ -492,6 +498,8 @@ def initialize_function_optimization(params: FunctionOptimizationInitParams) -> 
 
         if server.optimizer is None:
             _initialize_optimizer_if_api_key_is_valid()
+        if server.optimizer is None:
+            return {"status": "error", "message": "Optimizer not initialized yet."}
 
         server.optimizer.args.file = file_path
         server.optimizer.args.function = params.functionName
@@ -505,11 +513,12 @@ def initialize_function_optimization(params: FunctionOptimizationInitParams) -> 
 
         initialization_result = _initialize_current_function_optimizer()
         if isinstance(initialization_result, dict):
-            return initialization_result
+            return initialization_result  # type: ignore[return-value]
 
-        server.current_optimization_init_result = initialization_result.unwrap()
+        server.current_optimization_init_result = initialization_result.unwrap()  # type: ignore[assignment]
         server.show_message_log(f"Successfully initialized optimization for {params.functionName}", "Info")
 
+        assert server.current_optimization_init_result is not None
         files = [document.path]
 
         _, _, original_helpers = server.current_optimization_init_result
@@ -522,11 +531,14 @@ def initialize_function_optimization(params: FunctionOptimizationInitParams) -> 
 async def start_demo_optimization(params: DemoOptimizationParams) -> dict[str, str]:
     try:
         _init()
+        assert server.optimizer is not None
+        assert server.args is not None
         cancel_event = threading.Event()
         # start by creating the worktree so that the demo file is not created in user workspace
         server.optimizer.worktree_mode()
         file_path = create_find_common_tags_file(server.args, params.functionName + ".py")
         # commit the new file for diff generation later
+        assert server.optimizer.current_worktree is not None
         create_worktree_snapshot_commit(server.optimizer.current_worktree, "added sample optimization file")
 
         server.optimizer.args.file = file_path
@@ -537,7 +549,7 @@ async def start_demo_optimization(params: DemoOptimizationParams) -> dict[str, s
         if isinstance(initialization_result, dict):
             return initialization_result
 
-        server.current_optimization_init_result = initialization_result.unwrap()
+        server.current_optimization_init_result = initialization_result.unwrap()  # type: ignore[assignment]
         return await perform_function_optimization(
             FunctionOptimizationParams(functionName=params.functionName, task_id=None)
         )

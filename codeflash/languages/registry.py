@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from codeflash.languages.language_enum import Language
 
@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from codeflash.languages.base import LanguageSupport
+
+T = TypeVar("T", bound="LanguageSupport")
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +75,7 @@ class UnsupportedLanguageError(Exception):
         super().__init__(msg)
 
 
-def register_language(cls: type[LanguageSupport]) -> type[LanguageSupport]:
+def register_language(cls: type[T]) -> type[T]:
     """Decorator to register a language support implementation.
 
     This decorator registers a language support class in both the extension

@@ -55,7 +55,7 @@ def test_function_eligible_for_optimization() -> None:
             f.write(function)
 
         functions_found = find_all_functions_in_file(file_path)
-    assert functions_found == {}
+    assert not any(functions_found.values())
 
 
 def test_find_top_level_function_or_method():
