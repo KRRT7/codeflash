@@ -35,33 +35,6 @@ HAS_TENSORFLOW = find_spec("tensorflow") is not None
 HAS_NUMBA = find_spec("numba") is not None
 HAS_PYARROW = find_spec("pyarrow") is not None
 
-if HAS_NUMPY:
-    import numpy as np
-if HAS_SCIPY:
-    import scipy  # type: ignore  # noqa: PGH003
-if HAS_JAX:
-    import jax  # type: ignore  # noqa: PGH003
-    import jax.numpy as jnp  # type: ignore  # noqa: PGH003
-if HAS_XARRAY:
-    import xarray  # type: ignore  # noqa: PGH003
-if HAS_TENSORFLOW:
-    import tensorflow as tf  # type: ignore  # noqa: PGH003
-if HAS_SQLALCHEMY:
-    import sqlalchemy  # type: ignore  # noqa: PGH003
-if HAS_PYARROW:
-    import pyarrow as pa  # type: ignore  # noqa: PGH003
-if HAS_PANDAS:
-    import pandas  # noqa: ICN001
-if HAS_TORCH:
-    import torch  # type: ignore  # noqa: PGH003
-if HAS_NUMBA:
-    import numba
-    from numba.core.dispatcher import Dispatcher  # type: ignore[import-not-found]
-    from numba.typed import Dict as NumbaDict  # type: ignore[import-not-found]
-    from numba.typed import List as NumbaList
-if HAS_PYRSISTENT:
-    import pyrsistent  # type: ignore  # noqa: PGH003
-
 # Pattern to match pytest temp directories: /tmp/pytest-of-<user>/pytest-<N>/
 # These paths vary between test runs but are logically equivalent
 PYTEST_TEMP_PATH_PATTERN = re.compile(r"/tmp/pytest-of-[^/]+/pytest-\d+/")  # noqa: S108
@@ -306,7 +279,9 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             return comparator(orig_referent, new_referent, superset_obj)
 
         if HAS_JAX:
-            # Handle JAX arrays first to avoid boolean context errors in other conditions
+            import jax
+            import jax.numpy as jnp
+
             if isinstance(orig, jax.Array):
                 if orig.dtype != new.dtype:
                     return False
@@ -314,13 +289,15 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                     return False
                 return bool(jnp.allclose(orig, new, equal_nan=True))
 
-        # Handle xarray objects before numpy to avoid boolean context errors
         if HAS_XARRAY:
+            import xarray
+
             if isinstance(orig, (xarray.Dataset, xarray.DataArray)):
                 return orig.identical(new)  # type: ignore[no-any-return]
 
-        # Handle TensorFlow objects early to avoid boolean context errors
         if HAS_TENSORFLOW:
+            import tensorflow as tf
+
             if isinstance(orig, tf.Tensor):
                 if orig.dtype != new.dtype:
                     return False
@@ -359,6 +336,8 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return comparator(orig.to_list(), new.to_list(), superset_obj)
 
         if HAS_SQLALCHEMY:
+            import sqlalchemy
+
             try:
                 insp = sqlalchemy.inspection.inspect(orig)
                 insp = sqlalchemy.inspection.inspect(new)
@@ -401,6 +380,8 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             return comparator(dict(orig), dict(new), superset_obj)  # type: ignore[call-overload]
 
         if HAS_NUMPY:
+            import numpy as np
+
             if isinstance(orig, (np.datetime64, np.timedelta64)):
                 # Handle NaT (Not a Time) - numpy's equivalent of NaN for datetime
                 if np.isnat(orig) and np.isnat(new):
@@ -457,14 +438,19 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 new_state = new.get_state(legacy=False)
                 return comparator(orig_state, new_state, superset_obj)
 
-        if HAS_SCIPY and isinstance(orig, scipy.sparse.spmatrix):
-            if orig.dtype != new.dtype:
-                return False
-            if orig.get_shape() != new.get_shape():
-                return False
-            return (orig != new).nnz == 0  # type: ignore[no-any-return]
+        if HAS_SCIPY:
+            import scipy
+
+            if isinstance(orig, scipy.sparse.spmatrix):
+                if orig.dtype != new.dtype:
+                    return False
+                if orig.get_shape() != new.get_shape():
+                    return False
+                return (orig != new).nnz == 0  # type: ignore[no-any-return]
 
         if HAS_PYARROW:
+            import pyarrow as pa
+
             if isinstance(orig, pa.Table):
                 if orig.schema != new.schema:
                     return False
@@ -507,6 +493,8 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return bool(orig.equals(new))
 
         if HAS_PANDAS:
+            import pandas
+
             if isinstance(
                 orig, (pandas.DataFrame, pandas.Series, pandas.Index, pandas.Categorical, pandas.arrays.SparseArray)
             ):
@@ -537,6 +525,8 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
             pass
 
         if HAS_TORCH:
+            import torch
+
             if isinstance(orig, torch.Tensor):
                 if orig.dtype != new.dtype:
                     return False
@@ -555,7 +545,11 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return orig == new  # type: ignore[no-any-return]
 
         if HAS_NUMBA:
-            # Handle numba typed List
+            import numba
+            from numba.core.dispatcher import Dispatcher  # type: ignore[import-not-found]
+            from numba.typed import Dict as NumbaDict  # type: ignore[import-not-found]
+            from numba.typed import List as NumbaList  # type: ignore[import-not-found]
+
             if isinstance(orig, NumbaList):
                 if len(orig) != len(new):
                     return False
@@ -586,6 +580,8 @@ def comparator(orig: Any, new: Any, superset_obj: bool = False) -> bool:
                 return orig.py_func is new.py_func
 
         if HAS_PYRSISTENT:
+            import pyrsistent
+
             if isinstance(
                 orig,
                 (
