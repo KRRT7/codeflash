@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'codeflash/version.py'
+      - 'src/codeflash/version.py'
 
 jobs:
   publish:
@@ -24,7 +24,7 @@ jobs:
       - name: Extract version from version.py
         id: extract_version
         run: |
-          VERSION=$(grep -oP '__version__ = "\K[^"]+' codeflash/version.py)
+          VERSION=$(grep -oP '__version__ = "\K[^"]+' src/codeflash/version.py)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
