@@ -12,7 +12,6 @@ def test_benchmark_extract(benchmark)->None:
     opt = Optimizer(
         Namespace(
             project_root=file_path.resolve(),
-            disable_telemetry=True,
             tests_root=(file_path / "tests").resolve(),
             test_framework="pytest",
             pytest_cmd="pytest",

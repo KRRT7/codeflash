@@ -4,5 +4,4 @@ module-root = "src/app"
 tests-root = "src/tests"
 test-framework = "pytest"
 ignore-paths = []
-disable-telemetry = true
 formatter-cmds = ["disabled"]
