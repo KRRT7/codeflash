@@ -12,7 +12,7 @@ from typing import Any, Union
 
 import isort
 
-from codeflash.cli_cmds.console import console, logger
+from codeflash.cli_cmds.logging_config import logger
 
 
 def generate_unified_diff(
@@ -73,7 +73,7 @@ def apply_formatter_cmds(
             )
             if result.returncode == 0:
                 if print_status:
-                    console.rule(
+                    rule(
                         f"Formatted Successfully with: {command.replace('$file', path.name)}"
                     )
                 changed = True

@@ -21,7 +21,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.cli import project_root_from_module_root
-from codeflash.cli_cmds.console import console
 from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE
 from codeflash.code_utils.config_consts import EffortLevel
@@ -96,7 +95,7 @@ def main(args: Namespace | None = None) -> ArgumentParser:
         sys.argv[:] = unknown_args
 
         if getattr(args, "disable", False):
-            console.rule("Codeflash: Tracer disabled by --disable option")
+            rule("Codeflash: Tracer disabled by --disable option")
             return parser
 
     else:
@@ -136,11 +135,11 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                     unknown_args[1:], limit=parsed_args.limit
                 )
                 if pytest_splits is None or test_paths is None:
-                    console.print(
+                    print(
                         f"❌ Could not find test files in the specified paths: {unknown_args[1:]}"
                     )
-                    console.print(f"Current working directory: {Path.cwd()}")
-                    console.print(
+                    print(f"Current working directory: {Path.cwd()}")
+                    print(
                         "Please ensure the test directory exists and contains test files."
                     )
                     sys.exit(1)
@@ -193,7 +192,7 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                             data = pickle.load(f)
                             replay_test_paths.append(str(data["replay_test_file_path"]))
                     except Exception:
-                        console.print("❌ Failed to trace. Exiting...")
+                        print("❌ Failed to trace. Exiting...")
                         sys.exit(1)
                     finally:
                         result_pickle_file_path.unlink(missing_ok=True)
@@ -229,14 +228,14 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                         data = pickle.load(f)
                         replay_test_paths.append(str(data["replay_test_file_path"]))
                 except Exception:
-                    console.print("❌ Failed to trace. Exiting...")
+                    print("❌ Failed to trace. Exiting...")
                     sys.exit(1)
                 finally:
                     result_pickle_file_path.unlink(missing_ok=True)
             if not parsed_args.trace_only and replay_test_paths:
                 from codeflash.cli_cmds.cli import parse_args, process_pyproject_config
                 from codeflash.cli_cmds.cmd_init import CODEFLASH_LOGO
-                from codeflash.cli_cmds.console import paneled_text
+                from codeflash.cli_cmds.logging_config import paneled_text
 
                 sys.argv = ["codeflash", "--replay-test", *replay_test_paths]
                 args = parse_args()

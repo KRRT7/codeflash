@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import git
 from unidiff import PatchSet
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 
 if TYPE_CHECKING:
     from git import Repo

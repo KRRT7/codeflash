@@ -4,7 +4,7 @@ import reprlib
 import sys
 from typing import TYPE_CHECKING
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_utils import shorten_pytest_error
 from codeflash.models.models import TestDiff, TestDiffScope, TestResults, TestType, VerificationType
 from codeflash.verification.comparator import comparator

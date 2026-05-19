@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from pydantic.dataclasses import dataclass
 
-from codeflash.cli_cmds.console import console, logger, test_files_progress_bar
+from codeflash.cli_cmds.logging_config import logger, test_files_progress_bar
 from codeflash.code_utils.code_utils import (
     ImportErrorPattern,
     custom_addopts,
@@ -656,7 +656,7 @@ def discover_tests_pytest(
             )
         else:
             logger.warning(f"Failed to collect tests. Pytest Exit code: {exitcode}")
-        console.rule()
+        rule()
     else:
         logger.debug(f"Pytest collection exit code: {exitcode}")
     if pytest_rootdir is not None:
@@ -791,7 +791,7 @@ def process_test_files(
 
     tests_cache = TestsCache(project_root_path)
     logger.info("Discovering tests and processing unit tests")
-    console.rule()
+    rule()
     with test_files_progress_bar(
         total=len(file_to_test_map), description="Processing test files"
     ) as (

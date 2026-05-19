@@ -4,7 +4,7 @@ import sqlite3
 from copy import copy
 from pathlib import Path
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 
 
 class ProfileStats(pstats.Stats):

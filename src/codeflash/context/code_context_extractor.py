@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_extractor import (
     add_needed_imports_from_module,
     find_preexisting_objects,

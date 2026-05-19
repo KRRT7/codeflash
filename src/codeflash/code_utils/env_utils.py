@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_utils import exit_with_message
 from codeflash.code_utils.formatter import format_code
 from codeflash.code_utils.shell_utils import (

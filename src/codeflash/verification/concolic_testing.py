@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from codeflash.cli_cmds.console import console, logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE
 from codeflash.code_utils.concolic_utils import clean_concolic_tests
 from codeflash.code_utils.static_analysis import has_typed_parameters
@@ -37,7 +37,7 @@ def generate_concolic_tests(
         and has_typed_parameters(function_to_optimize_ast, function_to_optimize.parents)
     ):
         logger.info("Generating concolic opcode coverage tests for the original code…")
-        console.rule()
+        rule()
         try:
             cover_result = subprocess.run(
                 [
@@ -96,13 +96,13 @@ def generate_concolic_tests(
                 f"Created {num_discovered_concolic_tests} "
                 f"concolic unit test case{'s' if num_discovered_concolic_tests != 1 else ''} "
             )
-            console.rule()
+            rule()
 
         else:
             logger.debug(
                 f"Error running CrossHair Cover {': ' + cover_result.stderr if cover_result.stderr else '.'}"
             )
-            console.rule()
+            rule()
     end_time = time.perf_counter()
     logger.debug(f"Generated concolic tests in {end_time - start_time:.2f} seconds")
     return function_to_concolic_tests, concolic_test_suite_code

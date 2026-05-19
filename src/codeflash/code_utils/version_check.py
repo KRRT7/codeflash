@@ -7,7 +7,7 @@ import time
 import requests
 from packaging import version
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.version import __version__
 
 # Simple cache to avoid checking too frequently

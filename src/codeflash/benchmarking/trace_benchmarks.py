@@ -5,7 +5,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE
 from codeflash.code_utils.shell_utils import get_cross_platform_subprocess_run_args
 

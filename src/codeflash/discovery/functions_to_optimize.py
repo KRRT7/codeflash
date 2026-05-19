@@ -18,7 +18,7 @@ from codeflash.api.cfapi import (
     get_blocklisted_functions,
     is_function_being_optimized_again,
 )
-from codeflash.cli_cmds.console import DEBUG_MODE, console, logger
+from codeflash.cli_cmds.logging_config import DEBUG_MODE, logger
 from codeflash.code_utils.code_utils import (
     exit_with_message,
     is_class_defined_in_file,
@@ -204,7 +204,7 @@ def get_functions_to_optimize(
         warnings.simplefilter(action="ignore", category=SyntaxWarning)
         if optimize_all:
             logger.info("Finding all functions in the module '%s'…", optimize_all)
-            console.rule()
+            rule()
             functions = get_all_files_and_functions(Path(optimize_all))
         elif replay_test:
             functions, trace_file_path = get_all_replay_test_functions(
@@ -212,7 +212,7 @@ def get_functions_to_optimize(
             )
         elif file is not None:
             logger.info("Finding all functions in the file '%s'…", file)
-            console.rule()
+            rule()
             file = Path(file) if isinstance(file, str) else file
             functions: dict[Path, list[FunctionToOptimize]] = (
                 find_all_functions_in_file(file)
@@ -251,7 +251,7 @@ def get_functions_to_optimize(
                 functions[file] = [found_function]
         else:
             logger.info("Finding all functions modified in the current git diff ...")
-            console.rule()
+            rule()
             functions = get_functions_within_git_diff(uncommitted_changes=False)
         filtered_modified_functions, functions_count = filter_functions(
             functions,
@@ -805,7 +805,7 @@ def filter_functions(
             print("Ignored functions and files:")
             for label, count in ignored_items:
                 print(f"  {label}: {count}")
-            console.rule()
+            rule()
     return {
         Path(k): v for k, v in filtered_modified_functions.items() if v
     }, functions_count

@@ -28,7 +28,7 @@ from codeflash.cli_cmds.cli_common import (
     prompt_choice,
     prompt_text,
 )
-from codeflash.cli_cmds.console import console, logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.cli_cmds.extension import install_vscode_extension
 from codeflash.code_utils.code_utils import validate_relative_directory_path
 from codeflash.code_utils.compat import LF
@@ -157,7 +157,7 @@ def ask_run_end_to_end_test(args: Namespace) -> None:
         default=True,
     )
 
-    console.rule()
+    rule()
 
     if run_tests:
         file_path = create_find_common_tags_file(args, "find_common_tags.py")
@@ -1464,7 +1464,7 @@ def find_common_tags(articles: list[dict[str, list[str]]]) -> set[str]:
         )
         if not overwrite:
             apologize_and_exit()
-        console.rule()
+        rule()
 
     file_path.write_text(find_common_tags_content, encoding="utf8")
     logger.info(f"Created demo optimization file: {file_path}")
@@ -1508,7 +1508,7 @@ def test_sort():
         )
         if not overwrite:
             apologize_and_exit()
-        console.rule()
+        rule()
 
     bubble_sort_path.write_text(bubble_sort_content, encoding="utf8")
 
@@ -1517,7 +1517,7 @@ def test_sort():
 
     for path in [bubble_sort_path, bubble_sort_test_path]:
         logger.info(f"✅ Created {path}")
-        console.rule()
+        rule()
 
     return str(bubble_sort_path), str(bubble_sort_test_path)
 
@@ -1544,7 +1544,7 @@ def run_end_to_end_test(args: Namespace, find_common_tags_path: Path) -> None:
         command.append("--verbose")
 
     logger.info("Running sample optimization…")
-    console.rule()
+    rule()
 
     try:
         output = []
@@ -1561,7 +1561,7 @@ def run_end_to_end_test(args: Namespace, find_common_tags_path: Path) -> None:
                     print(stripped)
                     output.append(stripped)
             process.wait()
-        console.rule()
+        rule()
         if process.returncode == 0:
             logger.info("End-to-end test passed. Codeflash has been correctly set up!")
         else:
@@ -1569,7 +1569,7 @@ def run_end_to_end_test(args: Namespace, find_common_tags_path: Path) -> None:
                 "End-to-end test failed. Please check the logs above, and take a look at https://docs.codeflash.ai/getting-started/local-installation for help and troubleshooting."
             )
     finally:
-        console.rule()
+        rule()
         # Delete the bubble_sort.py file after the test
         logger.info("🧹 Cleaning up…")
         find_common_tags_path.unlink(missing_ok=True)

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_utils import custom_addopts, get_run_tmp_file
 from codeflash.code_utils.compat import IS_POSIX, SAFE_SYS_EXECUTABLE
 from codeflash.code_utils.config_consts import TOTAL_LOOPING_TIME_EFFECTIVE

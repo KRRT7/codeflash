@@ -6,7 +6,7 @@ solved problem, please reach out to us at careers@codeflash.ai. We're hiring!
 
 from codeflash.cli_cmds.cli import parse_args, process_pyproject_config
 from codeflash.cli_cmds.cmd_init import CODEFLASH_LOGO, ask_run_end_to_end_test
-from codeflash.cli_cmds.console import paneled_text
+from codeflash.cli_cmds.logging_config import paneled_text
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.version_check import check_for_newer_minor_version
 from codeflash.models.config import AppConfig

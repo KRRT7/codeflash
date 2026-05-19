@@ -26,7 +26,7 @@ from codeflash.api.cfapi import (
     mark_optimization_success,
 )
 from codeflash.benchmarking.utils import process_benchmark_data
-from codeflash.cli_cmds.console import code_print, console, logger, progress_bar
+from codeflash.cli_cmds.logging_config import code_print, logger, progress_bar
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_extractor import get_opt_review_metrics
 from codeflash.code_utils.code_replacer import (
@@ -160,7 +160,7 @@ def log_optimization_context(
     if logger.getEffectiveLevel() > logging.DEBUG:
         return
 
-    console.rule()
+    rule()
     read_writable_tokens = encoded_tokens_len(code_context.read_writable_code.markdown)
     read_only_tokens = (
         encoded_tokens_len(code_context.read_only_context_code)
@@ -194,12 +194,12 @@ def log_optimization_context(
 
     print("Read-Writable Code")
     print(code_context.read_writable_code.markdown)
-    console.rule()
+    rule()
 
     if code_context.read_only_context_code:
         print("Read-Only Dependencies")
         print(code_context.read_only_context_code)
-        console.rule()
+        rule()
 
 
 class CandidateNode:
@@ -671,7 +671,7 @@ class FunctionOptimizer:
             transient=True,
             revert_to_print=bool(get_pr_number()),
         ):
-            console.rule()
+            rule()
             # Generate tests and optimizations in parallel
             future_tests = self.executor.submit(
                 self.generate_and_instrument_tests, code_context
@@ -687,7 +687,7 @@ class FunctionOptimizer:
 
             test_setup_result = future_tests.result()
             optimization_result = future_optimizations.result()
-            console.rule()
+            rule()
 
         if not is_successful(test_setup_result):
             return Failure(test_setup_result.failure())
@@ -1068,7 +1068,7 @@ class FunctionOptimizer:
                 logger.warning(
                     "No functions were replaced in the optimized code. Skipping optimization candidate."
                 )
-                console.rule()
+                rule()
                 return None
         except (ValueError, SyntaxError, cst.ParserSyntaxError, AttributeError) as e:
             logger.error(e)
@@ -1103,7 +1103,7 @@ class FunctionOptimizer:
             candidate=candidate,
             exp_type=exp_type,
         )
-        console.rule()
+        rule()
 
         if not is_successful(run_results):
             eval_ctx.record_failed_candidate(candidate.optimization_id)
@@ -1204,7 +1204,7 @@ class FunctionOptimizer:
         print(tree)
         if self.config.benchmark and benchmark_tree:
             print(benchmark_tree)
-        console.rule()
+        rule()
 
         return best_optimization
 
@@ -1224,7 +1224,7 @@ class FunctionOptimizer:
             f"Determining best optimization candidate (out of {len(candidates)}) for "
             f"{self.function_to_optimize.qualified_name}…"
         )
-        console.rule()
+        rule()
 
         # Initialize evaluation context and async tasks
         eval_ctx = CandidateEvaluationContext()
@@ -1629,7 +1629,7 @@ class FunctionOptimizer:
                 f"{concolic_coverage_test_files_count} concolic coverage test file"
                 f"{'s' if concolic_coverage_test_files_count != 1 else ''} for {func_qualname}"
             )
-            console.rule()
+            rule()
         return unique_instrumented_test_files
 
     def generate_tests(
@@ -1707,7 +1707,7 @@ class FunctionOptimizer:
         logger.info(
             f"Generated {count_tests} tests for '{self.function_to_optimize.function_name}'"
         )
-        console.rule()
+        rule()
 
         generated_tests = GeneratedTestsList(generated_tests=tests)
         return Success(
@@ -1834,7 +1834,7 @@ class FunctionOptimizer:
             file_path_to_helper_classes=file_path_to_helper_classes,
         )
 
-        console.rule()
+        rule()
         paths_to_cleanup = (
             generated_test_paths
             + generated_perf_test_paths
@@ -2259,7 +2259,7 @@ class FunctionOptimizer:
             logger.warning(
                 f"Couldn't run any tests for original function {self.function_to_optimize.function_name}. Skipping optimization."
             )
-            console.rule()
+            rule()
             return Failure(
                 "Failed to establish a baseline for the original code - bevhavioral tests failed."
             )
@@ -2279,7 +2279,7 @@ class FunctionOptimizer:
                 original_helper_code=original_helper_code,
                 candidate_index=0,
             )
-        console.rule()
+        rule()
         with progress_bar("Running performance benchmarks..."):
             if self.function_to_optimize.is_async:
                 from codeflash.code_utils.instrument_existing_tests import (
@@ -2316,7 +2316,7 @@ class FunctionOptimizer:
                 title="Overall test results for original code",
             )
         )
-        console.rule()
+        rule()
 
         total_timing = (
             benchmarking_results.total_passed_runtime()
@@ -2333,13 +2333,13 @@ class FunctionOptimizer:
             logger.warning(
                 "The overall summed benchmark runtime of the original function is 0, couldn't run tests."
             )
-            console.rule()
+            rule()
             success = False
         if not total_timing:
             logger.warning(
                 "Failed to run the tests for the original function, skipping optimization"
             )
-            console.rule()
+            rule()
             success = False
         if not success:
             return Failure("Failed to establish a baseline for the original code.")
@@ -2351,7 +2351,7 @@ class FunctionOptimizer:
             f"h3|⌚ Original code summed runtime measured over '{loop_count}' loop{'s' if loop_count > 1 else ''}: "
             f"'{humanize_runtime(total_timing)}' per full loop"
         )
-        console.rule()
+        rule()
         logger.debug(f"Total original code runtime (ns): {total_timing}")
 
         async_throughput = None
@@ -2390,7 +2390,7 @@ class FunctionOptimizer:
         logger.info(
             "h4|Test results did not match the test results of the original code ❌"
         )
-        console.rule()
+        rule()
         return Failure(
             "Test results did not match the test results of the original code."
         )
@@ -2534,13 +2534,13 @@ class FunctionOptimizer:
                     title=f"Behavioral Test Results for candidate {optimization_candidate_index}",
                 )
             )
-            console.rule()
+            rule()
             match, diffs = compare_test_results(
                 baseline_results.behavior_test_results, candidate_behavior_results
             )
             if match:
                 logger.info("h3|Test results matched ✅")
-                console.rule()
+                rule()
             else:
                 self.repair_if_possible(
                     candidate,
@@ -2555,7 +2555,7 @@ class FunctionOptimizer:
             logger.info(
                 f"loading|Running performance tests for candidate {optimization_candidate_index}..."
             )
-            console.rule()
+            rule()
 
             # For async functions, instrument at definition site for performance benchmarking
             if self.function_to_optimize.is_async:
@@ -2604,7 +2604,7 @@ class FunctionOptimizer:
                 logger.warning(
                     "The overall test runtime of the optimized function is 0, couldn't run tests."
                 )
-                console.rule()
+                rule()
 
             logger.debug(
                 f"Total optimized code {optimization_candidate_index} runtime (ns): {total_candidate_timing}"
@@ -2829,7 +2829,7 @@ class FunctionOptimizer:
                 return {"timings": {}, "unit": 0, "str_out": ""}
 
         try:
-            console.rule()
+            rule()
 
             test_env = self.get_test_env(
                 codeflash_loop_index=0,

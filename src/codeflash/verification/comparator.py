@@ -10,7 +10,7 @@ from collections import ChainMap, OrderedDict, deque
 from importlib.util import find_spec
 from typing import Any
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.picklepatch.pickle_placeholder import PicklePlaceholderAccessError
 
 HAS_NUMPY = find_spec("numpy") is not None

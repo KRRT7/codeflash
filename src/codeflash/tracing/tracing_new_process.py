@@ -18,7 +18,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, ClassVar
 
-from codeflash.cli_cmds.console import console
+from codeflash.cli_cmds.logging_config import rule
 from codeflash.picklepatch.pickle_patcher import PicklePatcher
 from codeflash.tracing.tracing_utils import (
     FunctionModules,
@@ -93,7 +93,7 @@ class Tracer:
         if functions is None:
             functions = []
         if os.environ.get("CODEFLASH_TRACER_DISABLE", "0") == "1":
-            console.rule(
+            rule(
                 "Codeflash: Tracer disabled by environment variable CODEFLASH_TRACER_DISABLE"
             )
             disable = True
@@ -123,7 +123,7 @@ class Tracer:
         self.max_function_count = max_function_count
         self.config = config
         self.project_root = project_root
-        console.rule(f"Project Root: {self.project_root}")
+        rule(f"Project Root: {self.project_root}")
         self.ignored_functions = {
             "<listcomp>",
             "<genexpr>",
@@ -180,8 +180,8 @@ class Tracer:
         Tracer.used_once = True
 
         if Path(self.output_file).exists():
-            console.rule("Removing existing trace file")
-            console.rule()
+            rule("Removing existing trace file")
+            rule()
         Path(self.output_file).unlink(missing_ok=True)
 
         self.con = sqlite3.connect(self.output_file, check_same_thread=False)
@@ -218,7 +218,7 @@ class Tracer:
             "INSERT INTO metadata VALUES (?, ?)",
             ("project_root", str(self.project_root)),
         )
-        console.rule("Codeflash: Traced Program Output Begin")
+        rule("Codeflash: Traced Program Output Begin")
         frame = sys._getframe(
             0
         )  # Get this frame and simulate a call to it  # noqa: SLF001
@@ -243,7 +243,7 @@ class Tracer:
                 return
 
             self.con.commit()  # Commit any pending from tracer_logic
-            console.rule("Codeflash: Traced Program Output End")
+            rule("Codeflash: Traced Program Output End")
             self.create_stats()  # This calls snapshot_stats which uses self.timings
 
             cur = self.con.cursor()

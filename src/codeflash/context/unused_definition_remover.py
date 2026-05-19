@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Union
 
 import libcst as cst
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_replacer import replace_function_definitions_in_module
 from codeflash.models.models import CodeString, CodeStringsMarkdown
 

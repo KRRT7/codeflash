@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.config_consts import DEFAULT_IMPORTANCE_THRESHOLD
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.tracing.profile_stats import ProfileStats

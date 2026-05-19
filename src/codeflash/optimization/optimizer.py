@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from codeflash.api.aiservice import AiServiceClient, LocalAiServiceClient
 from codeflash.api.cfapi import send_completion_email
-from codeflash.cli_cmds.console import console, logger, progress_bar
+from codeflash.cli_cmds.logging_config import logger, progress_bar
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_utils import cleanup_paths, get_run_tmp_file
 from codeflash.code_utils.env_utils import get_pr_number, is_pr_draft
@@ -87,7 +87,7 @@ class Optimizer:
             validate_and_format_benchmark_table,
         )
 
-        console.rule()
+        rule()
         with progress_bar(
             f"Running benchmarks in {self.config.benchmarks_root}",
             transient=True,
@@ -146,7 +146,7 @@ class Optimizer:
                 for file in file_path_to_source_code:
                     with file.open("w", encoding="utf8") as f:
                         f.write(file_path_to_source_code[file])
-        console.rule()
+        rule()
         return function_benchmark_timings, total_benchmark_timings
 
     def get_optimizable_functions(
@@ -235,7 +235,7 @@ class Optimizer:
         from codeflash.code_utils.static_analysis import analyze_imported_modules
 
         logger.info(f"loading|Examining file {original_module_path!s}")
-        console.rule()
+        rule()
 
         original_module_code: str = original_module_path.read_text(encoding="utf8")
         try:
@@ -285,7 +285,7 @@ class Optimizer:
     ) -> tuple[dict[str, set[FunctionCalledInTest]], int]:
         from codeflash.discovery.discover_unit_tests import discover_unit_tests
 
-        console.rule()
+        rule()
         start_time = time.time()
         logger.info("lsp,loading|Discovering existing function tests...")
         function_to_tests, num_discovered_tests, num_discovered_replay_tests = (
@@ -293,11 +293,11 @@ class Optimizer:
                 self.test_cfg, file_to_funcs_to_optimize=file_to_funcs_to_optimize
             )
         )
-        console.rule()
+        rule()
         logger.info(
             f"Discovered {num_discovered_tests} existing unit tests and {num_discovered_replay_tests} replay tests in {(time.time() - start_time):.1f}s at {self.test_cfg.tests_root}"
         )
-        console.rule()
+        rule()
         return function_to_tests, num_discovered_tests
 
     def display_global_ranking(
@@ -383,9 +383,9 @@ class Optimizer:
         try:
             from codeflash.benchmarking.function_ranker import FunctionRanker
 
-            console.rule()
+            rule()
             logger.info("loading|Ranking functions globally by performance impact...")
-            console.rule()
+            rule()
             # Create ranker with trace data
             ranker = FunctionRanker(trace_file_path)
 
@@ -414,7 +414,7 @@ class Optimizer:
                 if file_path:
                     globally_ranked.append((file_path, func))
 
-            console.rule()
+            rule()
             logger.info(
                 f"Globally ranked {len(ranked_functions)} functions by addressable time "
                 f"(filtered {len(functions_only) - len(ranked_functions)} low-importance functions)"
@@ -422,7 +422,7 @@ class Optimizer:
 
             # Display ranking table for user visibility
             self.display_global_ranking(globally_ranked, ranker)
-            console.rule()
+            rule()
 
         except Exception as e:
             logger.warning(f"Could not perform global ranking: {e}")
@@ -433,7 +433,7 @@ class Optimizer:
 
     def run(self) -> None:
         logger.info("Running optimizer.")
-        console.rule()
+        rule()
         if not env_utils.ensure_codeflash_api_key():
             return
         if self.config.no_draft and is_pr_draft():
@@ -461,7 +461,7 @@ class Optimizer:
         )
         if self.config.all:
             three_min_in_ns = int(1.8e11)
-            console.rule()
+            rule()
             pr_message = (
                 "\nCodeflash will keep opening pull requests as it finds optimizations."
                 if not self.config.no_pr
@@ -517,7 +517,7 @@ class Optimizer:
                     f"Optimizing function {function_iterator_count} of {len(globally_ranked_functions)}: "
                     f"{function_to_optimize.qualified_name} (in {original_module_path.name})"
                 )
-                console.rule()
+                rule()
                 function_optimizer = None
                 try:
                     function_optimizer = self.create_function_optimizer(
@@ -562,7 +562,7 @@ class Optimizer:
                                 )
                     else:
                         logger.warning(best_optimization.failure())
-                        console.rule()
+                        rule()
                         continue
                 finally:
                     if function_optimizer is not None:

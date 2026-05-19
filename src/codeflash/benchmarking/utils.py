@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.time_utils import humanize_runtime
 from codeflash.models.models import BenchmarkDetail, ProcessedBenchmarkInfo
 from codeflash.result.critic import performance_gain

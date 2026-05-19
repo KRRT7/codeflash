@@ -10,7 +10,7 @@ from typing import Any
 
 import requests
 
-from codeflash.cli_cmds.console import logger, progress_bar
+from codeflash.cli_cmds.logging_config import logger, progress_bar
 
 supported_editor_paths = [
     (Path(Path.home()) / ".vscode", "VSCode"),

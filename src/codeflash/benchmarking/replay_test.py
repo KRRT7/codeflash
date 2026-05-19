@@ -6,7 +6,7 @@ import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.formatter import sort_imports
 from codeflash.discovery.functions_to_optimize import inspect_top_level_functions_or_methods
 from codeflash.verification.verification_utils import get_test_file_path

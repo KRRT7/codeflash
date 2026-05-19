@@ -12,7 +12,7 @@ import dill as pickle
 from junitparser.xunit2 import JUnitXml
 from lxml.etree import XMLParser, parse
 
-from codeflash.cli_cmds.console import DEBUG_MODE, console, logger
+from codeflash.cli_cmds.logging_config import DEBUG_MODE, logger
 from codeflash.code_utils.code_utils import (
     file_name_from_test_module_name,
     file_path_from_module_name,
@@ -118,7 +118,7 @@ def parse_test_return_values_bin(file_location: Path, test_files: TestFiles, tes
     test_results = TestResults()
     if not file_location.exists():
         logger.debug(f"No test results for {file_location} found.")
-        console.rule()
+        rule()
         return test_results
 
     with file_location.open("rb") as file:
@@ -179,7 +179,7 @@ def parse_sqlite_test_results(sqlite_file_path: Path, test_files: TestFiles, tes
     test_results = TestResults()
     if not sqlite_file_path.exists():
         logger.warning(f"No test results for {sqlite_file_path} found.")
-        console.rule()
+        rule()
         return test_results
     db = None
     try:
@@ -253,7 +253,7 @@ def parse_test_xml(
     # Parse unittest output
     if not test_xml_file_path.exists():
         logger.warning(f"No test results for {test_xml_file_path} found.")
-        console.rule()
+        rule()
         return test_results
     try:
         xml = JUnitXml.fromfile(str(test_xml_file_path), parse_func=parse_func)

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal, Union
 
 from coverage.exceptions import NoDataError
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.models.models import CoverageData, CoverageStatus, FunctionCoverage
 

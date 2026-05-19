@@ -11,7 +11,7 @@ import git
 import requests
 from pydantic.json import pydantic_encoder
 
-from codeflash.cli_cmds.console import console, logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_utils import exit_with_message
 from codeflash.code_utils.env_utils import (
     ensure_codeflash_api_key,
@@ -42,7 +42,7 @@ def get_cfapi_base_urls() -> BaseUrls:
         cfapi_base_url = "http://localhost:3001"
         cfwebapp_base_url = "http://localhost:3000"
         logger.info(f"Using local CF API at {cfapi_base_url}.")
-        console.rule()
+        rule()
     else:
         cfapi_base_url = "https://app.codeflash.ai"
         cfwebapp_base_url = "https://app.codeflash.ai"

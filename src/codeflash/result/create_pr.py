@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import git
 
 from codeflash.api import cfapi
-from codeflash.cli_cmds.console import console, logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_replacer import is_zero_diff
 from codeflash.code_utils.git_utils import (
@@ -277,10 +277,10 @@ def check_create_pr(
             )
     else:
         logger.info("Creating a new PR with the optimized code...")
-        console.rule()
+        rule()
         owner, repo = get_repo_owner_and_name(git_repo, git_remote)
         logger.info(f"Pushing to {git_remote} - Owner: {owner}, Repo: {repo}")
-        console.rule()
+        rule()
         if not check_and_push_branch(git_repo, git_remote, wait_for_push=True):
             logger.warning("⏭️ Branch is not pushed, skipping PR creation...")
             return
@@ -336,4 +336,4 @@ def check_create_pr(
                 f"Optimization was successful, but I failed to create a PR with the optimized code."
                 f" Response from server was: {response.text}"
             )
-        console.rule()
+        rule()

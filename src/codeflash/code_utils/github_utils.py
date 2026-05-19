@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from codeflash.api.cfapi import is_github_app_installed_on_repo
 from codeflash.cli_cmds.cli_common import apologize_and_exit
-from codeflash.cli_cmds.console import paneled_text
+from codeflash.cli_cmds.logging_config import paneled_text
 from codeflash.code_utils.compat import LF
 from codeflash.code_utils.git_utils import get_repo_owner_and_name
 

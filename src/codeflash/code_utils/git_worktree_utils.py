@@ -11,7 +11,7 @@ from typing import Any, Callable
 
 import git
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.compat import codeflash_cache_dir
 from codeflash.code_utils.git_utils import check_running_in_git_repo, git_root_dir
 

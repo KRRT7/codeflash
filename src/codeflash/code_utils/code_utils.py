@@ -15,7 +15,7 @@ from tempfile import TemporaryDirectory
 
 import tomlkit
 
-from codeflash.cli_cmds.console import logger, paneled_text
+from codeflash.cli_cmds.logging_config import logger, paneled_text
 from codeflash.code_utils.config_parser import (
     find_pyproject_toml,
     get_all_closest_config_files,

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from codeflash.cli_cmds.console import DEBUG_MODE, console, logger
+from codeflash.cli_cmds.logging_config import DEBUG_MODE, logger
 from codeflash.models.test_type import TestType
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ from pydantic import (
 )
 from pydantic.dataclasses import dataclass
 
-from codeflash.cli_cmds.console import console, logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_utils import (
     diff_length,
     module_name_from_file_path,
@@ -632,12 +632,12 @@ class CoverageData:
                 f"  Dependent Function: {self.dependent_func_coverage.name}: {self.dependent_func_coverage.coverage:.2f}%"
             )
         print(f"  Total Coverage: {self.coverage:.2f}%")
-        console.rule()
+        rule()
 
         if not self.coverage:
             logger.debug(self.graph)
         if is_end_to_end():
-            console.print(self)
+            print(self)
 
     @classmethod
     def create_empty(

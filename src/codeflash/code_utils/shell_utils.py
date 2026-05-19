@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.compat import LF
 from codeflash.either import Failure, Success
 

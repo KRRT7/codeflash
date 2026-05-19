@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import sys
 
-from codeflash.cli_cmds.console import console, logger
+from codeflash.cli_cmds.logging_config import logger
 
 
 def apologize_and_exit() -> None:
-    console.rule()
+    rule()
     logger.info(
         "💡 If you're having trouble, see https://docs.codeflash.ai/getting-started/local-installation for further help getting started with Codeflash!"
     )
-    console.rule()
+    rule()
     logger.info("👋 Exiting...")
     sys.exit(1)
 

@@ -14,7 +14,7 @@ from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import AddImportsVisitor, GatherImportsVisitor, RemoveImportsVisitor
 from libcst.helpers import calculate_module_and_package
 
-from codeflash.cli_cmds.console import logger
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.config_consts import MAX_CONTEXT_LEN_REVIEW
 from codeflash.models.models import CodePosition, FunctionParent
 
