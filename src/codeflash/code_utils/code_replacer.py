@@ -24,16 +24,27 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.models.models import CodeOptimizationContext, CodeStringsMarkdown, OptimizedCandidate, ValidCode
+    from codeflash.models.models import (
+        CodeOptimizationContext,
+        CodeStringsMarkdown,
+        OptimizedCandidate,
+        ValidCode,
+    )
 
 ASTNodeT = TypeVar("ASTNodeT", bound=ast.AST)
 
 
 def normalize_node(node: ASTNodeT) -> ASTNodeT:
-    if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and ast.get_docstring(node):
+    if isinstance(
+        node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+    ) and ast.get_docstring(node):
         node.body = node.body[1:]
     if hasattr(node, "body"):
-        node.body = [normalize_node(n) for n in node.body if not isinstance(n, (ast.Import, ast.ImportFrom))]
+        node.body = [
+            normalize_node(n)
+            for n in node.body
+            if not isinstance(n, (ast.Import, ast.ImportFrom))
+        ]
     return node
 
 
@@ -45,15 +56,22 @@ def normalize_code(code: str) -> str:
 class AddRequestArgument(cst.CSTTransformer):
     METADATA_DEPENDENCIES = (PositionProvider,)
 
-    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:
+    def leave_FunctionDef(
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+    ) -> cst.FunctionDef:
         # Matcher for '@fixture' or '@pytest.fixture'
         for decorator in original_node.decorators:
             dec = decorator.decorator
 
             if isinstance(dec, cst.Call):
                 func_name = ""
-                if isinstance(dec.func, cst.Attribute) and isinstance(dec.func.value, cst.Name):
-                    if dec.func.attr.value == "fixture" and dec.func.value.value == "pytest":
+                if isinstance(dec.func, cst.Attribute) and isinstance(
+                    dec.func.value, cst.Name
+                ):
+                    if (
+                        dec.func.attr.value == "fixture"
+                        and dec.func.value.value == "pytest"
+                    ):
                         func_name = "pytest.fixture"
                 elif isinstance(dec.func, cst.Name) and dec.func.value == "fixture":
                     func_name = "fixture"
@@ -80,13 +98,17 @@ class AddRequestArgument(cst.CSTTransformer):
                             if args:
                                 first_arg = args[0].name.value
                                 if first_arg in {"self", "cls"}:
-                                    new_params = [args[0], request_param] + list(args[1:])  # noqa: RUF005
+                                    new_params = [args[0], request_param] + list(
+                                        args[1:]
+                                    )  # noqa: RUF005
                                 else:
                                     new_params = [request_param] + list(args)  # noqa: RUF005
                             else:
                                 new_params = [request_param]
 
-                            new_param_list = updated_node.params.with_changes(params=new_params)
+                            new_param_list = updated_node.params.with_changes(
+                                params=new_params
+                            )
                             return updated_node.with_changes(params=new_param_list)
         return updated_node
 
@@ -106,19 +128,30 @@ class PytestMarkAdder(cst.CSTTransformer):
                 for stmt in statement.body:
                     if isinstance(stmt, cst.Import):
                         for import_alias in stmt.names:
-                            if isinstance(import_alias, cst.ImportAlias) and import_alias.name.value == "pytest":
+                            if (
+                                isinstance(import_alias, cst.ImportAlias)
+                                and import_alias.name.value == "pytest"
+                            ):
                                 self.has_pytest_import = True
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:  # noqa: ARG002
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:  # noqa: ARG002
         """Add pytest import if not present."""
         if not self.has_pytest_import:
             # Create import statement
-            import_stmt = cst.SimpleStatementLine(body=[cst.Import(names=[cst.ImportAlias(name=cst.Name("pytest"))])])
+            import_stmt = cst.SimpleStatementLine(
+                body=[cst.Import(names=[cst.ImportAlias(name=cst.Name("pytest"))])]
+            )
             # Add import at the beginning
-            updated_node = updated_node.with_changes(body=[import_stmt, *updated_node.body])
+            updated_node = updated_node.with_changes(
+                body=[import_stmt, *updated_node.body]
+            )
         return updated_node
 
-    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:  # noqa: ARG002
+    def leave_FunctionDef(
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+    ) -> cst.FunctionDef:  # noqa: ARG002
         """Add pytest mark to test functions."""
         # Check if the mark already exists
         for decorator in updated_node.decorators:
@@ -143,7 +176,9 @@ class PytestMarkAdder(cst.CSTTransformer):
                 and decorator.attr.value == mark_name
             ):
                 return True
-        elif isinstance(decorator, cst.Call) and isinstance(decorator.func, cst.Attribute):
+        elif isinstance(decorator, cst.Call) and isinstance(
+            decorator.func, cst.Attribute
+        ):
             return self._is_pytest_mark(decorator.func, mark_name)
         return False
 
@@ -151,22 +186,30 @@ class PytestMarkAdder(cst.CSTTransformer):
         """Create a pytest mark decorator."""
         # Base: pytest.mark.{mark_name}
         mark_attr = cst.Attribute(
-            value=cst.Attribute(value=cst.Name("pytest"), attr=cst.Name("mark")), attr=cst.Name(self.mark_name)
+            value=cst.Attribute(value=cst.Name("pytest"), attr=cst.Name("mark")),
+            attr=cst.Name(self.mark_name),
         )
         decorator = mark_attr
         return cst.Decorator(decorator=decorator)
 
 
 class AutouseFixtureModifier(cst.CSTTransformer):
-    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:
+    def leave_FunctionDef(
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+    ) -> cst.FunctionDef:
         # Matcher for '@fixture' or '@pytest.fixture'
         for decorator in original_node.decorators:
             dec = decorator.decorator
 
             if isinstance(dec, cst.Call):
                 func_name = ""
-                if isinstance(dec.func, cst.Attribute) and isinstance(dec.func.value, cst.Name):
-                    if dec.func.attr.value == "fixture" and dec.func.value.value == "pytest":
+                if isinstance(dec.func, cst.Attribute) and isinstance(
+                    dec.func.value, cst.Name
+                ):
+                    if (
+                        dec.func.attr.value == "fixture"
+                        and dec.func.value.value == "pytest"
+                    ):
                         func_name = "pytest.fixture"
                 elif isinstance(dec.func, cst.Name) and dec.func.value == "fixture":
                     func_name = "fixture"
@@ -186,15 +229,21 @@ class AutouseFixtureModifier(cst.CSTTransformer):
                             else_block = cst.Else(body=updated_node.body)
 
                             # 2. Create the new 'if' block that will exit the fixture early.
-                            if_test = cst.parse_expression('request.node.get_closest_marker("codeflash_no_autouse")')
+                            if_test = cst.parse_expression(
+                                'request.node.get_closest_marker("codeflash_no_autouse")'
+                            )
                             yield_statement = cst.parse_statement("yield")
                             if_body = cst.IndentedBlock(body=[yield_statement])
 
                             # 3. Construct the full if/else statement.
-                            new_if_statement = cst.If(test=if_test, body=if_body, orelse=else_block)
+                            new_if_statement = cst.If(
+                                test=if_test, body=if_body, orelse=else_block
+                            )
 
                             # 4. Replace the entire function's body with our new single statement.
-                            return updated_node.with_changes(body=cst.IndentedBlock(body=[new_if_statement]))
+                            return updated_node.with_changes(
+                                body=cst.IndentedBlock(body=[new_if_statement])
+                            )
         return updated_node
 
 
@@ -223,7 +272,6 @@ def modify_autouse_fixture(test_paths: list[Path]) -> dict[Path, list[str]]:
     return file_content_map
 
 
-# # reuse line profiler utils to add decorator and import to test fns
 def add_custom_marker_to_all_tests(test_paths: list[Path]) -> None:
     for test_path in test_paths:
         # read file
@@ -231,7 +279,9 @@ def add_custom_marker_to_all_tests(test_paths: list[Path]) -> None:
         module = cst.parse_module(file_content)
         importadder = ImportAdder("import pytest")
         modified_module = module.visit(importadder)
-        modified_module = cst.parse_module(sort_imports(code=modified_module.code, float_to_top=True))
+        modified_module = cst.parse_module(
+            sort_imports(code=modified_module.code, float_to_top=True)
+        )
         pytest_mark_adder = PytestMarkAdder("codeflash_no_autouse")
         modified_module = modified_module.visit(pytest_mark_adder)
         test_path.write_text(modified_module.code, encoding="utf-8")
@@ -246,7 +296,9 @@ class OptimFunctionCollector(cst.CSTVisitor):
         function_names: set[tuple[str | None, str]] | None = None,
     ) -> None:
         super().__init__()
-        self.preexisting_objects = preexisting_objects if preexisting_objects is not None else set()
+        self.preexisting_objects = (
+            preexisting_objects if preexisting_objects is not None else set()
+        )
 
         self.function_names = function_names  # set of (class_name, function_name)
         self.modified_functions: dict[
@@ -299,17 +351,25 @@ class OptimFunctionCollector(cst.CSTVisitor):
 class OptimFunctionReplacer(cst.CSTTransformer):
     def __init__(
         self,
-        modified_functions: Optional[dict[tuple[str | None, str], cst.FunctionDef]] = None,
+        modified_functions: Optional[
+            dict[tuple[str | None, str], cst.FunctionDef]
+        ] = None,
         new_classes: Optional[list[cst.ClassDef]] = None,
         new_functions: Optional[list[cst.FunctionDef]] = None,
         new_class_functions: Optional[dict[str, list[cst.FunctionDef]]] = None,
         modified_init_functions: Optional[dict[str, cst.FunctionDef]] = None,
     ) -> None:
         super().__init__()
-        self.modified_functions = modified_functions if modified_functions is not None else {}
+        self.modified_functions = (
+            modified_functions if modified_functions is not None else {}
+        )
         self.new_functions = new_functions if new_functions is not None else []
         self.new_classes = new_classes if new_classes is not None else []
-        self.new_class_functions = new_class_functions if new_class_functions is not None else defaultdict(list)
+        self.new_class_functions = (
+            new_class_functions
+            if new_class_functions is not None
+            else defaultdict(list)
+        )
         self.modified_init_functions: dict[str, cst.FunctionDef] = (
             modified_init_functions if modified_init_functions is not None else {}
         )
@@ -318,11 +378,18 @@ class OptimFunctionReplacer(cst.CSTTransformer):
     def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:  # noqa: ARG002
         return False
 
-    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:
+    def leave_FunctionDef(
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+    ) -> cst.FunctionDef:
         if (self.current_class, original_node.name.value) in self.modified_functions:
-            node = self.modified_functions[(self.current_class, original_node.name.value)]
+            node = self.modified_functions[
+                (self.current_class, original_node.name.value)
+            ]
             return updated_node.with_changes(body=node.body, decorators=node.decorators)
-        if original_node.name.value == "__init__" and self.current_class in self.modified_init_functions:
+        if (
+            original_node.name.value == "__init__"
+            and self.current_class in self.modified_init_functions
+        ):
             return self.modified_init_functions[self.current_class]
 
         return updated_node
@@ -333,18 +400,25 @@ class OptimFunctionReplacer(cst.CSTTransformer):
         self.current_class = node.name.value
         return True
 
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.ClassDef:
+    def leave_ClassDef(
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+    ) -> cst.ClassDef:
         if self.current_class and self.current_class == original_node.name.value:
             self.current_class = None
             if original_node.name.value in self.new_class_functions:
                 return updated_node.with_changes(
                     body=updated_node.body.with_changes(
-                        body=(list(updated_node.body.body) + list(self.new_class_functions[original_node.name.value]))
+                        body=(
+                            list(updated_node.body.body)
+                            + list(self.new_class_functions[original_node.name.value])
+                        )
                     )
                 )
         return updated_node
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:  # noqa: ARG002
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:  # noqa: ARG002
         node = updated_node
         max_function_index = None
         max_class_index = None
@@ -355,25 +429,45 @@ class OptimFunctionReplacer(cst.CSTTransformer):
                 max_class_index = index
 
         if self.new_classes:
-            existing_class_names = {_node.name.value for _node in node.body if isinstance(_node, cst.ClassDef)}
+            existing_class_names = {
+                _node.name.value
+                for _node in node.body
+                if isinstance(_node, cst.ClassDef)
+            }
 
             unique_classes = [
-                new_class for new_class in self.new_classes if new_class.name.value not in existing_class_names
+                new_class
+                for new_class in self.new_classes
+                if new_class.name.value not in existing_class_names
             ]
             if unique_classes:
-                new_classes_insertion_idx = max_class_index or find_insertion_index_after_imports(node)
+                new_classes_insertion_idx = (
+                    max_class_index or find_insertion_index_after_imports(node)
+                )
                 new_body = list(
-                    chain(node.body[:new_classes_insertion_idx], unique_classes, node.body[new_classes_insertion_idx:])
+                    chain(
+                        node.body[:new_classes_insertion_idx],
+                        unique_classes,
+                        node.body[new_classes_insertion_idx:],
+                    )
                 )
                 node = node.with_changes(body=new_body)
 
         if max_function_index is not None:
             node = node.with_changes(
-                body=(*node.body[: max_function_index + 1], *self.new_functions, *node.body[max_function_index + 1 :])
+                body=(
+                    *node.body[: max_function_index + 1],
+                    *self.new_functions,
+                    *node.body[max_function_index + 1 :],
+                )
             )
         elif max_class_index is not None:
             node = node.with_changes(
-                body=(*node.body[: max_class_index + 1], *self.new_functions, *node.body[max_class_index + 1 :])
+                body=(
+                    *node.body[: max_class_index + 1],
+                    *self.new_functions,
+                    *node.body[max_class_index + 1 :],
+                )
             )
         else:
             node = node.with_changes(body=(*self.new_functions, *node.body))
@@ -427,7 +521,9 @@ def replace_functions_and_add_imports(
 ) -> str:
     return add_needed_imports_from_module(
         optimized_code,
-        replace_functions_in_file(source_code, function_names, optimized_code, preexisting_objects),
+        replace_functions_in_file(
+            source_code, function_names, optimized_code, preexisting_objects
+        ),
         module_abspath,
         module_abspath,
         project_root_path,
@@ -443,14 +539,18 @@ def replace_function_definitions_in_module(
     should_add_global_assignments: bool = True,  # noqa: FBT001, FBT002
 ) -> bool:
     source_code: str = module_abspath.read_text(encoding="utf8")
-    code_to_apply = get_optimized_code_for_module(module_abspath.relative_to(project_root_path), optimized_code)
+    code_to_apply = get_optimized_code_for_module(
+        module_abspath.relative_to(project_root_path), optimized_code
+    )
 
     new_code: str = replace_functions_and_add_imports(
         # adding the global assignments before replacing the code, not after
         # because of an "edge case" where the optimized code intoduced a new import and a global assignment using that import
         # and that import wasn't used before, so it was ignored when calling AddImportsVisitor.add_needed_import inside replace_functions_and_add_imports (because the global assignment wasn't added yet)
         # this was added at https://github.com/codeflash-ai/codeflash/pull/448
-        add_global_assignments(code_to_apply, source_code) if should_add_global_assignments else source_code,
+        add_global_assignments(code_to_apply, source_code)
+        if should_add_global_assignments
+        else source_code,
         function_names,
         code_to_apply,
         module_abspath,
@@ -463,7 +563,9 @@ def replace_function_definitions_in_module(
     return True
 
 
-def get_optimized_code_for_module(relative_path: Path, optimized_code: CodeStringsMarkdown) -> str:
+def get_optimized_code_for_module(
+    relative_path: Path, optimized_code: CodeStringsMarkdown
+) -> str:
     file_to_code_context = optimized_code.file_to_path()
     module_optimized_code = file_to_code_context.get(str(relative_path))
     if module_optimized_code is None:
@@ -501,11 +603,17 @@ def replace_optimized_code(
         for candidate in candidates
     }
     callee_original_code = {
-        module_path: validated_original_code[module_path].source_code for module_path in callee_module_paths
+        module_path: validated_original_code[module_path].source_code
+        for module_path in callee_module_paths
     }
     intermediate_original_code: dict[str, dict[Path, str]] = {
         candidate.optimization_id: (
-            callee_original_code | {function_to_optimize.file_path: initial_optimized_code[candidate.optimization_id]}
+            callee_original_code
+            | {
+                function_to_optimize.file_path: initial_optimized_code[
+                    candidate.optimization_id
+                ]
+            }
         )
         for candidate in candidates
     }
@@ -518,7 +626,8 @@ def replace_optimized_code(
                     [
                         callee.qualified_name
                         for callee in code_context.helper_functions
-                        if callee.file_path == module_path and callee.jedi_definition.type != "class"
+                        if callee.file_path == module_path
+                        and callee.jedi_definition.type != "class"
                     ]
                 ),
                 candidate.source_code,
@@ -542,7 +651,9 @@ def is_optimized_module_code_zero_diff(
 ) -> dict[str, dict[Path, bool]]:
     return {
         candidate.optimization_id: {
-            callee_module_path: normalize_code(optimized_code[candidate.optimization_id][callee_module_path])
+            callee_module_path: normalize_code(
+                optimized_code[candidate.optimization_id][callee_module_path]
+            )
             == validated_original_code[callee_module_path].normalized_code
             for callee_module_path in module_paths
         }
@@ -560,9 +671,9 @@ def candidates_with_diffs(
         candidate
         for candidate in candidates
         if not all(
-            is_optimized_module_code_zero_diff(candidates, validated_original_code, optimized_code, module_paths)[
-                candidate.optimization_id
-            ].values()
+            is_optimized_module_code_zero_diff(
+                candidates, validated_original_code, optimized_code, module_paths
+            )[candidate.optimization_id].values()
         )
     ]
 
@@ -584,7 +695,10 @@ def function_to_optimize_original_worktree_fqn(
     function_to_optimize: FunctionToOptimize, worktrees: list[Path], git_root: Path
 ) -> str:
     return (
-        str(worktrees[0].name / function_to_optimize.file_path.relative_to(git_root).with_suffix("")).replace("/", ".")
+        str(
+            worktrees[0].name
+            / function_to_optimize.file_path.relative_to(git_root).with_suffix("")
+        ).replace("/", ".")
         + "."
         + function_to_optimize.qualified_name
     )

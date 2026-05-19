@@ -36,7 +36,6 @@ dependencies = [
     "platformdirs>=4.3.7",
     "requests>=2.28.0",
     "codeflash-benchmark",
-    "filelock",
     "pytest-asyncio>=1.2.0",
 ]
 
