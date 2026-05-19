@@ -8,11 +8,7 @@
     "dark": "#1D4ED8"
   },
   "favicon": "/favicon.ico",
-  "integrations": {
-    "posthog": {
-      "apiKey": "phc_aUO790jHd7z1SXwsYCz8dRApxueplZlZWeDSpKc5hol"
-    }
-  },
+  "integrations": {},
   "navigation": {
     "tabs": [
       {
