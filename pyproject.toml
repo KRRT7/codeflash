@@ -44,6 +44,14 @@ dependencies = [
     "pytest-asyncio>=1.2.0",
 ]
 
+[tool.codeflash]
+# All paths are relative to this pyproject.toml's directory.
+module-root = "src/codeflash"
+tests-root = "tests"
+ignore-paths = []
+
+formatter-cmds = ["disabled"]
+
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
 markers = ["ci_skip: mark test to skip in CI environment"]

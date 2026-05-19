@@ -1441,6 +1441,7 @@ def configure_pyproject_toml(
         codeflash_section["ignore-paths"] = setup_info.ignore_paths
         if setup_info.git_remote not in ["", "origin"]:
             codeflash_section["git-remote"] = setup_info.git_remote
+        codeflash_section.add(tomlkit.nl())
 
     formatter = setup_info.formatter
 
