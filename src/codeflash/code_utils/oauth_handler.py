@@ -14,7 +14,6 @@ import time
 import urllib.parse
 import webbrowser
 
-import click
 import requests
 
 from codeflash.api.cfapi import get_cfapi_base_urls
@@ -50,7 +49,8 @@ class OAuthHandler:
                     self.end_headers()
 
                     status = {
-                        "success": oauth_handler.token_error is None and oauth_handler.code is not None,
+                        "success": oauth_handler.token_error is None
+                        and oauth_handler.code is not None,
                         "error": oauth_handler.token_error,
                     }
                     self.wfile.write(json.dumps(status).encode())
@@ -601,9 +601,16 @@ class OAuthHandler:
     def generate_pkce_pair() -> tuple[str, str]:
         """Generate PKCE code verifier and challenge."""
         code_verifier = "".join(
-            secrets.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~") for _ in range(64)
+            secrets.choice(
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~"
+            )
+            for _ in range(64)
         )
-        code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest()).rstrip(b"=").decode()
+        code_challenge = (
+            base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest())
+            .rstrip(b"=")
+            .decode()
+        )
         return code_verifier, code_challenge
 
     def start_local_server(self, port: int) -> http.server.HTTPServer:
@@ -620,9 +627,13 @@ class OAuthHandler:
 
         return httpd
 
-    def exchange_code_for_token(self, code: str, code_verifier: str, redirect_uri: str) -> str | None:
+    def exchange_code_for_token(
+        self, code: str, code_verifier: str, redirect_uri: str
+    ) -> str | None:
         """Exchange authorization code for API token."""
-        token_url = f"{get_cfapi_base_urls().cfwebapp_base_url}/codeflash/auth/oauth/token"
+        token_url = (
+            f"{get_cfapi_base_urls().cfwebapp_base_url}/codeflash/auth/oauth/token"
+        )
         data = {
             "grant_type": "authorization_code",
             "code": code,
@@ -716,11 +727,16 @@ def perform_oauth_signin() -> str | None:
     # Setup PKCE
     port = oauth.get_free_port()
     code_verifier, code_challenge = oauth.generate_pkce_pair()
-    state = "".join(secrets.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") for _ in range(16))
+    state = "".join(
+        secrets.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        for _ in range(16)
+    )
 
     # Build authorization URLs for both local and remote
     local_redirect_uri = f"http://localhost:{port}/callback"
-    remote_redirect_uri = f"{get_cfapi_base_urls().cfwebapp_base_url}/codeflash/auth/callback"
+    remote_redirect_uri = (
+        f"{get_cfapi_base_urls().cfwebapp_base_url}/codeflash/auth/callback"
+    )
 
     base_url = f"{get_cfapi_base_urls().cfwebapp_base_url}/codeflash/auth"
     params = (
@@ -730,26 +746,30 @@ def perform_oauth_signin() -> str | None:
         f"&code_challenge_method=sha256"
         f"&state={state}"
     )
-    local_auth_url = f"{base_url}?{params}&redirect_uri={urllib.parse.quote(local_redirect_uri)}"
-    remote_auth_url = f"{base_url}?{params}&redirect_uri={urllib.parse.quote(remote_redirect_uri)}"
+    local_auth_url = (
+        f"{base_url}?{params}&redirect_uri={urllib.parse.quote(local_redirect_uri)}"
+    )
+    remote_auth_url = (
+        f"{base_url}?{params}&redirect_uri={urllib.parse.quote(remote_redirect_uri)}"
+    )
 
     # Start local server
     try:
         httpd = oauth.start_local_server(port)
     except Exception:
-        click.echo("❌ Failed to start local server.")
+        print("❌ Failed to start local server.")
         return None
 
     if should_attempt_browser_launch():
         # Try to open browser
-        click.echo("🌐 Opening browser to sign in to CodeFlash…")
+        print("🌐 Opening browser to sign in to CodeFlash…")
         with contextlib.suppress(Exception):
             webbrowser.open(local_auth_url)
 
     # Show remote URL and start input thread
-    click.echo("\n📋 If browser didn't open, visit this URL:")
-    click.echo(f"\n{remote_auth_url}\n")
-    click.echo("Paste code here if prompted > ", nl=False)
+    print("\n📋 If browser didn't open, visit this URL:")
+    print(f"\n{remote_auth_url}\n")
+    print("Paste code here if prompted > ", end="", flush=True)
 
     # Start thread to wait for manual input
     input_thread = threading.Thread(target=_wait_for_manual_code_input, args=(oauth,))
@@ -763,7 +783,7 @@ def perform_oauth_signin() -> str | None:
 
     if not oauth.is_complete:
         httpd.shutdown()
-        click.echo("\n❌ Authentication timed out.")
+        print("\n❌ Authentication timed out.")
         return None
 
     # Check which method completed
@@ -771,21 +791,25 @@ def perform_oauth_signin() -> str | None:
 
     if oauth.manual_code:
         # Manual code was entered
-        api_key = oauth.exchange_code_for_token(oauth.manual_code, code_verifier, remote_redirect_uri)
+        api_key = oauth.exchange_code_for_token(
+            oauth.manual_code, code_verifier, remote_redirect_uri
+        )
     elif oauth.code:
         # Browser callback received
         if oauth.error or not oauth.state or oauth.state != state:
             httpd.shutdown()
-            click.echo("\n❌ Unauthorized.")
+            print("\n❌ Unauthorized.")
             return None
 
-        api_key = oauth.exchange_code_for_token(oauth.code, code_verifier, local_redirect_uri)
+        api_key = oauth.exchange_code_for_token(
+            oauth.code, code_verifier, local_redirect_uri
+        )
 
     # Cleanup
     time.sleep(3)
     httpd.shutdown()
 
     if not api_key:
-        click.echo("\n❌ Authentication failed.")
-    click.echo("\n")
+        print("\n❌ Authentication failed.")
+    print("\n")
     return api_key
