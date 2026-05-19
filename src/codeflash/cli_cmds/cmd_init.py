@@ -11,8 +11,6 @@ from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 import click
 import git
-import inquirer
-import inquirer.themes
 import tomlkit
 from git import InvalidGitRepositoryError, Repo
 from pydantic.dataclasses import dataclass
@@ -231,19 +229,6 @@ def should_modify_pyproject_toml() -> tuple[bool, dict[str, Any] | None]:
     ), config
 
 
-# Custom theme for better UX
-class CodeflashTheme(inquirer.themes.Default):
-    def __init__(self) -> None:
-        super().__init__()
-        self.Question.mark_color = inquirer.themes.term.yellow
-        self.Question.brackets_color = inquirer.themes.term.bright_blue
-        self.Question.default_color = inquirer.themes.term.bright_cyan
-        self.List.selection_color = inquirer.themes.term.bright_blue
-        self.Checkbox.selection_color = inquirer.themes.term.bright_blue
-        self.Checkbox.selected_icon = "✅"
-        self.Checkbox.unselected_icon = "⬜"
-
-
 class CommonSections(Enum):
     module_root = "module_root"
     tests_root = "tests_root"
@@ -309,24 +294,16 @@ def collect_setup_info() -> CLISetupInfo:
     print(
         "📁 Let's identify your Python module directory.\n\nThis is usually the top-level directory containing all your Python source code."
     )
-    questions = [
-        inquirer.List(
-            "module_root",
-            message="Which Python module do you want me to optimize?",
-            choices=module_subdir_options,
-            default=(
-                project_name
-                if project_name in module_subdir_options
-                else module_subdir_options[0]
-            ),
-            carousel=True,
-        )
-    ]
-
-    answers = inquirer.prompt(questions, theme=CodeflashTheme())
-    if not answers:
-        apologize_and_exit()
-    module_root_answer = answers["module_root"]
+    module_root_answer = click.prompt(
+        "Which Python module do you want me to optimize?",
+        type=click.Choice(module_subdir_options),
+        default=(
+            project_name
+            if project_name in module_subdir_options
+            else module_subdir_options[0]
+        ),
+        show_choices=True,
+    )
     if module_root_answer == curdir_option:
         module_root = "."
     elif module_root_answer == custom_dir_option:
@@ -337,21 +314,9 @@ def collect_setup_info() -> CLISetupInfo:
         # Retry loop for custom module root path
         module_root = None
         while module_root is None:
-            custom_questions = [
-                inquirer.Path(
-                    "custom_path",
-                    message="Enter the path to your module directory",
-                    path_type=inquirer.Path.DIRECTORY,
-                    exists=True,
-                )
-            ]
-
-            custom_answers = inquirer.prompt(custom_questions, theme=CodeflashTheme())
-            if not custom_answers:
-                apologize_and_exit()
-                return None  # unreachable but satisfies type checker
-
-            custom_path_str = str(custom_answers["custom_path"])
+            custom_path_str = click.prompt(
+                "Enter the path to your module directory",
+            )
             # Validate the path is safe
             is_valid, error_msg = validate_relative_directory_path(custom_path_str)
             if not is_valid:
@@ -378,20 +343,12 @@ def collect_setup_info() -> CLISetupInfo:
         "🧪 Now let's locate your test directory.\n\nThis is where all your test files are stored. If you don't have tests yet, I can create a directory for you!"
     )
 
-    tests_questions = [
-        inquirer.List(
-            "tests_root",
-            message="Where are your tests located?",
-            choices=test_subdir_options,
-            default=(default_tests_subdir or test_subdir_options[0]),
-            carousel=True,
-        )
-    ]
-
-    tests_answers = inquirer.prompt(tests_questions, theme=CodeflashTheme())
-    if not tests_answers:
-        apologize_and_exit()
-    tests_root_answer = tests_answers["tests_root"]
+    tests_root_answer = click.prompt(
+        "Where are your tests located?",
+        type=click.Choice(test_subdir_options),
+        default=(default_tests_subdir or test_subdir_options[0]),
+        show_choices=True,
+    )
 
     if tests_root_answer == create_for_me_option:
         tests_root = Path(curdir) / (default_tests_subdir or "tests")
@@ -405,23 +362,9 @@ def collect_setup_info() -> CLISetupInfo:
         # Retry loop for custom tests root path
         tests_root = None
         while tests_root is None:
-            custom_tests_questions = [
-                inquirer.Path(
-                    "custom_tests_path",
-                    message="Enter the path to your tests directory",
-                    path_type=inquirer.Path.DIRECTORY,
-                    exists=True,
-                )
-            ]
-
-            custom_tests_answers = inquirer.prompt(
-                custom_tests_questions, theme=CodeflashTheme()
+            custom_tests_path_str = click.prompt(
+                "Enter the path to your tests directory",
             )
-            if not custom_tests_answers:
-                apologize_and_exit()
-                return None  # unreachable but satisfies type checker
-
-            custom_tests_path_str = str(custom_tests_answers["custom_tests_path"])
             # Validate the path is safe
             is_valid, error_msg = validate_relative_directory_path(
                 custom_tests_path_str
@@ -446,43 +389,16 @@ def collect_setup_info() -> CLISetupInfo:
 
     benchmarks_root = None
 
-    # TODO: Implement other benchmark framework options
-    # if benchmarks_root:
-    #     benchmarks_root = benchmarks_root.relative_to(curdir)
-    #
-    #     # Ask about benchmark framework
-    #     benchmark_framework_options = ["pytest-benchmark", "asv (Airspeed Velocity)", "custom/other"]
-    #     benchmark_framework = inquirer_wrapper(
-    #         inquirer.list_input,
-    #         message="Which benchmark framework do you use?",
-    #         choices=benchmark_framework_options,
-    #         default=benchmark_framework_options[0],
-    #         carousel=True,
-    #     )
-
     print(
         "🎨 Let's configure your code formatter.\n\nCode formatters help maintain consistent code style. Codeflash will use this to format optimized code."
     )
 
-    formatter_questions = [
-        inquirer.List(
-            "formatter",
-            message="Which code formatter do you use?",
-            choices=[
-                ("⚫ black", "black"),
-                ("⚡ ruff", "ruff"),
-                ("🔧 other", "other"),
-                ("❌ don't use a formatter", "don't use a formatter"),
-            ],
-            default="black",
-            carousel=True,
-        )
-    ]
-
-    formatter_answers = inquirer.prompt(formatter_questions, theme=CodeflashTheme())
-    if not formatter_answers:
-        apologize_and_exit()
-    formatter = formatter_answers["formatter"]
+    formatter = click.prompt(
+        "Which code formatter do you use?",
+        type=click.Choice(["black", "ruff", "other", "don't use a formatter"]),
+        default="black",
+        show_choices=True,
+    )
 
     git_remote = ""
     try:
@@ -494,19 +410,11 @@ def collect_setup_info() -> CLISetupInfo:
                     "🔗 Configure Git Remote for Pull Requests.\n\nCodeflash will use this remote to create pull requests with optimized code."
                 )
 
-                git_questions = [
-                    inquirer.List(
-                        "git_remote",
-                        message="Which git remote should Codeflash use for Pull Requests?",
-                        choices=git_remotes,
-                        default="origin",
-                        carousel=True,
-                    )
-                ]
-
-                git_answers = inquirer.prompt(git_questions, theme=CodeflashTheme())
-                git_remote = (
-                    git_answers["git_remote"] if git_answers else git_remotes[0]
+                git_remote = click.prompt(
+                    "Which git remote should Codeflash use for Pull Requests?",
+                    type=click.Choice(git_remotes),
+                    default="origin",
+                    show_choices=True,
                 )
             else:
                 git_remote = git_remotes[0]
@@ -563,18 +471,10 @@ def check_for_toml_or_setup_file() -> str | None:
         )
 
         # Create a pyproject.toml file because it doesn't exist
-        toml_questions = [
-            inquirer.Confirm(
-                "create_toml",
-                message="Create pyproject.toml in the current directory?",
-                default=True,
-            )
-        ]
-
-        toml_answers = inquirer.prompt(toml_questions, theme=CodeflashTheme())
-        if not toml_answers:
-            apologize_and_exit()
-        create_toml = toml_answers["create_toml"]
+        create_toml = click.confirm(
+            "Create pyproject.toml in the current directory?",
+            default=True,
+        )
         if create_toml:
             create_empty_pyproject_toml(pyproject_toml_path)
     click.echo()
@@ -660,19 +560,9 @@ def install_github_actions(override_formatter_check: bool = False) -> None:  # n
                 "📊 Benchmark Mode Available\n\nI noticed you've configured a benchmarks_root in your config. Benchmark mode will show the performance impact of Codeflash's optimizations on your benchmarks."
             )
 
-            benchmark_questions = [
-                inquirer.Confirm(
-                    "benchmark_mode",
-                    message="Run GitHub Actions in benchmark mode?",
-                    default=True,
-                )
-            ]
-
-            benchmark_answers = inquirer.prompt(
-                benchmark_questions, theme=CodeflashTheme()
-            )
-            benchmark_mode = (
-                benchmark_answers["benchmark_mode"] if benchmark_answers else False
+            benchmark_mode = click.confirm(
+                "Run GitHub Actions in benchmark mode?",
+                default=True,
             )
 
         # Show prompt only if workflow doesn't exist locally
@@ -680,16 +570,11 @@ def install_github_actions(override_formatter_check: bool = False) -> None:  # n
             "🤖 GitHub Actions Setup\n\nGitHub Actions will automatically optimize your code in every pull request. This is the recommended way to use Codeflash for continuous optimization."
         )
 
-        creation_questions = [
-            inquirer.Confirm(
-                "confirm_creation",
-                message="Set up GitHub Actions for continuous optimization? We'll open a pull request with the workflow file.",
-                default=True,
-            )
-        ]
-
-        creation_answers = inquirer.prompt(creation_questions, theme=CodeflashTheme())
-        if not creation_answers or not creation_answers["confirm_creation"]:
+        confirm_creation = click.confirm(
+            "Set up GitHub Actions for continuous optimization? We'll open a pull request with the workflow file.",
+            default=True,
+        )
+        if not confirm_creation:
             print("⏩️ Skipping GitHub Actions setup.")
             return
 
@@ -1502,21 +1387,12 @@ def prompt_api_key() -> bool:
     # Prompt for authentication method
     auth_choices = ["🔐 Login in with Codeflash", "🔑 Use Codeflash API key"]
 
-    questions = [
-        inquirer.List(
-            "auth_method",
-            message="How would you like to authenticate?",
-            choices=auth_choices,
-            default=auth_choices[0],
-            carousel=True,
-        )
-    ]
-
-    answers = inquirer.prompt(questions, theme=CodeflashTheme())
-    if not answers:
-        apologize_and_exit()
-
-    method = answers["auth_method"]
+    method = click.prompt(
+        "How would you like to authenticate?",
+        type=click.Choice(auth_choices),
+        default=auth_choices[0],
+        show_choices=True,
+    )
 
     if method == auth_choices[1]:
         enter_api_key_and_save_to_rc()
