@@ -10,8 +10,6 @@ from collections import ChainMap, OrderedDict, deque
 from importlib.util import find_spec
 from typing import Any
 
-import sentry_sdk
-
 from codeflash.cli_cmds.console import logger
 from codeflash.picklepatch.pickle_placeholder import PicklePlaceholderAccessError
 
@@ -380,13 +378,10 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
             return True
         # TODO : Add other types here
         logger.warning(f"Unknown comparator input type: {type(orig)}")
-        sentry_sdk.capture_exception(RuntimeError(f"Unknown comparator input type: {type(orig)}"))
         return False  # noqa: TRY300
     except RecursionError as e:
         logger.error(f"RecursionError while comparing objects: {e}")
-        sentry_sdk.capture_exception(e)
         return False
     except Exception as e:
         logger.error(f"Error while comparing objects: {e}")
-        sentry_sdk.capture_exception(e)
         return False

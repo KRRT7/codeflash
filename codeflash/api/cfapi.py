@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import git
 import requests
-import sentry_sdk
 from pydantic.json import pydantic_encoder
 
 from codeflash.cli_cmds.console import console, logger
@@ -347,7 +346,6 @@ def get_blocklisted_functions() -> dict[str, set[str]] | dict[str, Any]:
         content: dict[str, list[str]] = req.json()
     except Exception as e:
         logger.error(f"Error getting blocklisted functions: {e}")
-        sentry_sdk.capture_exception(e)
         return {}
 
     return {Path(k).name: {v.replace("()", "") for v in values} for k, values in content.items()}
@@ -401,7 +399,7 @@ def send_completion_email() -> Response:
     try:
         owner, repo = get_repo_owner_and_name()
     except Exception as e:
-        sentry_sdk.capture_exception(e)
+        logger.error(f"Error determining repository owner and repo: {e}")
         response = requests.Response()
         response.status_code = 500
         return response

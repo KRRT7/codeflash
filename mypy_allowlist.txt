@@ -18,8 +18,6 @@ codeflash/github/PrComment.py
 codeflash/api/__init__.py
 codeflash/api/aiservice.py
 codeflash/api/cfapi.py
-codeflash/telemetry/__init__.py
-codeflash/telemetry/posthog_cf.py
 codeflash/main.py
 codeflash/code_utils/formatter.py
 codeflash/code_utils/compat.py

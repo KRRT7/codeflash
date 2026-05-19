@@ -36,7 +36,6 @@ from codeflash.code_utils.oauth_handler import perform_oauth_signin
 from codeflash.code_utils.shell_utils import get_shell_rc_path, is_powershell, save_api_key_to_rc
 from codeflash.either import is_successful
 from codeflash.lsp.helpers import is_LSP_enabled
-from codeflash.telemetry.posthog_cf import ph
 from codeflash.version import __version__ as version
 
 if TYPE_CHECKING:
@@ -63,7 +62,6 @@ class CLISetupInfo:
     ignore_paths: list[str]
     formatter: Union[str, list[str]]
     git_remote: str
-    enable_telemetry: bool
 
 
 @dataclass(frozen=True)
@@ -149,7 +147,6 @@ def init_codeflash() -> None:
         )
         console.print(completion_panel)
 
-        ph("cli-installation-successful", {"did_add_new_key": did_add_new_key})
         sys.exit(0)
     except KeyboardInterrupt:
         apologize_and_exit()
@@ -379,7 +376,6 @@ def collect_setup_info() -> CLISetupInfo:
             module_root = Path(custom_path_str)
     else:
         module_root = module_root_answer
-    ph("cli-project-root-provided")
 
     # Discover test directory
     create_for_me_option = f"🆕 Create a new tests{os.pathsep} directory for me!"
@@ -472,8 +468,6 @@ def collect_setup_info() -> CLISetupInfo:
             "It looks like your tests root is the same as your module root. This is not recommended and can lead to unexpected behavior."
         )
 
-    ph("cli-tests-root-provided")
-
     benchmarks_root = None
 
     # TODO: Implement other benchmark framework options
@@ -563,8 +557,6 @@ def collect_setup_info() -> CLISetupInfo:
     except InvalidGitRepositoryError:
         git_remote = ""
 
-    enable_telemetry = ask_for_telemetry()
-
     ignore_paths: list[str] = []
     return CLISetupInfo(
         module_root=str(module_root),
@@ -573,7 +565,6 @@ def collect_setup_info() -> CLISetupInfo:
         ignore_paths=ignore_paths,
         formatter=cast("str", formatter),
         git_remote=str(git_remote),
-        enable_telemetry=enable_telemetry,
     )
 
 
@@ -589,10 +580,8 @@ def check_for_toml_or_setup_file() -> str | None:
             pyproject_toml_content = pyproject_toml_path.read_text(encoding="utf8")
             project_name = tomlkit.parse(pyproject_toml_content)["tool"]["poetry"]["name"]
             click.echo(f"✅ I found a pyproject.toml for your project {project_name}.")
-            ph("cli-pyproject-toml-found-name")
         except Exception:
             click.echo("✅ I found a pyproject.toml for your project.")
-            ph("cli-pyproject-toml-found")
     else:
         if setup_py_path.exists():
             setup_py_content = setup_py_path.read_text(encoding="utf8")
@@ -600,10 +589,8 @@ def check_for_toml_or_setup_file() -> str | None:
             if project_name_match:
                 project_name = project_name_match.group(1)
                 click.echo(f"✅ Found setup.py for your project {project_name}")
-                ph("cli-setup-py-found-name")
             else:
                 click.echo("✅ Found setup.py.")
-                ph("cli-setup-py-found")
         toml_info_panel = Panel(
             Text(
                 f"💡 No pyproject.toml found in {curdir}.\n\n"
@@ -616,7 +603,6 @@ def check_for_toml_or_setup_file() -> str | None:
         )
         console.print(toml_info_panel)
         console.print()
-        ph("cli-no-pyproject-toml-or-setup-py")
 
         # Create a pyproject.toml file because it doesn't exist
         toml_questions = [
@@ -634,7 +620,6 @@ def check_for_toml_or_setup_file() -> str | None:
 
 
 def create_empty_pyproject_toml(pyproject_toml_path: Path) -> None:
-    ph("cli-create-pyproject-toml")
     lsp_mode = is_LSP_enabled()
     # Define a minimal pyproject.toml content
     new_pyproject_toml = tomlkit.document()
@@ -657,7 +642,6 @@ def create_empty_pyproject_toml(pyproject_toml_path: Path) -> None:
             console.print(success_panel)
             console.print("\n📍 Press any key to continue...")
             console.input()
-        ph("cli-created-pyproject-toml")
     except OSError:
         click.echo("❌ Failed to create pyproject.toml. Please check your disk permissions and available space.")
         apologize_and_exit()
@@ -667,7 +651,6 @@ def install_github_actions(override_formatter_check: bool = False) -> None:  # n
     try:
         config, _config_file_path = parse_config_file(override_formatter_check=override_formatter_check)
 
-        ph("cli-github-actions-install-started")
         try:
             repo = Repo(config["module_root"], search_parent_directories=True)
         except git.InvalidGitRepositoryError:
@@ -762,12 +745,7 @@ def install_github_actions(override_formatter_check: bool = False) -> None:  # n
                 Text("⏩️ Skipping GitHub Actions setup.", style="yellow"), title="⏩️ Skipped", border_style="yellow"
             )
             console.print(skip_panel)
-            ph("cli-github-workflow-skipped")
             return
-        ph(
-            "cli-github-optimization-confirm-workflow-creation",
-            {"confirm_creation": creation_answers["confirm_creation"]},
-        )
 
         # Generate workflow content AFTER user confirmation
         logger.info("[cmd_init.py:install_github_actions] User confirmed, generating workflow content...")
@@ -1084,7 +1062,6 @@ def install_github_actions(override_formatter_check: bool = False) -> None:  # n
         console.print(launch_panel)
         click.pause()
         console.print()
-        ph("cli-github-workflow-created")
     except KeyboardInterrupt:
         apologize_and_exit()
 
@@ -1462,8 +1439,6 @@ def configure_pyproject_toml(
         codeflash_section["module-root"] = setup_info.module_root
         codeflash_section["tests-root"] = setup_info.tests_root
         codeflash_section["ignore-paths"] = setup_info.ignore_paths
-        if not setup_info.enable_telemetry:
-            codeflash_section["disable-telemetry"] = not setup_info.enable_telemetry
         if setup_info.git_remote not in ["", "origin"]:
             codeflash_section["git-remote"] = setup_info.git_remote
 
@@ -1617,7 +1592,6 @@ def prompt_api_key() -> bool:
 
     if method == auth_choices[1]:
         enter_api_key_and_save_to_rc()
-        ph("cli-new-api-key-entered")
         return True
 
     # Perform OAuth sign-in
@@ -1641,7 +1615,6 @@ def prompt_api_key() -> bool:
         click.pause()
 
     os.environ["CODEFLASH_API_KEY"] = api_key
-    ph("cli-oauth-signin-completed")
     return True
 
 
@@ -1807,14 +1780,3 @@ def run_end_to_end_test(args: Namespace, find_common_tags_path: Path) -> None:
         logger.info("🧹 Cleaning up…")
         find_common_tags_path.unlink(missing_ok=True)
         logger.info(f"🗑️  Deleted {find_common_tags_path}")
-
-
-def ask_for_telemetry() -> bool:
-    """Prompt the user to enable or disable telemetry."""
-    from rich.prompt import Confirm
-
-    return Confirm.ask(
-        "⚡️ Help us improve Codeflash by sharing anonymous usage data (e.g. errors encountered)?",
-        default=True,
-        show_default=True,
-    )

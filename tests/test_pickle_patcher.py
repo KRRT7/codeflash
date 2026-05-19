@@ -364,7 +364,6 @@ def test_run_and_parse_picklepatch() -> None:
         opt = Optimizer(
             Namespace(
                 project_root=project_root,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 pytest_cmd="pytest",
                 experiment_id=None,

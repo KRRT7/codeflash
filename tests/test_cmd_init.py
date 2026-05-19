@@ -96,7 +96,6 @@ def test_configure_pyproject_toml_for_cli(temp_dir: Path) -> None:
             ignore_paths=[],
             formatter="black",
             git_remote="origin",
-            enable_telemetry=False,
         )
 
         success = configure_pyproject_toml(config, pyproject_path)
@@ -110,7 +109,7 @@ def test_configure_pyproject_toml_for_cli(temp_dir: Path) -> None:
 module-root = "."
 tests-root = "tests"
 ignore-paths = []
-disable-telemetry = true
+
 formatter-cmds = ["black $file"]
 """
         )

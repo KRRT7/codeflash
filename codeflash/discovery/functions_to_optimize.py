@@ -28,7 +28,6 @@ from codeflash.code_utils.git_utils import get_git_diff, get_repo_owner_and_name
 from codeflash.discovery.discover_unit_tests import discover_unit_tests
 from codeflash.lsp.helpers import is_LSP_enabled
 from codeflash.models.models import FunctionParent
-from codeflash.telemetry.posthog_cf import ph
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -241,7 +240,6 @@ def get_functions_to_optimize(
         else:
             logger.info("Finding all functions modified in the current git diff ...")
             console.rule()
-            ph("cli-optimizing-git-diff")
             functions = get_functions_within_git_diff(uncommitted_changes=False)
         filtered_modified_functions, functions_count = filter_functions(
             functions, test_cfg.tests_root, ignore_paths, project_root, module_root, previous_checkpoint_functions

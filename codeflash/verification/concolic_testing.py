@@ -13,7 +13,6 @@ from codeflash.code_utils.concolic_utils import clean_concolic_tests
 from codeflash.code_utils.static_analysis import has_typed_parameters
 from codeflash.discovery.discover_unit_tests import discover_unit_tests
 from codeflash.lsp.helpers import is_LSP_enabled
-from codeflash.telemetry.posthog_cf import ph
 from codeflash.verification.verification_utils import TestConfig
 
 if TYPE_CHECKING:
@@ -88,7 +87,6 @@ def generate_concolic_tests(
                 f"concolic unit test case{'s' if num_discovered_concolic_tests != 1 else ''} "
             )
             console.rule()
-            ph("cli-optimize-concolic-tests", {"num_tests": num_discovered_concolic_tests})
 
         else:
             logger.debug(f"Error running CrossHair Cover {': ' + cover_result.stderr if cover_result.stderr else '.'}")

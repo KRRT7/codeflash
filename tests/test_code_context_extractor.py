@@ -440,7 +440,6 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -690,7 +689,6 @@ class HelperClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -788,7 +786,6 @@ class HelperClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -884,7 +881,6 @@ class HelperClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -980,7 +976,6 @@ class HelperClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -1032,7 +1027,6 @@ class HelperClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -1084,7 +1078,6 @@ class HelperClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -1649,7 +1642,6 @@ def outside_method():
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -1918,7 +1910,6 @@ def get_system_details():
         opt = Optimizer(
             Namespace(
                 project_root=project_root,
-                disable_telemetry=True,
                 tests_root="tests",
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -2166,7 +2157,6 @@ def get_system_details():
         opt = Optimizer(
             Namespace(
                 project_root=project_root,
-                disable_telemetry=True,
                 tests_root="tests",
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -2300,7 +2290,6 @@ def standalone_function():
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -2380,7 +2369,6 @@ class OuterClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -2432,7 +2420,6 @@ class TestClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -2485,7 +2472,6 @@ class TestClass:
     opt1 = Optimizer(
         Namespace(
             project_root=file_path1.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -2496,7 +2482,6 @@ class TestClass:
     opt2 = Optimizer(
         Namespace(
             project_root=file_path2.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -2541,7 +2526,6 @@ class SimpleClass:
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -2776,7 +2760,6 @@ def target_function():
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -2856,7 +2839,6 @@ def dump_layout(layout_type, layout):
     opt = Optimizer(
         Namespace(
             project_root=file_path.parent.resolve(),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",

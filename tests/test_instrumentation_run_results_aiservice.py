@@ -146,7 +146,6 @@ def test_single_element_list():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -289,7 +288,6 @@ def test_single_element_list():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -380,7 +378,6 @@ class BubbleSorter:
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -434,7 +431,6 @@ class BubbleSorter:
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",

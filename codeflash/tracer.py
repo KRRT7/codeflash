@@ -200,8 +200,6 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                 from codeflash.cli_cmds.cli import parse_args, process_pyproject_config
                 from codeflash.cli_cmds.cmd_init import CODEFLASH_LOGO
                 from codeflash.cli_cmds.console import paneled_text
-                from codeflash.telemetry import posthog_cf
-                from codeflash.telemetry.sentry import init_sentry
 
                 sys.argv = ["codeflash", "--replay-test", *replay_test_paths]
                 args = parse_args()
@@ -213,8 +211,6 @@ def main(args: Namespace | None = None) -> ArgumentParser:
 
                 args = process_pyproject_config(args)
                 args.previous_checkpoint_functions = None
-                init_sentry(not args.disable_telemetry, exclude_errors=True)
-                posthog_cf.initialize_posthog(not args.disable_telemetry)
 
                 from codeflash.optimization import optimizer
 

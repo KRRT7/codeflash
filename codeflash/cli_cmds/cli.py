@@ -180,7 +180,6 @@ def process_pyproject_config(args: Namespace) -> Namespace:
         "ignore_paths",
         "pytest_cmd",
         "formatter_cmds",
-        "disable_telemetry",
         "disable_imports_sorting",
         "git_remote",
         "override_fixtures",

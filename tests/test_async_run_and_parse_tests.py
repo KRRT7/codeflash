@@ -68,7 +68,6 @@ async def test_async_sort():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -193,7 +192,6 @@ async def test_async_class_sort():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -307,7 +305,6 @@ async def test_async_perf():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -465,7 +462,6 @@ async def async_error_function(lst):
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -563,7 +559,6 @@ async def test_async_multi():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -678,7 +673,6 @@ async def test_async_edge_cases():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -814,7 +808,6 @@ def test_sync_sort():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",
@@ -985,7 +978,6 @@ async def test_mixed_sorting():
         opt = Optimizer(
             Namespace(
                 project_root=project_root_path,
-                disable_telemetry=True,
                 tests_root=tests_root,
                 test_framework="pytest",
                 pytest_cmd="pytest",

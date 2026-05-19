@@ -24,11 +24,11 @@ class TestGitUtils(unittest.TestCase):
         assert repo_name == "repo"
 
         # Test with another GitHub SSH URL
-        mock_get_remote_url.return_value = "git@github.com:codeflash-ai/posthog.git"
+        mock_get_remote_url.return_value = "git@github.com:example-owner/example-repo.git"
         get_repo_owner_and_name.cache_clear()
         owner, repo_name = get_repo_owner_and_name()
-        assert owner == "codeflash-ai"
-        assert repo_name == "posthog"
+        assert owner == "example-owner"
+        assert repo_name == "example-repo"
 
         # Test with a URL without the .git suffix
         mock_get_remote_url.return_value = "https://github.com/owner/repo"
@@ -38,11 +38,11 @@ class TestGitUtils(unittest.TestCase):
         assert repo_name == "repo"
 
         # Test with another GitHub SSH URL
-        mock_get_remote_url.return_value = "git@github.com:codeflash-ai/posthog/"
+        mock_get_remote_url.return_value = "git@github.com:example-owner/example-repo/"
         get_repo_owner_and_name.cache_clear()
         owner, repo_name = get_repo_owner_and_name()
-        assert owner == "codeflash-ai"
-        assert repo_name == "posthog"
+        assert owner == "example-owner"
+        assert repo_name == "example-repo"
 
     @patch("codeflash.code_utils.git_utils.git.Repo")
     def test_check_running_in_git_repo_in_git_repo(self, mock_repo):

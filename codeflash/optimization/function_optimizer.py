@@ -106,7 +106,6 @@ from codeflash.result.critic import (
     throughput_gain,
 )
 from codeflash.result.explanation import Explanation
-from codeflash.telemetry.posthog_cf import ph
 from codeflash.verification.concolic_testing import generate_concolic_tests
 from codeflash.verification.equivalence import compare_test_results
 from codeflash.verification.instrument_codeflash_capture import instrument_codeflash_capture
@@ -469,7 +468,6 @@ class FunctionOptimizer:
     def can_be_optimized(self) -> Result[tuple[bool, CodeOptimizationContext, dict[Path, str]], str]:
         should_run_experiment = self.experiment_id is not None
         logger.info(f"!lsp|Function Trace ID: {self.function_trace_id}")
-        ph("cli-optimize-function-start", {"function_trace_id": self.function_trace_id})
         self.cleanup_leftover_test_return_values()
         file_name_from_test_module_name.cache_clear()
         ctx_result = self.get_code_optimization_context()
@@ -1232,9 +1230,7 @@ class FunctionOptimizer:
         )
         return executor.submit(ai_service_client.code_repair, request=request)
 
-    def log_successful_optimization(
-        self, explanation: Explanation, generated_tests: GeneratedTestsList, exp_type: str
-    ) -> None:
+    def log_successful_optimization(self, explanation: Explanation, generated_tests: GeneratedTestsList) -> None:
         if is_LSP_enabled():
             md_lines = [
                 "### ⚡️ Optimization Summary",
@@ -1293,23 +1289,6 @@ class FunctionOptimizer:
                 console.print(Group(explanation_panel, tests_panel))
             else:
                 console.print(explanation_panel)
-
-        ph(
-            "cli-optimize-success",
-            {
-                "function_trace_id": self.function_trace_id[:-4] + exp_type
-                if self.experiment_id
-                else self.function_trace_id,
-                "speedup_x": explanation.speedup_x,
-                "speedup_pct": explanation.speedup_pct,
-                "best_runtime": explanation.best_runtime_ns,
-                "original_runtime": explanation.original_runtime_ns,
-                "winning_test_results": {
-                    tt.to_name(): v
-                    for tt, v in explanation.winning_behavior_test_results.get_test_pass_fail_report_by_type().items()
-                },
-            },
-        )
 
     @staticmethod
     def write_code_and_helpers(original_code: str, original_helper_code: dict[Path, str], path: Path) -> None:
@@ -1722,14 +1701,6 @@ class FunctionOptimizer:
                 file_path_to_helper_classes=file_path_to_helper_classes,
                 exp_type=exp_type,
                 function_references=function_references,
-            )
-            ph(
-                "cli-optimize-function-finished",
-                {
-                    "function_trace_id": self.function_trace_id[:-4] + exp_type
-                    if self.experiment_id
-                    else self.function_trace_id
-                },
             )
 
             if best_optimization:

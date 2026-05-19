@@ -2986,7 +2986,6 @@ def test_code_replacement10() -> None:
     opt = Optimizer(
         Namespace(
             project_root=str(file_path.parent.resolve()),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
@@ -3037,7 +3036,7 @@ def test_code_replacement10() -> None:
     codeflash_cur.execute('CREATE TABLE IF NOT EXISTS test_results (test_module_path TEXT, test_class_name TEXT, test_function_name TEXT, function_getting_tested TEXT, loop_index INTEGER, iteration_id TEXT, runtime INTEGER, return_value BLOB, verification_type TEXT)')
     get_code_output = 'random code'
     file_path = Path(__file__).resolve()
-    opt = Optimizer(Namespace(project_root=str(file_path.parent.resolve()), disable_telemetry=True, tests_root='tests', test_framework='pytest', pytest_cmd='pytest', experiment_id=None))
+    opt = Optimizer(Namespace(project_root=str(file_path.parent.resolve()), tests_root='tests', test_framework='pytest', pytest_cmd='pytest', experiment_id=None))
     func_top_optimize = FunctionToOptimize(function_name='main_method', file_path=str(file_path), parents=[FunctionParent('MainClass', 'ClassDef')])
     with open(file_path) as f:
         original_code = f.read()

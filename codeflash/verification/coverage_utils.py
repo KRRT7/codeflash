@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, Union
 
-import sentry_sdk
 from coverage.exceptions import NoDataError
 
 from codeflash.cli_cmds.console import logger
@@ -40,7 +39,6 @@ class CoverageUtils:
 
         if not database_path.exists() or not database_path.stat().st_size:
             logger.debug(f"Coverage database {database_path} is empty or does not exist")
-            sentry_sdk.capture_message(f"Coverage database {database_path} is empty or does not exist")
             return CoverageData.create_empty(source_code_path, function_name, code_context)
         cov.load()
 
@@ -50,7 +48,7 @@ class CoverageUtils:
             try:
                 reporter.report(morfs=[source_code_path.as_posix()], outfile=f)
             except NoDataError:
-                sentry_sdk.capture_message(f"No coverage data found for {function_name} in {source_code_path}")
+                logger.debug(f"No coverage data found for {function_name} in {source_code_path}")
                 return CoverageData.create_empty(source_code_path, function_name, code_context)
         with temp_json_file.open() as f:
             original_coverage_data = json.load(f)

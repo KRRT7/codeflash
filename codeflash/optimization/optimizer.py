@@ -25,7 +25,6 @@ from codeflash.code_utils.git_worktree_utils import (
 from codeflash.code_utils.time_utils import humanize_runtime
 from codeflash.either import is_successful
 from codeflash.models.models import ValidCode
-from codeflash.telemetry.posthog_cf import ph
 from codeflash.verification.verification_utils import TestConfig
 
 if TYPE_CHECKING:
@@ -252,7 +251,6 @@ class Optimizer:
             f"Discovered {num_discovered_tests} existing unit tests and {num_discovered_replay_tests} replay tests in {(time.time() - start_time):.1f}s at {self.test_cfg.tests_root}"
         )
         console.rule()
-        ph("cli-optimize-discovered-tests", {"num_tests": num_discovered_tests})
         return function_to_tests, num_discovered_tests
 
     def display_global_ranking(
@@ -397,7 +395,6 @@ class Optimizer:
     def run(self) -> None:
         from codeflash.code_utils.checkpoint import CodeflashRunCheckpoint
 
-        ph("cli-optimize-run-start")
         logger.info("Running optimizer.")
         console.rule()
         if not env_utils.ensure_codeflash_api_key():
@@ -437,7 +434,6 @@ class Optimizer:
             tempfile.mkdtemp(dir=self.args.tests_root, prefix="codeflash_concolic_")
         )
         try:
-            ph("cli-optimize-functions-to-optimize", {"num_functions": num_optimizable_functions})
             if num_optimizable_functions == 0:
                 logger.info("No functions found to optimize. Exiting…")
                 return
@@ -518,7 +514,6 @@ class Optimizer:
                         function_optimizer.executor.shutdown(wait=True)
                         function_optimizer.cleanup_generated_files()
 
-            ph("cli-optimize-run-finished", {"optimizations_found": optimizations_found})
             if len(self.patch_files) > 0:
                 logger.info(
                     f"Created {len(self.patch_files)} patch(es) ({[str(patch_path) for patch_path in self.patch_files]})"

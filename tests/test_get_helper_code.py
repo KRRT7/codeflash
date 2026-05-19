@@ -27,7 +27,6 @@ def test_get_outside_method_helper() -> None:
     opt = Optimizer(
         Namespace(
             project_root=str(file_path.parent.resolve()),
-            disable_telemetry=True,
             tests_root="tests",
             test_framework="pytest",
             pytest_cmd="pytest",
