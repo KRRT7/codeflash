@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from codeflash.cli_cmds.logging_config import logger
+from codeflash.cli_cmds.logging_config import logger, rule
 
 
 def apologize_and_exit() -> None:

@@ -26,7 +26,7 @@ from codeflash.api.cfapi import (
     mark_optimization_success,
 )
 from codeflash.benchmarking.utils import process_benchmark_data
-from codeflash.cli_cmds.logging_config import code_print, logger, progress_bar
+from codeflash.cli_cmds.logging_config import logger, progress_bar, rule
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_extractor import get_opt_review_metrics
 from codeflash.code_utils.code_replacer import (
@@ -609,13 +609,14 @@ class FunctionOptimizer:
                 )
             )
             logger.info(f"Generated test {i + 1}/{count_tests}:")
-            code_print(
-                generated_test.generated_original_test_source,
-                file_name=f"test_{i + 1}.py",
-            )
+            rule()
+            print(generated_test.generated_original_test_source)
+            rule()
         if concolic_test_str:
             logger.info(f"Generated test {count_tests}/{count_tests}:")
-            code_print(concolic_test_str)
+            rule()
+            print(concolic_test_str)
+            rule()
 
         function_to_all_tests = {
             key: self.function_to_tests.get(key, set())
@@ -660,11 +661,9 @@ class FunctionOptimizer:
             initialization_result.unwrap()
         )
 
-        code_print(
-            code_context.read_writable_code.flat,
-            file_name=self.function_to_optimize.file_path,
-            function_name=self.function_to_optimize.function_name,
-        )
+        rule()
+        print(code_context.read_writable_code.flat)
+        rule()
 
         with progress_bar(
             f"Generating new tests and optimizations for function '{self.function_to_optimize.function_name}'",
@@ -1052,10 +1051,9 @@ class FunctionOptimizer:
 
         logger.info(f"h3|Optimization candidate {candidate_index}/{total_candidates}:")
         candidate = candidate_node.candidate
-        code_print(
-            candidate.source_code.flat,
-            file_name=f"candidate_{candidate_index}.py",
-        )
+        rule()
+        print(candidate.source_code.flat)
+        rule()
 
         # Try to replace function with optimized code
         try:
@@ -1904,11 +1902,9 @@ class FunctionOptimizer:
 
             if best_optimization:
                 logger.info("h2|Best candidate 🚀")
-                code_print(
-                    best_optimization.candidate.source_code.flat,
-                    file_name="best_candidate.py",
-                    function_name=self.function_to_optimize.function_name,
-                )
+                rule()
+                print(best_optimization.candidate.source_code.flat)
+                rule()
                 processed_benchmark_info = None
                 if self.config.benchmark:
                     processed_benchmark_info = process_benchmark_data(

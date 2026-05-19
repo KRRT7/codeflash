@@ -53,25 +53,6 @@ def rule(title: str = "") -> None:
         print("─" * width)
 
 
-def paneled_text(
-    text: str,
-    panel_args: dict[str, str | bool] | None = None,
-    text_args: dict[str, str] | None = None,
-) -> None:
-    print(text)
-
-
-def code_print(
-    code_str: str,
-    file_name: str | None = None,
-    function_name: str | None = None,
-    lsp_message_id: str | None = None,
-) -> None:
-    rule()
-    print(code_str)
-    rule()
-
-
 @contextmanager
 def progress_bar(
     message: str, *, transient: bool = False, revert_to_print: bool = False

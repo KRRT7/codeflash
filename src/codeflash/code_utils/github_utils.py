@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 from codeflash.api.cfapi import is_github_app_installed_on_repo
 from codeflash.cli_cmds.cli_common import apologize_and_exit
-from codeflash.cli_cmds.logging_config import paneled_text
 from codeflash.code_utils.compat import LF
 from codeflash.code_utils.git_utils import get_repo_owner_and_name
 
@@ -28,11 +27,8 @@ def require_github_app_or_exit(owner: str, repo: str) -> None:
             f"{LF}https://github.com/apps/codeflash-ai/installations/select_target{LF}{LF}"
             "Tip: If you want to find optimizations without opening PRs, run Codeflash with the --no-pr flag."
         )
-        paneled_text(
-            message,
-            panel_args={"title": "GitHub App Required", "border_style": "red", "expand": False},
-            text_args={"style": "bold red"},
-        )
+        print(
+            message)
         apologize_and_exit()
 
 

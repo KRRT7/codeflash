@@ -235,15 +235,11 @@ def main(args: Namespace | None = None) -> ArgumentParser:
             if not parsed_args.trace_only and replay_test_paths:
                 from codeflash.cli_cmds.cli import parse_args, process_pyproject_config
                 from codeflash.cli_cmds.cmd_init import CODEFLASH_LOGO
-                from codeflash.cli_cmds.logging_config import paneled_text
-
+                
                 sys.argv = ["codeflash", "--replay-test", *replay_test_paths]
                 args = parse_args()
-                paneled_text(
-                    CODEFLASH_LOGO,
-                    panel_args={"title": "https://codeflash.ai", "expand": False},
-                    text_args={"style": "bold gold3"},
-                )
+                print(
+                    CODEFLASH_LOGO)
 
                 args = process_pyproject_config(args)
 

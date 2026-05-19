@@ -15,7 +15,7 @@ from tempfile import TemporaryDirectory
 
 import tomlkit
 
-from codeflash.cli_cmds.logging_config import logger, paneled_text
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.config_parser import (
     find_pyproject_toml,
     get_all_closest_config_files,
@@ -476,7 +476,7 @@ def restore_conftest(path_to_content_map: dict[Path, str]) -> None:
 
 def exit_with_message(message: str, *, error_on_exit: bool = False) -> None:
     """Display an error message and exit."""
-    paneled_text(message, panel_args={"style": "red"})
+    print(message)
 
     sys.exit(1 if error_on_exit else 0)
 
