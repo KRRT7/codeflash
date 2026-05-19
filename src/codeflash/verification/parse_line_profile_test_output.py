@@ -9,14 +9,18 @@ from typing import TYPE_CHECKING, Optional
 
 import dill as pickle
 
-from codeflash.code_utils.tabulate import tabulate
+from tabulate import tabulate
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
 def show_func(
-    filename: str, start_lineno: int, func_name: str, timings: list[tuple[int, int, float]], unit: float
+    filename: str,
+    start_lineno: int,
+    func_name: str,
+    timings: list[tuple[int, int, float]],
+    unit: float,
 ) -> str:
     total_hits = sum(t[1] for t in timings)
     total_time = sum(t[2] for t in timings)
@@ -59,7 +63,11 @@ def show_func(
         if "def" in line_ or nhits != "":
             table_rows.append((nhits, time, per_hit, percent, line_))
     out_table += tabulate(
-        headers=table_cols, tabular_data=table_rows, tablefmt="pipe", colglobalalign=None, preserve_whitespace=True
+        headers=table_cols,
+        tabular_data=table_rows,
+        tablefmt="pipe",
+        colglobalalign=None,
+        preserve_whitespace=True,
     )
     out_table += "\n"
     return out_table
@@ -72,7 +80,9 @@ def show_text(stats: dict) -> str:
     stats_order = sorted(stats["timings"].items())
     # Show detailed per-line information for each function.
     for (fn, lineno, name), _timings in stats_order:
-        table_md = show_func(fn, lineno, name, stats["timings"][fn, lineno, name], stats["unit"])
+        table_md = show_func(
+            fn, lineno, name, stats["timings"][fn, lineno, name], stats["unit"]
+        )
         out_table += table_md
     return out_table
 

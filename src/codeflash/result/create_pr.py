@@ -10,9 +10,13 @@ from codeflash.api import cfapi
 from codeflash.cli_cmds.console import console, logger
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_replacer import is_zero_diff
-from codeflash.code_utils.git_utils import check_and_push_branch, get_current_branch, get_repo_owner_and_name
+from codeflash.code_utils.git_utils import (
+    check_and_push_branch,
+    get_current_branch,
+    get_repo_owner_and_name,
+)
 from codeflash.code_utils.github_utils import github_pr_url
-from codeflash.code_utils.tabulate import tabulate
+from tabulate import tabulate
 from codeflash.code_utils.time_utils import format_perf, format_time
 from codeflash.github.PrComment import FileDiffContent, PrComment
 from codeflash.result.critic import performance_gain
@@ -49,7 +53,11 @@ def existing_tests_source_for(
     # TODO confirm that original and optimized have the same keys
     all_invocation_ids = original_runtimes_all.keys() | optimized_runtimes_all.keys()
     for invocation_id in all_invocation_ids:
-        abs_path = Path(invocation_id.test_module_path.replace(".", os.sep)).with_suffix(".py").resolve()
+        abs_path = (
+            Path(invocation_id.test_module_path.replace(".", os.sep))
+            .with_suffix(".py")
+            .resolve()
+        )
         if abs_path not in non_generated_tests:
             continue
         if abs_path not in original_tests_to_runtimes:
@@ -66,13 +74,15 @@ def existing_tests_source_for(
         if qualified_name not in optimized_tests_to_runtimes[abs_path]:
             optimized_tests_to_runtimes[abs_path][qualified_name] = 0  # type: ignore[index]
         if invocation_id in original_runtimes_all:
-            original_tests_to_runtimes[abs_path][qualified_name] += min(original_runtimes_all[invocation_id])  # type: ignore[index]
+            original_tests_to_runtimes[abs_path][qualified_name] += min(
+                original_runtimes_all[invocation_id]
+            )  # type: ignore[index]
         if invocation_id in optimized_runtimes_all:
-            optimized_tests_to_runtimes[abs_path][qualified_name] += min(optimized_runtimes_all[invocation_id])  # type: ignore[index]
+            optimized_tests_to_runtimes[abs_path][qualified_name] += min(
+                optimized_runtimes_all[invocation_id]
+            )  # type: ignore[index]
     # parse into string
-    all_abs_paths = (
-        original_tests_to_runtimes.keys()
-    )  # both will have the same keys as some default values are assigned in the previous loop
+    all_abs_paths = original_tests_to_runtimes.keys()  # both will have the same keys as some default values are assigned in the previous loop
     for filename in sorted(all_abs_paths):
         all_qualified_names = original_tests_to_runtimes[
             filename
@@ -83,17 +93,27 @@ def existing_tests_source_for(
                 original_tests_to_runtimes[filename][qualified_name] != 0
                 and optimized_tests_to_runtimes[filename][qualified_name] != 0
             ):
-                print_optimized_runtime = format_time(optimized_tests_to_runtimes[filename][qualified_name])
-                print_original_runtime = format_time(original_tests_to_runtimes[filename][qualified_name])
-                print_filename = filename.resolve().relative_to(tests_root.resolve()).as_posix()
+                print_optimized_runtime = format_time(
+                    optimized_tests_to_runtimes[filename][qualified_name]
+                )
+                print_original_runtime = format_time(
+                    original_tests_to_runtimes[filename][qualified_name]
+                )
+                print_filename = (
+                    filename.resolve().relative_to(tests_root.resolve()).as_posix()
+                )
                 greater = (
                     optimized_tests_to_runtimes[filename][qualified_name]
                     > original_tests_to_runtimes[filename][qualified_name]
                 )
                 perf_gain = format_perf(
                     performance_gain(
-                        original_runtime_ns=original_tests_to_runtimes[filename][qualified_name],
-                        optimized_runtime_ns=optimized_tests_to_runtimes[filename][qualified_name],
+                        original_runtime_ns=original_tests_to_runtimes[filename][
+                            qualified_name
+                        ],
+                        optimized_runtime_ns=optimized_tests_to_runtimes[filename][
+                            qualified_name
+                        ],
                     )
                     * 100
                 )
@@ -153,19 +173,31 @@ def existing_tests_source_for(
                         ]
                     )
     output_existing += tabulate(  # type: ignore[no-untyped-call]
-        headers=headers, tabular_data=rows_existing, tablefmt="pipe", colglobalalign=None, preserve_whitespace=True
+        headers=headers,
+        tabular_data=rows_existing,
+        tablefmt="pipe",
+        colglobalalign=None,
+        preserve_whitespace=True,
     )
     output_existing += "\n"
     if len(rows_existing) == 0:
         output_existing = ""
     output_concolic += tabulate(  # type: ignore[no-untyped-call]
-        headers=headers, tabular_data=rows_concolic, tablefmt="pipe", colglobalalign=None, preserve_whitespace=True
+        headers=headers,
+        tabular_data=rows_concolic,
+        tablefmt="pipe",
+        colglobalalign=None,
+        preserve_whitespace=True,
     )
     output_concolic += "\n"
     if len(rows_concolic) == 0:
         output_concolic = ""
     output_replay += tabulate(  # type: ignore[no-untyped-call]
-        headers=headers, tabular_data=rows_replay, tablefmt="pipe", colglobalalign=None, preserve_whitespace=True
+        headers=headers,
+        tabular_data=rows_replay,
+        tablefmt="pipe",
+        colglobalalign=None,
+        preserve_whitespace=True,
     )
     output_replay += "\n"
     if len(rows_replay) == 0:
@@ -193,9 +225,14 @@ def check_create_pr(
     if pr_number is not None:
         logger.info(f"Suggesting changes to PR #{pr_number} ...")
         owner, repo = get_repo_owner_and_name(git_repo)
-        relative_path = explanation.file_path.resolve().relative_to(root_dir.resolve()).as_posix()
+        relative_path = (
+            explanation.file_path.resolve().relative_to(root_dir.resolve()).as_posix()
+        )
         build_file_changes = {
-            Path(p).resolve().relative_to(root_dir.resolve()).as_posix(): FileDiffContent(
+            Path(p)
+            .resolve()
+            .relative_to(root_dir.resolve())
+            .as_posix(): FileDiffContent(
                 oldContent=original_code[p], newContent=new_code[p]
             )
             for p in original_code
@@ -247,10 +284,15 @@ def check_create_pr(
         if not check_and_push_branch(git_repo, git_remote, wait_for_push=True):
             logger.warning("⏭️ Branch is not pushed, skipping PR creation...")
             return
-        relative_path = explanation.file_path.resolve().relative_to(root_dir.resolve()).as_posix()
+        relative_path = (
+            explanation.file_path.resolve().relative_to(root_dir.resolve()).as_posix()
+        )
         base_branch = get_current_branch()
         build_file_changes = {
-            Path(p).resolve().relative_to(root_dir.resolve()).as_posix(): FileDiffContent(
+            Path(p)
+            .resolve()
+            .relative_to(root_dir.resolve())
+            .as_posix(): FileDiffContent(
                 oldContent=original_code[p], newContent=new_code[p]
             )
             for p in original_code
@@ -286,7 +328,9 @@ def check_create_pr(
         if response.ok:
             pr_id = response.text
             pr_url = github_pr_url(owner, repo, pr_id)
-            logger.info(f"Successfully created a new PR #{pr_id} with the optimized code: {pr_url}")
+            logger.info(
+                f"Successfully created a new PR #{pr_id} with the optimized code: {pr_url}"
+            )
         else:
             logger.error(
                 f"Optimization was successful, but I failed to create a PR with the optimized code."
