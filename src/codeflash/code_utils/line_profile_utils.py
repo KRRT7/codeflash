@@ -1,6 +1,7 @@
 """Adapted from line_profiler (https://github.com/pyutils/line_profiler) written by Enthought, Inc. (BSD License)."""
 
 from __future__ import annotations
+from codeflash.code_utils.cleanup import get_run_tmp_file
 
 import ast
 from collections import defaultdict
@@ -9,7 +10,6 @@ from typing import TYPE_CHECKING, Union
 
 import libcst as cst
 
-from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.code_utils.formatter import sort_imports
 
 if TYPE_CHECKING:

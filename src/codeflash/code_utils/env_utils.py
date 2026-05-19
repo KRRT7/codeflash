@@ -1,4 +1,5 @@
 from __future__ import annotations
+from codeflash.code_utils.code_utils import exit_with_message
 
 import json
 import os
@@ -10,7 +11,6 @@ from pathlib import Path
 from typing import Any
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.code_utils.code_utils import exit_with_message
 from codeflash.code_utils.formatter import format_code
 from codeflash.code_utils.shell_utils import (
     read_api_key_from_shell_config,

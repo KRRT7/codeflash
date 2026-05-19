@@ -1,4 +1,6 @@
 from __future__ import annotations
+from codeflash.code_utils.cleanup import get_run_tmp_file
+from codeflash.code_utils.path_utils import module_name_from_file_path
 
 import ast
 from dataclasses import dataclass
@@ -9,7 +11,6 @@ import libcst as cst
 
 from codeflash._constants import TEST_RESULTS_TABLE_SCHEMA
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.code_utils.code_utils import get_run_tmp_file, module_name_from_file_path
 from codeflash.code_utils.formatter import sort_imports
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.models import FunctionParent, TestingMode, VerificationType
