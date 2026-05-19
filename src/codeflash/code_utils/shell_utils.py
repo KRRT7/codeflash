@@ -10,12 +10,12 @@ from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.compat import LF
-from codeflash.either import Failure, Success
+from codeflash.danom import Err, Ok
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from codeflash.either import Result
+    from codeflash.danom import Result
 
 
 # PowerShell patterns and prefixes
@@ -29,7 +29,9 @@ CMD_RC_EXPORT_PATTERN = re.compile(r"^set CODEFLASH_API_KEY=(cf-.*)$", re.MULTIL
 CMD_RC_EXPORT_PREFIX = "set CODEFLASH_API_KEY="
 
 # Unix shell patterns and prefixes
-UNIX_RC_EXPORT_PATTERN = re.compile(r'^(?!#)export CODEFLASH_API_KEY=(?:"|\')?(cf-[^\s"\']+)(?:"|\')?$', re.MULTILINE)
+UNIX_RC_EXPORT_PATTERN = re.compile(
+    r'^(?!#)export CODEFLASH_API_KEY=(?:"|\')?(cf-[^\s"\']+)(?:"|\')?$', re.MULTILINE
+)
 UNIX_RC_EXPORT_PREFIX = "export CODEFLASH_API_KEY="
 
 
@@ -48,13 +50,17 @@ def is_powershell() -> bool:
     # This is the most reliable indicator as PowerShell always sets this
     ps_module_path = os.environ.get("PSMODULEPATH")
     if ps_module_path:
-        logger.debug("shell_utils.py:is_powershell - Detected PowerShell via PSModulePath")
+        logger.debug(
+            "shell_utils.py:is_powershell - Detected PowerShell via PSModulePath"
+        )
         return True
 
     # Secondary check: COMSPEC points to PowerShell
     comspec = os.environ.get("COMSPEC", "").lower()
     if "powershell" in comspec:
-        logger.debug(f"shell_utils.py:is_powershell - Detected PowerShell via COMSPEC: {comspec}")
+        logger.debug(
+            f"shell_utils.py:is_powershell - Detected PowerShell via COMSPEC: {comspec}"
+        )
         return True
 
     # Tertiary check: Windows Terminal often uses PowerShell by default
@@ -62,11 +68,19 @@ def is_powershell() -> bool:
     term_program = os.environ.get("TERM_PROGRAM", "").lower()
     # Check if we can find evidence of CMD (cmd.exe in COMSPEC)
     # If not, assume PowerShell for Windows Terminal
-    if "windows" in term_program and "terminal" in term_program and "cmd.exe" not in comspec:
-        logger.debug(f"shell_utils.py:is_powershell - Detected PowerShell via Windows Terminal (COMSPEC: {comspec})")
+    if (
+        "windows" in term_program
+        and "terminal" in term_program
+        and "cmd.exe" not in comspec
+    ):
+        logger.debug(
+            f"shell_utils.py:is_powershell - Detected PowerShell via Windows Terminal (COMSPEC: {comspec})"
+        )
         return True
 
-    logger.debug(f"shell_utils.py:is_powershell - Not PowerShell (COMSPEC: {comspec}, TERM_PROGRAM: {term_program})")
+    logger.debug(
+        f"shell_utils.py:is_powershell - Not PowerShell (COMSPEC: {comspec}, TERM_PROGRAM: {term_program})"
+    )
     return False
 
 
@@ -79,26 +93,42 @@ def read_api_key_from_shell_config() -> str | None:
 
     # Determine the correct pattern to use based on the file extension and platform
     if os.name == "nt":  # Windows
-        pattern = POWERSHELL_RC_EXPORT_PATTERN if shell_rc_path.suffix == ".ps1" else CMD_RC_EXPORT_PATTERN
+        pattern = (
+            POWERSHELL_RC_EXPORT_PATTERN
+            if shell_rc_path.suffix == ".ps1"
+            else CMD_RC_EXPORT_PATTERN
+        )
     else:  # Unix-like
         pattern = UNIX_RC_EXPORT_PATTERN
 
     try:
         # Convert Path to string using as_posix() for cross-platform path compatibility
-        shell_rc_path_str = shell_rc_path.as_posix() if isinstance(shell_rc_path, Path) else str(shell_rc_path)
+        shell_rc_path_str = (
+            shell_rc_path.as_posix()
+            if isinstance(shell_rc_path, Path)
+            else str(shell_rc_path)
+        )
         with open(shell_rc_path_str, encoding="utf8") as shell_rc:  # noqa: PTH123
             shell_contents = shell_rc.read()
             matches = pattern.findall(shell_contents)
             if matches:
-                logger.debug(f"shell_utils.py:read_api_key_from_shell_config - Found API key in file: {shell_rc_path}")
+                logger.debug(
+                    f"shell_utils.py:read_api_key_from_shell_config - Found API key in file: {shell_rc_path}"
+                )
                 return matches[-1]
-            logger.debug(f"shell_utils.py:read_api_key_from_shell_config - No API key found in file: {shell_rc_path}")
+            logger.debug(
+                f"shell_utils.py:read_api_key_from_shell_config - No API key found in file: {shell_rc_path}"
+            )
             return None
     except FileNotFoundError:
-        logger.debug(f"shell_utils.py:read_api_key_from_shell_config - File not found: {shell_rc_path}")
+        logger.debug(
+            f"shell_utils.py:read_api_key_from_shell_config - File not found: {shell_rc_path}"
+        )
         return None
     except Exception as e:
-        logger.debug(f"shell_utils.py:read_api_key_from_shell_config - Error reading file: {e}")
+        logger.debug(
+            f"shell_utils.py:read_api_key_from_shell_config - Error reading file: {e}"
+        )
         return None
 
 
@@ -109,9 +139,13 @@ def get_shell_rc_path() -> Path:
             return Path.home() / "codeflash_env.ps1"
         return Path.home() / "codeflash_env.bat"
     shell = os.environ.get("SHELL", "/bin/bash").split("/")[-1]
-    shell_rc_filename = {"zsh": ".zshrc", "ksh": ".kshrc", "csh": ".cshrc", "tcsh": ".cshrc", "dash": ".profile"}.get(
-        shell, ".bashrc"
-    )  # map each shell to its config file and default to .bashrc
+    shell_rc_filename = {
+        "zsh": ".zshrc",
+        "ksh": ".kshrc",
+        "csh": ".cshrc",
+        "tcsh": ".cshrc",
+        "dash": ".profile",
+    }.get(shell, ".bashrc")  # map each shell to its config file and default to .bashrc
     return Path.home() / shell_rc_filename
 
 
@@ -133,8 +167,12 @@ def save_api_key_to_rc(api_key: str) -> Result[str, str]:
         shell_rc_path = Path(shell_rc_path)
     api_key_line = get_api_key_export_line(api_key)
 
-    logger.debug(f"shell_utils.py:save_api_key_to_rc - Saving API key to: {shell_rc_path}")
-    logger.debug(f"shell_utils.py:save_api_key_to_rc - API key line format: {api_key_line[:30]}...")
+    logger.debug(
+        f"shell_utils.py:save_api_key_to_rc - Saving API key to: {shell_rc_path}"
+    )
+    logger.debug(
+        f"shell_utils.py:save_api_key_to_rc - API key line format: {api_key_line[:30]}..."
+    )
 
     # Determine the correct pattern to use for replacement
     if os.name == "nt":  # Windows
@@ -156,40 +194,60 @@ def save_api_key_to_rc(api_key: str) -> Result[str, str]:
             shell_rc_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Convert Path to string using as_posix() for cross-platform path compatibility
-        shell_rc_path_str = shell_rc_path.as_posix() if isinstance(shell_rc_path, Path) else str(shell_rc_path)
+        shell_rc_path_str = (
+            shell_rc_path.as_posix()
+            if isinstance(shell_rc_path, Path)
+            else str(shell_rc_path)
+        )
 
         # Try to open in r+ mode (read and write in single operation)
         # Handle FileNotFoundError if file doesn't exist (r+ requires file to exist)
         try:
             with open(shell_rc_path_str, "r+", encoding="utf8") as shell_file:  # noqa: PTH123
                 shell_contents = shell_file.read()
-                logger.debug(f"shell_utils.py:save_api_key_to_rc - Read existing file, length: {len(shell_contents)}")
+                logger.debug(
+                    f"shell_utils.py:save_api_key_to_rc - Read existing file, length: {len(shell_contents)}"
+                )
 
                 # Initialize empty file with header for batch files if needed
                 if not shell_contents:
-                    logger.debug("shell_utils.py:save_api_key_to_rc - File is empty, initializing")
+                    logger.debug(
+                        "shell_utils.py:save_api_key_to_rc - File is empty, initializing"
+                    )
                     if os.name == "nt" and not is_powershell():
                         shell_contents = "@echo off"
-                        logger.debug("shell_utils.py:save_api_key_to_rc - Added @echo off header for batch file")
+                        logger.debug(
+                            "shell_utils.py:save_api_key_to_rc - Added @echo off header for batch file"
+                        )
 
                 # Check if API key already exists in the current file
                 matches = pattern.findall(shell_contents)
                 existing_in_file = bool(matches)
-                logger.debug(f"shell_utils.py:save_api_key_to_rc - Existing key in file: {existing_in_file}")
+                logger.debug(
+                    f"shell_utils.py:save_api_key_to_rc - Existing key in file: {existing_in_file}"
+                )
 
                 if existing_in_file:
                     # Replace the existing API key line in this file
-                    updated_shell_contents = re.sub(pattern, api_key_line, shell_contents)
+                    updated_shell_contents = re.sub(
+                        pattern, api_key_line, shell_contents
+                    )
                     action = "Updated CODEFLASH_API_KEY in"
-                    logger.debug("shell_utils.py:save_api_key_to_rc - Replaced existing API key")
+                    logger.debug(
+                        "shell_utils.py:save_api_key_to_rc - Replaced existing API key"
+                    )
                 else:
                     # Append the new API key line
                     if shell_contents and not shell_contents.endswith(LF):
                         updated_shell_contents = shell_contents + LF + api_key_line + LF
                     else:
-                        updated_shell_contents = shell_contents.rstrip() + f"{LF}{api_key_line}{LF}"
+                        updated_shell_contents = (
+                            shell_contents.rstrip() + f"{LF}{api_key_line}{LF}"
+                        )
                     action = "Added CODEFLASH_API_KEY to"
-                    logger.debug("shell_utils.py:save_api_key_to_rc - Appended new API key")
+                    logger.debug(
+                        "shell_utils.py:save_api_key_to_rc - Appended new API key"
+                    )
 
                 # Write the updated contents
                 shell_file.seek(0)
@@ -197,12 +255,16 @@ def save_api_key_to_rc(api_key: str) -> Result[str, str]:
                 shell_file.truncate()
         except FileNotFoundError:
             # File doesn't exist, create it first with initial content
-            logger.debug("shell_utils.py:save_api_key_to_rc - File does not exist, creating new")
+            logger.debug(
+                "shell_utils.py:save_api_key_to_rc - File does not exist, creating new"
+            )
             shell_contents = ""
             # Initialize with header for batch files if needed
             if os.name == "nt" and not is_powershell():
                 shell_contents = "@echo off"
-                logger.debug("shell_utils.py:save_api_key_to_rc - Added @echo off header for batch file")
+                logger.debug(
+                    "shell_utils.py:save_api_key_to_rc - Added @echo off header for batch file"
+                )
 
             # Create the file by opening in write mode
             with open(shell_rc_path_str, "w", encoding="utf8") as shell_file:  # noqa: PTH123
@@ -211,28 +273,34 @@ def save_api_key_to_rc(api_key: str) -> Result[str, str]:
             # Re-open in r+ mode to add the API key (r+ allows both read and write)
             with open(shell_rc_path_str, "r+", encoding="utf8") as shell_file:  # noqa: PTH123
                 # Append the new API key line
-                updated_shell_contents = shell_contents.rstrip() + f"{LF}{api_key_line}{LF}"
+                updated_shell_contents = (
+                    shell_contents.rstrip() + f"{LF}{api_key_line}{LF}"
+                )
                 action = "Added CODEFLASH_API_KEY to"
-                logger.debug("shell_utils.py:save_api_key_to_rc - Appended new API key to new file")
+                logger.debug(
+                    "shell_utils.py:save_api_key_to_rc - Appended new API key to new file"
+                )
 
                 # Write the updated contents
                 shell_file.seek(0)
                 shell_file.write(updated_shell_contents)
                 shell_file.truncate()
 
-        logger.debug(f"shell_utils.py:save_api_key_to_rc - Successfully wrote to {shell_rc_path}")
+        logger.debug(
+            f"shell_utils.py:save_api_key_to_rc - Successfully wrote to {shell_rc_path}"
+        )
 
-        return Success(f"✅ {action} {shell_rc_path}")
+        return Ok(f"✅ {action} {shell_rc_path}")
     except PermissionError as e:
         logger.debug(f"shell_utils.py:save_api_key_to_rc - Permission error: {e}")
-        return Failure(
-            f"💡 I tried adding your Codeflash API key to {shell_rc_path} - but seems like I don't have permissions to do so.{LF}"
+        return Err(
+            error=f"💡 I tried adding your Codeflash API key to {shell_rc_path} - but seems like I don't have permissions to do so.{LF}"
             f"You'll need to open it yourself and add the following line:{LF}{LF}{api_key_line}{LF}"
         )
     except Exception as e:
         logger.debug(f"shell_utils.py:save_api_key_to_rc - Error: {e}")
-        return Failure(
-            f"💡 I went to save your Codeflash API key to {shell_rc_path}, but encountered an error: {e}{LF}"
+        return Err(
+            error=f"💡 I went to save your Codeflash API key to {shell_rc_path}, but encountered an error: {e}{LF}"
             f"To ensure your Codeflash API key is automatically loaded into your environment at startup, you can create {shell_rc_path} and add the following line:{LF}"
             f"{LF}{api_key_line}{LF}"
         )
@@ -246,7 +314,13 @@ def get_cross_platform_subprocess_run_args(
     text: bool = True,  # noqa: FBT001, FBT002
     capture_output: bool = True,  # noqa: FBT001, FBT002 (only for non-Windows)
 ) -> dict[str, str]:
-    run_args = {"cwd": cwd, "env": env, "text": text, "timeout": timeout, "check": check}
+    run_args = {
+        "cwd": cwd,
+        "env": env,
+        "text": text,
+        "timeout": timeout,
+        "check": check,
+    }
     if sys.platform == "win32":
         creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
         run_args["creationflags"] = creationflags

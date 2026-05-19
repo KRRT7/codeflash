@@ -23,7 +23,7 @@ from codeflash.code_utils.git_worktree_utils import (
     remove_worktree,
 )
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.either import is_successful
+from codeflash.danom import Ok, Err
 from codeflash.models.config import AppConfig
 from codeflash.models.models import ValidCode
 from codeflash.verification.verification_utils import TestConfig
@@ -536,7 +536,7 @@ class Optimizer:
 
                     self.current_function_optimizer = function_optimizer  # needed to clean up from the outside of this function
                     best_optimization = function_optimizer.optimize_function()
-                    if is_successful(best_optimization):
+                    if best_optimization.is_ok():
                         optimizations_found += 1
                         # create a diff patch for successful optimization
                         if self.current_worktree:

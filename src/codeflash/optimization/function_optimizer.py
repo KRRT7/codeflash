@@ -90,7 +90,7 @@ from codeflash.context.unused_definition_remover import (
     revert_unused_helper_functions,
 )
 from codeflash.discovery.functions_to_optimize import was_function_previously_optimized
-from codeflash.either import Failure, Success, is_successful
+from codeflash.danom import Err, Ok
 from codeflash.models.models import ExperimentMetadata
 from codeflash.models.models import (
     AdaptiveOptimizedCandidate,
@@ -140,7 +140,7 @@ from codeflash.verification.verifier import generate_tests
 
 if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.either import Result
+    from codeflash.danom import Result
     from codeflash.models.config import AppConfig
     from codeflash.models.models import (
         BenchmarkKey,
@@ -520,8 +520,8 @@ class FunctionOptimizer:
         self.cleanup_leftover_test_return_values()
         file_name_from_test_module_name.cache_clear()
         ctx_result = self.get_code_optimization_context()
-        if not is_successful(ctx_result):
-            return Failure(ctx_result.failure())
+        if not ctx_result.is_ok():
+            return ctx_result
         code_context: CodeOptimizationContext = ctx_result.unwrap()
         log_optimization_context(self.function_to_optimize.function_name, code_context)
         original_helper_code: dict[Path, str] = {}
@@ -540,9 +540,9 @@ class FunctionOptimizer:
                 self.function_to_optimize, code_context, self.config
             )
         ):
-            return Failure("Function optimization previously attempted, skipping.")
+            return Err(error="Function optimization previously attempted, skipping.")
 
-        return Success((should_run_experiment, code_context, original_helper_code))
+        return Ok((should_run_experiment, code_context, original_helper_code))
 
     def generate_and_instrument_tests(
         self, code_context: CodeOptimizationContext
@@ -586,8 +586,8 @@ class FunctionOptimizer:
             generated_perf_test_paths=generated_perf_test_paths,
         )
 
-        if not is_successful(test_results):
-            return Failure(test_results.failure())
+        if not test_results.is_ok():
+            return test_results
 
         count_tests, generated_tests, function_to_concolic_tests, concolic_test_str = (
             test_results.unwrap()
@@ -640,7 +640,7 @@ class FunctionOptimizer:
                 generated_test_paths + generated_perf_test_paths
             )
 
-        return Success(
+        return Ok(
             (
                 generated_tests,
                 function_to_concolic_tests,
@@ -655,8 +655,8 @@ class FunctionOptimizer:
     # note: this is only called by the CLI
     def optimize_function(self) -> Result[BestOptimization, str]:
         initialization_result = self.can_be_optimized()
-        if not is_successful(initialization_result):
-            return Failure(initialization_result.failure())
+        if not initialization_result.is_ok():
+            return initialization_result
         should_run_experiment, code_context, original_helper_code = (
             initialization_result.unwrap()
         )
@@ -688,11 +688,11 @@ class FunctionOptimizer:
             optimization_result = future_optimizations.result()
             rule()
 
-        if not is_successful(test_setup_result):
-            return Failure(test_setup_result.failure())
+        if not test_setup_result.is_ok():
+            return test_setup_result
 
-        if not is_successful(optimization_result):
-            return Failure(optimization_result.failure())
+        if not optimization_result.is_ok():
+            return optimization_result
 
         (
             generated_tests,
@@ -716,8 +716,8 @@ class FunctionOptimizer:
             original_conftest_content=original_conftest_content,
         )
 
-        if not is_successful(baseline_setup_result):
-            return Failure(baseline_setup_result.failure())
+        if not baseline_setup_result.is_ok():
+            return baseline_setup_result
 
         (
             function_to_optimize_qualified_name,
@@ -748,10 +748,10 @@ class FunctionOptimizer:
         if self.config.override_fixtures:
             restore_conftest(original_conftest_content)
         if not best_optimization:
-            return Failure(
+            return Err(
                 f"No best optimizations found for function {self.function_to_optimize.qualified_name}"
             )
-        return Success(best_optimization)
+        return Ok(best_optimization)
 
     def get_trace_id(self, exp_type: str) -> str:
         """Get the trace ID for the current experiment type."""
@@ -1103,7 +1103,7 @@ class FunctionOptimizer:
         )
         rule()
 
-        if not is_successful(run_results):
+        if not run_results.is_ok():
             eval_ctx.record_failed_candidate(candidate.optimization_id)
             return None
 
@@ -1512,9 +1512,9 @@ class FunctionOptimizer:
                 self.function_to_optimize, self.project_root
             )
         except ValueError as e:
-            return Failure(str(e))
+            return Err(error=str(e))
 
-        return Success(
+        return Ok(
             CodeOptimizationContext(
                 testgen_context=new_code_ctx.testgen_context,
                 read_writable_code=new_code_ctx.read_writable_code,
@@ -1693,7 +1693,7 @@ class FunctionOptimizer:
                 logger.warning(
                     f"Failed to generate and instrument tests for {self.function_to_optimize.function_name}"
                 )
-                return Failure(
+                return Err(
                     f"/!\\ NO TESTS GENERATED for {self.function_to_optimize.function_name}"
                 )
 
@@ -1708,7 +1708,7 @@ class FunctionOptimizer:
         rule()
 
         generated_tests = GeneratedTestsList(generated_tests=tests)
-        return Success(
+        return Ok(
             (
                 count_tests,
                 generated_tests,
@@ -1770,7 +1770,7 @@ class FunctionOptimizer:
         candidates = future_optimization_candidates.result()
 
         if not candidates:
-            return Failure(
+            return Err(
                 f"/!\\ NO OPTIMIZATIONS GENERATED for {self.function_to_optimize.function_name}"
             )
 
@@ -1780,7 +1780,7 @@ class FunctionOptimizer:
             candidates_experiment = future_candidates_exp.result()
         function_references = future_references.result()
 
-        return Success(
+        return Ok(
             (
                 OptimizationSet(control=candidates, experiment=candidates_experiment),
                 function_references,
@@ -1839,11 +1839,11 @@ class FunctionOptimizer:
             + list(instrumented_unittests_created_for_function)
         )
 
-        if not is_successful(baseline_result):
+        if not baseline_result.is_ok():
             if self.config.override_fixtures:
                 restore_conftest(original_conftest_content)
             cleanup_paths(paths_to_cleanup)
-            return Failure(baseline_result.failure())
+            return baseline_result
 
         original_code_baseline, test_functions_to_remove = baseline_result.unwrap()
         if isinstance(original_code_baseline, OriginalCodeBaseline) and (
@@ -1853,9 +1853,9 @@ class FunctionOptimizer:
             if self.config.override_fixtures:
                 restore_conftest(original_conftest_content)
             cleanup_paths(paths_to_cleanup)
-            return Failure("The threshold for test confidence was not met.")
+            return Err(error="The threshold for test confidence was not met.")
 
-        return Success(
+        return Ok(
             (
                 function_to_optimize_qualified_name,
                 function_to_all_tests,
@@ -2256,14 +2256,14 @@ class FunctionOptimizer:
                 f"Couldn't run any tests for original function {self.function_to_optimize.function_name}. Skipping optimization."
             )
             rule()
-            return Failure(
+            return Err(
                 "Failed to establish a baseline for the original code - bevhavioral tests failed."
             )
         if not coverage_critic(coverage_results):
             did_pass_all_tests = all(result.did_pass for result in behavioral_results)
             if not did_pass_all_tests:
-                return Failure("Tests failed to pass for the original code.")
-            return Failure(
+                return Err(error="Tests failed to pass for the original code.")
+            return Err(
                 f"Test coverage is {coverage_results.coverage}%, which is below the required threshold of {COVERAGE_THRESHOLD}%."
             )
 
@@ -2338,7 +2338,7 @@ class FunctionOptimizer:
             rule()
             success = False
         if not success:
-            return Failure("Failed to establish a baseline for the original code.")
+            return Err(error="Failed to establish a baseline for the original code.")
 
         loop_count = max(
             [int(result.loop_index) for result in benchmarking_results.test_results]
@@ -2365,7 +2365,7 @@ class FunctionOptimizer:
                 self.replay_tests_dir,
                 self.project_root,
             )
-        return Success(
+        return Ok(
             (
                 OriginalCodeBaseline(
                     behavior_test_results=behavioral_results,
@@ -2382,12 +2382,12 @@ class FunctionOptimizer:
             )
         )
 
-    def get_results_not_matched_error(self) -> Failure:
+    def get_results_not_matched_error(self) -> Err:
         logger.info(
             "h4|Test results did not match the test results of the original code ❌"
         )
         rule()
-        return Failure(
+        return Err(
             "Test results did not match the test results of the original code."
         )
 
@@ -2633,7 +2633,7 @@ class FunctionOptimizer:
                     logger.debug(
                         f"Benchmark {benchmark_name} runtime (ns): {humanize_runtime(benchmark_results.total_passed_runtime())}"
                     )
-            return Success(
+            return Ok(
                 OptimizedCandidateResult(
                     max_loop_count=loop_count,
                     best_test_runtime=total_candidate_timing,

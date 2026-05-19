@@ -70,13 +70,13 @@ def get_codeflash_api_key() -> str:
     # If we have an env var but it's not in shell config, save it for persistence
     if env_api_key and not shell_api_key:
         try:
-            from codeflash.either import is_successful
+            from codeflash.danom import Ok, Err
 
             logger.debug(
                 "env_utils.py:get_codeflash_api_key - Saving API key from environment to shell config"
             )
             result = save_api_key_to_rc(env_api_key)
-            if is_successful(result):
+            if result.is_ok():
                 logger.debug(
                     f"env_utils.py:get_codeflash_api_key - Automatically saved API key from environment to shell config: {result.unwrap()}"
                 )

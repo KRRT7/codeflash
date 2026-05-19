@@ -49,7 +49,7 @@ from codeflash.code_utils.shell_utils import (
     is_powershell,
     save_api_key_to_rc,
 )
-from codeflash.either import is_successful
+from codeflash.danom import Ok, Err
 from codeflash.version import __version__ as version
 
 if TYPE_CHECKING:
@@ -1397,7 +1397,7 @@ def prompt_api_key() -> bool:
         print(f"✅ Created {shell_rc_path}")
 
     result = save_api_key_to_rc(api_key)
-    if is_successful(result):
+    if result.is_ok():
         print(result.unwrap())
         print("✅ Signed in successfully and API key saved!")
     else:
@@ -1433,7 +1433,7 @@ def enter_api_key_and_save_to_rc() -> None:
         print(f"✅ Created {shell_rc_path}")
     get_user_id(api_key=api_key)  # Used to verify whether the API key is valid.
     result = save_api_key_to_rc(api_key)
-    if is_successful(result):
+    if result.is_ok():
         print(result.unwrap())
     else:
         print(result.failure())
