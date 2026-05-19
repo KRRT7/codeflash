@@ -15,7 +15,10 @@ import libcst as cst
 from pydantic.dataclasses import dataclass
 from rich.tree import Tree
 
-from codeflash.api.cfapi import get_blocklisted_functions, is_function_being_optimized_again
+from codeflash.api.cfapi import (
+    get_blocklisted_functions,
+    is_function_being_optimized_again,
+)
 from codeflash.cli_cmds.console import DEBUG_MODE, console, logger
 from codeflash.code_utils.code_utils import (
     exit_with_message,
@@ -26,7 +29,6 @@ from codeflash.code_utils.code_utils import (
 from codeflash.code_utils.env_utils import get_pr_number
 from codeflash.code_utils.git_utils import get_git_diff, get_repo_owner_and_name
 from codeflash.discovery.discover_unit_tests import discover_unit_tests
-from codeflash.lsp.helpers import is_LSP_enabled
 from codeflash.models.models import FunctionParent
 
 if TYPE_CHECKING:
@@ -63,7 +65,10 @@ class ReturnStatementVisitor(cst.CSTVisitor):
 
 
 class FunctionVisitor(cst.CSTVisitor):
-    METADATA_DEPENDENCIES = (cst.metadata.PositionProvider, cst.metadata.ParentNodeProvider)
+    METADATA_DEPENDENCIES = (
+        cst.metadata.PositionProvider,
+        cst.metadata.ParentNodeProvider,
+    )
 
     def __init__(self, file_path: str) -> None:
         super().__init__()
@@ -75,12 +80,18 @@ class FunctionVisitor(cst.CSTVisitor):
         node.visit(return_visitor)
         if return_visitor.has_return_statement:
             pos: CodeRange = self.get_metadata(cst.metadata.PositionProvider, node)
-            parents: CSTNode | None = self.get_metadata(cst.metadata.ParentNodeProvider, node)
+            parents: CSTNode | None = self.get_metadata(
+                cst.metadata.ParentNodeProvider, node
+            )
             ast_parents: list[FunctionParent] = []
             while parents is not None:
                 if isinstance(parents, (cst.FunctionDef, cst.ClassDef)):
-                    ast_parents.append(FunctionParent(parents.name.value, parents.__class__.__name__))
-                parents = self.get_metadata(cst.metadata.ParentNodeProvider, parents, default=None)
+                    ast_parents.append(
+                        FunctionParent(parents.name.value, parents.__class__.__name__)
+                    )
+                parents = self.get_metadata(
+                    cst.metadata.ParentNodeProvider, parents, default=None
+                )
             self.functions.append(
                 FunctionToOptimize(
                     function_name=node.name.value,
@@ -103,7 +114,11 @@ class FunctionWithReturnStatement(ast.NodeVisitor):
         # Check if the function has a return statement and add it to the list
         if function_has_return_statement(node) and not function_is_a_property(node):
             self.functions.append(
-                FunctionToOptimize(function_name=node.name, file_path=self.file_path, parents=self.ast_path[:])
+                FunctionToOptimize(
+                    function_name=node.name,
+                    file_path=self.file_path,
+                    parents=self.ast_path[:],
+                )
             )
 
     def visit_AsyncFunctionDef(self, node: AsyncFunctionDef) -> None:
@@ -111,7 +126,10 @@ class FunctionWithReturnStatement(ast.NodeVisitor):
         if function_has_return_statement(node) and not function_is_a_property(node):
             self.functions.append(
                 FunctionToOptimize(
-                    function_name=node.name, file_path=self.file_path, parents=self.ast_path[:], is_async=True
+                    function_name=node.name,
+                    file_path=self.file_path,
+                    parents=self.ast_path[:],
+                    is_async=True,
                 )
             )
 
@@ -187,27 +205,26 @@ def get_functions_to_optimize(
     )
     functions: dict[str, list[FunctionToOptimize]]
     trace_file_path: Path | None = None
-    is_lsp = is_LSP_enabled()
     with warnings.catch_warnings():
         warnings.simplefilter(action="ignore", category=SyntaxWarning)
         if optimize_all:
-            logger.info("!lsp|Finding all functions in the module '%s'…", optimize_all)
+            logger.info("Finding all functions in the module '%s'…", optimize_all)
             console.rule()
             functions = get_all_files_and_functions(Path(optimize_all))
         elif replay_test:
             functions, trace_file_path = get_all_replay_test_functions(
-                replay_test=replay_test, test_cfg=test_cfg, project_root_path=project_root
+                replay_test=replay_test, test_cfg=test_cfg, project_root=project_root
             )
         elif file is not None:
-            logger.info("!lsp|Finding all functions in the file '%s'…", file)
+            logger.info("Finding all functions in the file '%s'…", file)
             console.rule()
             file = Path(file) if isinstance(file, str) else file
-            functions: dict[Path, list[FunctionToOptimize]] = find_all_functions_in_file(file)
+            functions: dict[Path, list[FunctionToOptimize]] = (
+                find_all_functions_in_file(file)
+            )
             if only_get_this_function is not None:
                 split_function = only_get_this_function.split(".")
                 if len(split_function) > 2:
-                    if is_lsp:
-                        return functions, 0, None
                     exit_with_message(
                         "Function name should be in the format 'function_name' or 'class_name.function_name'"
                     )
@@ -223,9 +240,9 @@ def get_functions_to_optimize(
                     ):
                         found_function = fn
                 if found_function is None:
-                    if is_lsp:
-                        return functions, 0, None
-                    found = closest_matching_file_function_name(only_get_this_function, functions)
+                    found = closest_matching_file_function_name(
+                        only_get_this_function, functions
+                    )
                     if found is not None:
                         file, found_function = found
                         exit_with_message(
@@ -242,15 +259,26 @@ def get_functions_to_optimize(
             console.rule()
             functions = get_functions_within_git_diff(uncommitted_changes=False)
         filtered_modified_functions, functions_count = filter_functions(
-            functions, test_cfg.tests_root, ignore_paths, project_root, module_root, previous_checkpoint_functions
+            functions,
+            test_cfg.tests_root,
+            ignore_paths,
+            project_root,
+            module_root,
+            previous_checkpoint_functions,
         )
 
-        logger.info(f"!lsp|Found {functions_count} function{'s' if functions_count > 1 else ''} to optimize")
+        logger.info(
+            f"Found {functions_count} function{'s' if functions_count > 1 else ''} to optimize"
+        )
         return filtered_modified_functions, functions_count, trace_file_path
 
 
-def get_functions_within_git_diff(uncommitted_changes: bool) -> dict[str, list[FunctionToOptimize]]:  # noqa: FBT001
-    modified_lines: dict[str, list[int]] = get_git_diff(uncommitted_changes=uncommitted_changes)
+def get_functions_within_git_diff(
+    uncommitted_changes: bool,
+) -> dict[str, list[FunctionToOptimize]]:  # noqa: FBT001
+    modified_lines: dict[str, list[int]] = get_git_diff(
+        uncommitted_changes=uncommitted_changes
+    )
     return get_functions_within_lines(modified_lines)
 
 
@@ -324,12 +352,16 @@ def levenshtein_distance(s1: str, s2: str) -> int:
     return previous[len1]
 
 
-def get_functions_inside_a_commit(commit_hash: str) -> dict[str, list[FunctionToOptimize]]:
+def get_functions_inside_a_commit(
+    commit_hash: str,
+) -> dict[str, list[FunctionToOptimize]]:
     modified_lines: dict[str, list[int]] = get_git_diff(only_this_commit=commit_hash)
     return get_functions_within_lines(modified_lines)
 
 
-def get_functions_within_lines(modified_lines: dict[str, list[int]]) -> dict[str, list[FunctionToOptimize]]:
+def get_functions_within_lines(
+    modified_lines: dict[str, list[int]],
+) -> dict[str, list[FunctionToOptimize]]:
     functions: dict[str, list[FunctionToOptimize]] = {}
     for path_str, lines_in_file in modified_lines.items():
         path = Path(path_str)
@@ -354,7 +386,9 @@ def get_functions_within_lines(modified_lines: dict[str, list[int]]) -> dict[str
     return functions
 
 
-def get_all_files_and_functions(module_root_path: Path) -> dict[str, list[FunctionToOptimize]]:
+def get_all_files_and_functions(
+    module_root_path: Path,
+) -> dict[str, list[FunctionToOptimize]]:
     functions: dict[str, list[FunctionToOptimize]] = {}
     for file_path in module_root_path.rglob("*.py"):
         # Find all the functions in the file
@@ -420,7 +454,9 @@ def get_all_replay_test_functions(
             "Please regenerate the replay test by re-running 'codeflash optimize' with your command."
         )
 
-    function_tests, _, _ = discover_unit_tests(test_cfg, discover_only_these_tests=replay_test)
+    function_tests, _, _ = discover_unit_tests(
+        test_cfg, discover_only_these_tests=replay_test
+    )
     # Get the absolute file paths for each function, excluding class name if present
     filtered_valid_functions = defaultdict(list)
     file_to_functions_map = defaultdict(list)
@@ -434,7 +470,8 @@ def get_all_replay_test_functions(
             module_path_parts[-1]
             if module_path_parts
             and is_class_defined_in_file(
-                module_path_parts[-1], Path(project_root_path, *module_path_parts[:-1]).with_suffix(".py")
+                module_path_parts[-1],
+                Path(project_root_path, *module_path_parts[:-1]).with_suffix(".py"),
             )
             else None
         )
@@ -448,9 +485,13 @@ def get_all_replay_test_functions(
         file_path = Path(project_root_path, *file_path_parts).with_suffix(".py")
         if not file_path.exists():
             continue
-        file_to_functions_map[file_path].append((qualified_function_name, function_name, class_name))
+        file_to_functions_map[file_path].append(
+            (qualified_function_name, function_name, class_name)
+        )
     for file_path, functions_in_file in file_to_functions_map.items():
-        all_valid_functions: dict[Path, list[FunctionToOptimize]] = find_all_functions_in_file(file_path=file_path)
+        all_valid_functions: dict[Path, list[FunctionToOptimize]] = (
+            find_all_functions_in_file(file_path=file_path)
+        )
         filtered_list = []
         for func_data in functions_in_file:
             qualified_name_to_match, _, _ = func_data
@@ -480,7 +521,10 @@ def ignored_submodule_paths(module_root: str) -> list[str]:
     if is_git_repo(module_root):
         git_repo = git.Repo(module_root, search_parent_directories=True)
         try:
-            return [Path(git_repo.working_tree_dir, submodule.path).resolve() for submodule in git_repo.submodules]
+            return [
+                Path(git_repo.working_tree_dir, submodule.path).resolve()
+                for submodule in git_repo.submodules
+            ]
         except Exception as e:
             logger.warning(f"Error getting submodule paths: {e}")
     return []
@@ -488,7 +532,11 @@ def ignored_submodule_paths(module_root: str) -> list[str]:
 
 class TopLevelFunctionOrMethodVisitor(ast.NodeVisitor):
     def __init__(
-        self, file_name: Path, function_or_method_name: str, class_name: str | None = None, line_no: int | None = None
+        self,
+        file_name: Path,
+        function_or_method_name: str,
+        class_name: str | None = None,
+        line_no: int | None = None,
     ) -> None:
         self.file_name = file_name
         self.class_name = class_name
@@ -535,12 +583,14 @@ class TopLevelFunctionOrMethodVisitor(ast.NodeVisitor):
                 ):
                     self.is_top_level = True
                     if any(
-                        isinstance(decorator, ast.Name) and decorator.id == "classmethod"
+                        isinstance(decorator, ast.Name)
+                        and decorator.id == "classmethod"
                         for decorator in body_node.decorator_list
                     ):
                         self.is_classmethod = True
                     elif any(
-                        isinstance(decorator, ast.Name) and decorator.id == "staticmethod"
+                        isinstance(decorator, ast.Name)
+                        and decorator.id == "staticmethod"
                         for decorator in body_node.decorator_list
                     ):
                         self.is_staticmethod = True
@@ -554,7 +604,8 @@ class TopLevelFunctionOrMethodVisitor(ast.NodeVisitor):
                     and body_node.name == self.function_name
                     and body_node.lineno in {self.line_no, self.line_no + 1}
                     and any(
-                        isinstance(decorator, ast.Name) and decorator.id == "staticmethod"
+                        isinstance(decorator, ast.Name)
+                        and decorator.id == "staticmethod"
                         for decorator in body_node.decorator_list
                     )
                 ):
@@ -567,7 +618,10 @@ class TopLevelFunctionOrMethodVisitor(ast.NodeVisitor):
 
 
 def inspect_top_level_functions_or_methods(
-    file_name: Path, function_or_method_name: str, class_name: str | None = None, line_no: int | None = None
+    file_name: Path,
+    function_or_method_name: str,
+    class_name: str | None = None,
+    line_no: int | None = None,
 ) -> FunctionProperties | None:
     with file_name.open(encoding="utf8") as file:
         try:
@@ -575,7 +629,10 @@ def inspect_top_level_functions_or_methods(
         except Exception:
             return None
     visitor = TopLevelFunctionOrMethodVisitor(
-        file_name=file_name, function_or_method_name=function_or_method_name, class_name=class_name, line_no=line_no
+        file_name=file_name,
+        function_or_method_name=function_or_method_name,
+        class_name=class_name,
+        line_no=line_no,
     )
     visitor.visit(ast_module)
     staticmethod_class_name = visitor.class_name if visitor.is_staticmethod else None
@@ -589,7 +646,9 @@ def inspect_top_level_functions_or_methods(
 
 
 def was_function_previously_optimized(
-    function_to_optimize: FunctionToOptimize, code_context: CodeOptimizationContext, args: Namespace
+    function_to_optimize: FunctionToOptimize,
+    code_context: CodeOptimizationContext,
+    args: Namespace,
 ) -> bool:
     """Check which functions have already been optimized and filter them out.
 
@@ -602,10 +661,6 @@ def was_function_previously_optimized(
         Tuple of (filtered_functions_dict, remaining_count)
 
     """
-    if is_LSP_enabled():
-        # was_function_previously_optimized is for the checking the optimization duplicates in the github action, no need to do this in the LSP mode
-        return False
-
     # Check optimization status if repository info is provided
     # already_optimized_count = 0
     try:
@@ -635,8 +690,12 @@ def was_function_previously_optimized(
         return False
 
     try:
-        result = is_function_being_optimized_again(owner, repo, pr_number, code_contexts)
-        already_optimized_paths: list[tuple[str, str]] = result.get("already_optimized_tuples", [])
+        result = is_function_being_optimized_again(
+            owner, repo, pr_number, code_contexts
+        )
+        already_optimized_paths: list[tuple[str, str]] = result.get(
+            "already_optimized_tuples", []
+        )
         return len(already_optimized_paths) > 0
 
     except Exception as e:
@@ -686,12 +745,15 @@ def filter_functions(
             test_functions_removed_count += len(_functions)
             continue
         if file_path in ignore_paths or any(
-            file_path_normalized.startswith(os.path.normcase(str(ignore_path)) + os.sep) for ignore_path in ignore_paths
+            file_path_normalized.startswith(os.path.normcase(str(ignore_path)) + os.sep)
+            for ignore_path in ignore_paths
         ):
             ignore_paths_removed_count += 1
             continue
         if file_path in submodule_paths or any(
-            file_path_normalized.startswith(os.path.normcase(str(submodule_path)) + os.sep)
+            file_path_normalized.startswith(
+                os.path.normcase(str(submodule_path)) + os.sep
+            )
             for submodule_path in submodule_paths
         ):
             submodule_ignored_paths_count += 1
@@ -703,7 +765,9 @@ def filter_functions(
             non_modules_removed_count += len(_functions)
             continue
         try:
-            ast.parse(f"import {module_name_from_file_path(Path(file_path), project_root)}")
+            ast.parse(
+                f"import {module_name_from_file_path(Path(file_path), project_root)}"
+            )
         except SyntaxError:
             malformed_paths_count += 1
             continue
@@ -713,7 +777,8 @@ def filter_functions(
             for function in _functions:
                 if (
                     function.file_path.name in blocklist_funcs
-                    and function.qualified_name in blocklist_funcs[function.file_path.name]
+                    and function.qualified_name
+                    in blocklist_funcs[function.file_path.name]
                 ):
                     # This function is in blocklist, we can skip it
                     blocklist_funcs_removed_count += 1
@@ -725,7 +790,10 @@ def filter_functions(
         if previous_checkpoint_functions:
             functions_tmp = []
             for function in _functions:
-                if function.qualified_name_with_modules_from_root(project_root) in previous_checkpoint_functions:
+                if (
+                    function.qualified_name_with_modules_from_root(project_root)
+                    in previous_checkpoint_functions
+                ):
                     previous_checkpoint_functions_removed_count += 1
                     continue
                 functions_tmp.append(function)
@@ -741,9 +809,18 @@ def filter_functions(
             "Non-importable file paths": (malformed_paths_count, "red"),
             "Functions outside module-root": (non_modules_removed_count, "cyan"),
             "Files from ignored paths": (ignore_paths_removed_count, "blue"),
-            "Files from ignored submodules": (submodule_ignored_paths_count, "bright_black"),
-            "Blocklisted functions removed": (blocklist_funcs_removed_count, "bright_red"),
-            "Functions skipped from checkpoint": (previous_checkpoint_functions_removed_count, "green"),
+            "Files from ignored submodules": (
+                submodule_ignored_paths_count,
+                "bright_black",
+            ),
+            "Blocklisted functions removed": (
+                blocklist_funcs_removed_count,
+                "bright_red",
+            ),
+            "Functions skipped from checkpoint": (
+                previous_checkpoint_functions_removed_count,
+                "green",
+            ),
         }
         tree = Tree(Text("Ignored functions and files", style="bold"))
         for label, (count, color) in log_info.items():
@@ -752,10 +829,14 @@ def filter_functions(
         if len(tree.children) > 0:
             console.print(tree)
             console.rule()
-    return {Path(k): v for k, v in filtered_modified_functions.items() if v}, functions_count
+    return {
+        Path(k): v for k, v in filtered_modified_functions.items() if v
+    }, functions_count
 
 
-def filter_files_optimized(file_path: Path, tests_root: Path, ignore_paths: list[Path], module_root: Path) -> bool:
+def filter_files_optimized(
+    file_path: Path, tests_root: Path, ignore_paths: list[Path], module_root: Path
+) -> bool:
     """Optimized version of the filter_functions function above.
 
     Takes in file paths and returns the count of files that are to be optimized.
@@ -763,7 +844,9 @@ def filter_files_optimized(file_path: Path, tests_root: Path, ignore_paths: list
     submodule_paths = None
     if file_path.is_relative_to(tests_root):
         return False
-    if file_path in ignore_paths or any(file_path.is_relative_to(ignore_path) for ignore_path in ignore_paths):
+    if file_path in ignore_paths or any(
+        file_path.is_relative_to(ignore_path) for ignore_path in ignore_paths
+    ):
         return False
     if path_belongs_to_site_packages(file_path):
         return False
@@ -773,11 +856,16 @@ def filter_files_optimized(file_path: Path, tests_root: Path, ignore_paths: list
         submodule_paths = ignored_submodule_paths(module_root)
     return not (
         file_path in submodule_paths
-        or any(file_path.is_relative_to(submodule_path) for submodule_path in submodule_paths)
+        or any(
+            file_path.is_relative_to(submodule_path)
+            for submodule_path in submodule_paths
+        )
     )
 
 
-def function_has_return_statement(function_node: FunctionDef | AsyncFunctionDef) -> bool:
+def function_has_return_statement(
+    function_node: FunctionDef | AsyncFunctionDef,
+) -> bool:
     # Custom DFS, return True as soon as a Return node is found
     stack = [function_node]
     while stack:

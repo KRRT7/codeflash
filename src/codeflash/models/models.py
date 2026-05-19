@@ -6,9 +6,7 @@ from typing import TYPE_CHECKING
 import libcst as cst
 from rich.tree import Tree
 
-from codeflash.cli_cmds.console import DEBUG_MODE, lsp_log
-from codeflash.lsp.helpers import is_LSP_enabled, report_to_markdown_table
-from codeflash.lsp.lsp_message import LspMarkdownMessage
+from codeflash.cli_cmds.console import DEBUG_MODE, console, logger
 from codeflash.models.test_type import TestType
 
 if TYPE_CHECKING:
@@ -23,11 +21,22 @@ from re import Pattern
 from typing import Annotated, NamedTuple, Optional, cast
 
 from jedi.api.classes import Name
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    ValidationError,
+)
 from pydantic.dataclasses import dataclass
 
 from codeflash.cli_cmds.console import console, logger
-from codeflash.code_utils.code_utils import diff_length, module_name_from_file_path, validate_python_code
+from codeflash.code_utils.code_utils import (
+    diff_length,
+    module_name_from_file_path,
+    validate_python_code,
+)
 from codeflash.code_utils.env_utils import is_end_to_end
 from codeflash.verification.comparator import comparator
 
@@ -144,7 +153,13 @@ class FunctionSource:
 
     def __hash__(self) -> int:
         return hash(
-            (self.file_path, self.qualified_name, self.fully_qualified_name, self.only_function_name, self.source_code)
+            (
+                self.file_path,
+                self.qualified_name,
+                self.fully_qualified_name,
+                self.only_function_name,
+                self.source_code,
+            )
         )
 
 
@@ -210,7 +225,9 @@ class ProcessedBenchmarkInfo:
         return result
 
     def to_dict(self) -> dict[str, list[dict[str, any]]]:
-        return {"benchmark_details": [detail.to_dict() for detail in self.benchmark_details]}
+        return {
+            "benchmark_details": [detail.to_dict() for detail in self.benchmark_details]
+        }
 
 
 class CodeString(BaseModel):
@@ -248,7 +265,8 @@ class CodeStringsMarkdown(BaseModel):
         if self._cache.get("flat") is not None:
             return self._cache["flat"]
         self._cache["flat"] = "\n".join(
-            get_code_block_splitter(block.file_path) + "\n" + block.code for block in self.code_strings
+            get_code_block_splitter(block.file_path) + "\n" + block.code
+            for block in self.code_strings
         )
         return self._cache["flat"]
 
@@ -280,7 +298,8 @@ class CodeStringsMarkdown(BaseModel):
         if self._cache.get("file_to_path") is not None:
             return self._cache["file_to_path"]
         self._cache["file_to_path"] = {
-            str(code_string.file_path): code_string.code for code_string in self.code_strings
+            str(code_string.file_path): code_string.code
+            for code_string in self.code_strings
         }
         return self._cache["file_to_path"]
 
@@ -362,7 +381,13 @@ class TestFiles(BaseModel):
     test_files: list[TestFile]
 
     def get_by_type(self, test_type: TestType) -> TestFiles:
-        return TestFiles(test_files=[test_file for test_file in self.test_files if test_file.test_type == test_type])
+        return TestFiles(
+            test_files=[
+                test_file
+                for test_file in self.test_files
+                if test_file.test_type == test_type
+            ]
+        )
 
     def add(self, test_file: TestFile) -> None:
         if test_file not in self.test_files:
@@ -372,21 +397,41 @@ class TestFiles(BaseModel):
             raise ValueError(msg)
 
     def get_by_original_file_path(self, file_path: Path) -> TestFile | None:
-        return next((test_file for test_file in self.test_files if test_file.original_file_path == file_path), None)
+        return next(
+            (
+                test_file
+                for test_file in self.test_files
+                if test_file.original_file_path == file_path
+            ),
+            None,
+        )
 
-    def get_test_type_by_instrumented_file_path(self, file_path: Path) -> TestType | None:
+    def get_test_type_by_instrumented_file_path(
+        self, file_path: Path
+    ) -> TestType | None:
         return next(
             (
                 test_file.test_type
                 for test_file in self.test_files
-                if (file_path in (test_file.instrumented_behavior_file_path, test_file.benchmarking_file_path))
+                if (
+                    file_path
+                    in (
+                        test_file.instrumented_behavior_file_path,
+                        test_file.benchmarking_file_path,
+                    )
+                )
             ),
             None,
         )
 
     def get_test_type_by_original_file_path(self, file_path: Path) -> TestType | None:
         return next(
-            (test_file.test_type for test_file in self.test_files if test_file.original_file_path == file_path), None
+            (
+                test_file.test_type
+                for test_file in self.test_files
+                if test_file.original_file_path == file_path
+            ),
+            None,
         )
 
     def __iter__(self) -> Iterator[TestFile]:
@@ -419,7 +464,9 @@ class CandidateEvaluationContext:
         self.is_correct[optimization_id] = False
         self.speedup_ratios[optimization_id] = None
 
-    def record_successful_candidate(self, optimization_id: str, runtime: float, speedup: float) -> None:
+    def record_successful_candidate(
+        self, optimization_id: str, runtime: float, speedup: float
+    ) -> None:
         """Record results for a successful candidate."""
         self.optimized_runtimes[optimization_id] = runtime
         self.is_correct[optimization_id] = True
@@ -430,41 +477,59 @@ class CandidateEvaluationContext:
         self.optimized_line_profiler_results[optimization_id] = result
 
     def handle_duplicate_candidate(
-        self, candidate: OptimizedCandidate, normalized_code: str, code_context: CodeOptimizationContext
+        self,
+        candidate: OptimizedCandidate,
+        normalized_code: str,
+        code_context: CodeOptimizationContext,
     ) -> None:
         """Handle a candidate that has been seen before."""
         past_opt_id = self.ast_code_to_id[normalized_code]["optimization_id"]
 
         # Copy results from the previous evaluation
-        self.speedup_ratios[candidate.optimization_id] = self.speedup_ratios[past_opt_id]
+        self.speedup_ratios[candidate.optimization_id] = self.speedup_ratios[
+            past_opt_id
+        ]
         self.is_correct[candidate.optimization_id] = self.is_correct[past_opt_id]
-        self.optimized_runtimes[candidate.optimization_id] = self.optimized_runtimes[past_opt_id]
+        self.optimized_runtimes[candidate.optimization_id] = self.optimized_runtimes[
+            past_opt_id
+        ]
 
         # Line profiler results only available for successful runs
         if past_opt_id in self.optimized_line_profiler_results:
-            self.optimized_line_profiler_results[candidate.optimization_id] = self.optimized_line_profiler_results[
-                past_opt_id
-            ]
+            self.optimized_line_profiler_results[candidate.optimization_id] = (
+                self.optimized_line_profiler_results[past_opt_id]
+            )
 
-        self.optimizations_post[candidate.optimization_id] = self.ast_code_to_id[normalized_code][
+        self.optimizations_post[candidate.optimization_id] = self.ast_code_to_id[
+            normalized_code
+        ]["shorter_source_code"].markdown
+        self.optimizations_post[past_opt_id] = self.ast_code_to_id[normalized_code][
             "shorter_source_code"
         ].markdown
-        self.optimizations_post[past_opt_id] = self.ast_code_to_id[normalized_code]["shorter_source_code"].markdown
 
         # Update to shorter code if this candidate has a shorter diff
-        new_diff_len = diff_length(candidate.source_code.flat, code_context.read_writable_code.flat)
+        new_diff_len = diff_length(
+            candidate.source_code.flat, code_context.read_writable_code.flat
+        )
         if new_diff_len < self.ast_code_to_id[normalized_code]["diff_len"]:
-            self.ast_code_to_id[normalized_code]["shorter_source_code"] = candidate.source_code
+            self.ast_code_to_id[normalized_code]["shorter_source_code"] = (
+                candidate.source_code
+            )
             self.ast_code_to_id[normalized_code]["diff_len"] = new_diff_len
 
     def register_new_candidate(
-        self, normalized_code: str, candidate: OptimizedCandidate, code_context: CodeOptimizationContext
+        self,
+        normalized_code: str,
+        candidate: OptimizedCandidate,
+        code_context: CodeOptimizationContext,
     ) -> None:
         """Register a new candidate that hasn't been seen before."""
         self.ast_code_to_id[normalized_code] = {
             "optimization_id": candidate.optimization_id,
             "shorter_source_code": candidate.source_code,
-            "diff_len": diff_length(candidate.source_code.flat, code_context.read_writable_code.flat),
+            "diff_len": diff_length(
+                candidate.source_code.flat, code_context.read_writable_code.flat
+            ),
         }
 
     def get_speedup_ratio(self, optimization_id: str) -> float | None:
@@ -573,7 +638,9 @@ class CoverageData:
             console.print(self)
 
     @classmethod
-    def create_empty(cls, file_path: Path, function_name: str, code_context: CodeOptimizationContext) -> CoverageData:
+    def create_empty(
+        cls, file_path: Path, function_name: str, code_context: CodeOptimizationContext
+    ) -> CoverageData:
         return cls(
             file_path=file_path,
             coverage=0.0,
@@ -621,9 +688,7 @@ class TestingMode(enum.Enum):
 
 # TODO this class is duplicated in codeflash_capture
 class VerificationType(str, Enum):
-    FUNCTION_CALL = (
-        "function_call"  # Correctness verification for a test function, checks input values and output values)
-    )
+    FUNCTION_CALL = "function_call"  # Correctness verification for a test function, checks input values and output values)
     INIT_STATE_FTO = "init_state_fto"  # Correctness verification for fto class instance attributes after init
     INIT_STATE_HELPER = "init_state_helper"  # Correctness verification for helper class instance attributes after init
 
@@ -632,7 +697,9 @@ class VerificationType(str, Enum):
 class InvocationId:
     test_module_path: str  # The fully qualified name of the test module
     test_class_name: Optional[str]  # The name of the class where the test is defined
-    test_function_name: Optional[str]  # The name of the test_function. Does not include the components of the file_name
+    test_function_name: Optional[
+        str
+    ]  # The name of the test_function. Does not include the components of the file_name
     function_getting_tested: str
     iteration_id: Optional[str]
 
@@ -653,7 +720,9 @@ class InvocationId:
             else str(self.test_function_name)
         )
 
-    def find_func_in_class(self, class_node: cst.ClassDef, func_name: str) -> Optional[cst.FunctionDef]:
+    def find_func_in_class(
+        self, class_node: cst.ClassDef, func_name: str
+    ) -> Optional[cst.FunctionDef]:
         for stmt in class_node.body.body:
             if isinstance(stmt, cst.FunctionDef) and stmt.name.value == func_name:
                 return stmt
@@ -670,7 +739,10 @@ class InvocationId:
 
         if self.test_class_name:
             for stmt in module_node.body:
-                if isinstance(stmt, cst.ClassDef) and stmt.name.value == self.test_class_name:
+                if (
+                    isinstance(stmt, cst.ClassDef)
+                    and stmt.name.value == self.test_class_name
+                ):
                     func_node = self.find_func_in_class(stmt, self.test_function_name)
                     if func_node:
                         return module_node.code_for_node(func_node).strip()
@@ -678,7 +750,10 @@ class InvocationId:
 
         # Otherwise, look for a top level function
         for stmt in module_node.body:
-            if isinstance(stmt, cst.FunctionDef) and stmt.name.value == self.test_function_name:
+            if (
+                isinstance(stmt, cst.FunctionDef)
+                and stmt.name.value == self.test_function_name
+            ):
                 return module_node.code_for_node(stmt).strip()
         return None
 
@@ -707,7 +782,9 @@ class FunctionTestInvocation:
     loop_index: int  # The loop index of the function invocation, starts at 1
     id: InvocationId  # The fully qualified name of the function invocation (id)
     file_name: Path  # The file where the test is defined
-    did_pass: bool  # Whether the test this function invocation was part of, passed or failed
+    did_pass: (
+        bool  # Whether the test this function invocation was part of, passed or failed
+    )
     runtime: Optional[int]  # Time in nanoseconds
     test_framework: str  # unittest or pytest
     test_type: TestType
@@ -736,7 +813,9 @@ class TestResults(BaseModel):  # noqa: PLW1641
         test_result_idx = self.test_result_idx
         if unique_id in test_result_idx:
             if DEBUG_MODE:
-                logger.warning(f"Test result with id {unique_id} already exists. SKIPPING")
+                logger.warning(
+                    f"Test result with id {unique_id} already exists. SKIPPING"
+                )
             return
         test_results = self.test_results
         test_result_idx[unique_id] = len(test_results)
@@ -752,7 +831,10 @@ class TestResults(BaseModel):  # noqa: PLW1641
             self.test_result_idx[k] = v + original_len
 
     def group_by_benchmarks(
-        self, benchmark_keys: list[BenchmarkKey], benchmark_replay_test_dir: Path, project_root: Path
+        self,
+        benchmark_keys: list[BenchmarkKey],
+        benchmark_replay_test_dir: Path,
+        project_root: Path,
     ) -> dict[BenchmarkKey, TestResults]:
         """Group TestResults by benchmark for calculating improvements for each benchmark."""
         test_results_by_benchmark = defaultdict(TestResults)
@@ -772,7 +854,9 @@ class TestResults(BaseModel):  # noqa: PLW1641
 
         return test_results_by_benchmark
 
-    def get_by_unique_invocation_loop_id(self, unique_invocation_loop_id: str) -> FunctionTestInvocation | None:
+    def get_by_unique_invocation_loop_id(
+        self, unique_invocation_loop_id: str
+    ) -> FunctionTestInvocation | None:
         try:
             return self.test_results[self.test_result_idx[unique_invocation_loop_id]]
         except (IndexError, KeyError):
@@ -782,7 +866,9 @@ class TestResults(BaseModel):  # noqa: PLW1641
         return {test_result.id for test_result in self.test_results}
 
     def get_all_unique_invocation_loop_ids(self) -> set[str]:
-        return {test_result.unique_invocation_loop_id for test_result in self.test_results}
+        return {
+            test_result.unique_invocation_loop_id for test_result in self.test_results
+        }
 
     def number_of_loops(self) -> int:
         if not self.test_results:
@@ -813,12 +899,6 @@ class TestResults(BaseModel):  # noqa: PLW1641
     @staticmethod
     def report_to_tree(report: dict[TestType, dict[str, int]], title: str) -> Tree:
         tree = Tree(title)
-
-        if is_LSP_enabled():
-            # Build markdown table
-            markdown = report_to_markdown_table(report, title)
-            lsp_log(LspMarkdownMessage(markdown=markdown))
-            return tree
 
         for test_type in TestType:
             if test_type is TestType.INIT_STATE_TEST:
@@ -854,7 +934,10 @@ class TestResults(BaseModel):  # noqa: PLW1641
         """
         # TODO this doesn't look at the intersection of tests of baseline and original
         return sum(
-            [min(usable_runtime_data) for _, usable_runtime_data in self.usable_runtime_data_by_test_case().items()]
+            [
+                min(usable_runtime_data)
+                for _, usable_runtime_data in self.usable_runtime_data_by_test_case().items()
+            ]
         )
 
     def file_to_no_of_tests(self, test_functions_to_remove: list[str]) -> Counter[Path]:
@@ -862,7 +945,8 @@ class TestResults(BaseModel):  # noqa: PLW1641
         for gen_test_result in self.test_results:
             if (
                 gen_test_result.test_type == TestType.GENERATED_REGRESSION
-                and gen_test_result.id.test_function_name not in test_functions_to_remove
+                and gen_test_result.id.test_function_name
+                not in test_functions_to_remove
             ):
                 map_gen_test_file_to_no_of_tests[gen_test_result.file_name] += 1
         return map_gen_test_file_to_no_of_tests
@@ -894,7 +978,9 @@ class TestResults(BaseModel):  # noqa: PLW1641
         original_recursion_limit = sys.getrecursionlimit()
         cast("TestResults", other)
         for test_result in self:
-            other_test_result = other.get_by_unique_invocation_loop_id(test_result.unique_invocation_loop_id)
+            other_test_result = other.get_by_unique_invocation_loop_id(
+                test_result.unique_invocation_loop_id
+            )
             if other_test_result is None:
                 return False
 
@@ -906,7 +992,9 @@ class TestResults(BaseModel):  # noqa: PLW1641
                 or test_result.runtime != other_test_result.runtime
                 or test_result.test_framework != other_test_result.test_framework
                 or test_result.test_type != other_test_result.test_type
-                or not comparator(test_result.return_value, other_test_result.return_value)
+                or not comparator(
+                    test_result.return_value, other_test_result.return_value
+                )
             ):
                 sys.setrecursionlimit(original_recursion_limit)
                 return False

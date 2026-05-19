@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
 from itertools import cycle
 from typing import TYPE_CHECKING, Optional
@@ -17,45 +18,32 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from codeflash.cli_cmds.console_constants import SPINNER_TYPES
-from codeflash.cli_cmds.logging_config import BARE_LOGGING_FORMAT
-from codeflash.lsp.helpers import is_LSP_enabled
-from codeflash.lsp.lsp_logger import enhanced_log
-from codeflash.lsp.lsp_message import LspCodeMessage, LspTextMessage
-
 if TYPE_CHECKING:
-    from collections.abc import Generator
-
     from rich.progress import TaskID
 
-    from codeflash.lsp.lsp_message import LspMessage
+from codeflash.cli_cmds.console_constants import SPINNER_TYPES
+from codeflash.cli_cmds.logging_config import BARE_LOGGING_FORMAT
 
 DEBUG_MODE = logging.getLogger().getEffectiveLevel() == logging.DEBUG
 
 console = Console()
 
-if is_LSP_enabled():
-    console.quiet = True
-
 logging.basicConfig(
     level=logging.INFO,
-    handlers=[RichHandler(rich_tracebacks=True, markup=False, console=console, show_path=False, show_time=False)],
+    handlers=[
+        RichHandler(
+            rich_tracebacks=True,
+            markup=False,
+            console=console,
+            show_path=False,
+            show_time=False,
+        )
+    ],
     format=BARE_LOGGING_FORMAT,
 )
 
 logger = logging.getLogger("rich")
 logging.getLogger("parso").setLevel(logging.WARNING)
-
-# override the logger to reformat the messages for the lsp
-for level in ("info", "debug", "warning", "error"):
-    real_fn = getattr(logger, level)
-    setattr(
-        logger,
-        level,
-        lambda msg, *args, _real_fn=real_fn, _level=level, **kwargs: enhanced_log(
-            msg, _real_fn, _level, *args, **kwargs
-        ),
-    )
 
 
 class DummyTask:
@@ -71,15 +59,10 @@ class DummyProgress:
         pass
 
 
-def lsp_log(message: LspMessage) -> None:
-    if not is_LSP_enabled():
-        return
-    json_msg = message.serialize()
-    logger.info(json_msg)
-
-
 def paneled_text(
-    text: str, panel_args: dict[str, str | bool] | None = None, text_args: dict[str, str] | None = None
+    text: str,
+    panel_args: dict[str, str | bool] | None = None,
+    text_args: dict[str, str] | None = None,
 ) -> None:
     """Print text in a panel."""
     from rich.panel import Panel
@@ -99,14 +82,11 @@ def code_print(
     function_name: Optional[str] = None,
     lsp_message_id: Optional[str] = None,
 ) -> None:
-    if is_LSP_enabled():
-        lsp_log(
-            LspCodeMessage(code=code_str, file_name=file_name, function_name=function_name, message_id=lsp_message_id)
-        )
-        return
     """Print code with syntax highlighting."""
     from rich.syntax import Syntax
 
+    console.rule()
+    console.print(Syntax(code_str, "python", line_numbers=True, theme="github-dark"))
     console.rule()
     console.print(Syntax(code_str, "python", line_numbers=True, theme="github-dark"))
     console.rule()
@@ -124,11 +104,6 @@ def progress_bar(
     If revert_to_print is True, falls back to printing a single logger.info message
     instead of showing a progress bar.
     """
-    if is_LSP_enabled():
-        lsp_log(LspTextMessage(text=message, takes_time=True))
-        yield
-        return
-
     if revert_to_print:
         logger.info(message)
 
@@ -148,15 +123,10 @@ def progress_bar(
 
 
 @contextmanager
-def test_files_progress_bar(total: int, description: str) -> Generator[tuple[Progress, TaskID], None, None]:
+def test_files_progress_bar(
+    total: int, description: str
+) -> Generator[tuple[Progress, TaskID], None, None]:
     """Progress bar for test files."""
-    if is_LSP_enabled():
-        lsp_log(LspTextMessage(text=description, takes_time=True))
-        dummy_progress = DummyProgress()
-        dummy_task = DummyTask()
-        yield dummy_progress, dummy_task.id
-        return
-
     with Progress(
         SpinnerColumn(next(spinners)),
         TextColumn("[progress.description]{task.description}"),

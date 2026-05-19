@@ -11,7 +11,6 @@ from codeflash.cli_cmds.extension import install_vscode_extension
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_utils import exit_with_message
 from codeflash.code_utils.config_parser import parse_config_file
-from codeflash.lsp.helpers import is_LSP_enabled
 from codeflash.version import __version__ as version
 
 
@@ -19,15 +18,23 @@ def parse_args() -> Namespace:
     parser = ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", help="Sub-commands")
 
-    init_parser = subparsers.add_parser("init", help="Initialize Codeflash for a Python project.")
+    init_parser = subparsers.add_parser(
+        "init", help="Initialize Codeflash for a Python project."
+    )
     init_parser.set_defaults(func=init_codeflash)
 
-    subparsers.add_parser("vscode-install", help="Install the Codeflash VSCode extension")
+    subparsers.add_parser(
+        "vscode-install", help="Install the Codeflash VSCode extension"
+    )
 
-    init_actions_parser = subparsers.add_parser("init-actions", help="Initialize GitHub Actions workflow")
+    init_actions_parser = subparsers.add_parser(
+        "init-actions", help="Initialize GitHub Actions workflow"
+    )
     init_actions_parser.set_defaults(func=install_github_actions)
 
-    trace_optimize = subparsers.add_parser("optimize", help="Trace and optimize a Python project.")
+    trace_optimize = subparsers.add_parser(
+        "optimize", help="Trace and optimize a Python project."
+    )
 
     from codeflash.tracer import main as tracer_main
 
@@ -57,7 +64,10 @@ def parse_args() -> Namespace:
     )
 
     parser.add_argument("--file", help="Try to optimize only this file")
-    parser.add_argument("--function", help="Try to optimize only this function within the given file path")
+    parser.add_argument(
+        "--function",
+        help="Try to optimize only this function within the given file path",
+    )
     parser.add_argument(
         "--all",
         help="Try to optimize all functions. Can take a really long time. Can pass an optional starting directory to"
@@ -73,34 +83,69 @@ def parse_args() -> Namespace:
         " This is the top-level root directory where all the Python source code is located.",
     )
     parser.add_argument(
-        "--tests-root", type=str, help="Path to the test directory of the project, where all the tests are located."
-    )
-    parser.add_argument("--config-file", type=str, help="Path to the pyproject.toml with codeflash configs.")
-    parser.add_argument("--replay-test", type=str, nargs="+", help="Paths to replay test to optimize functions from")
-    parser.add_argument(
-        "--no-pr", action="store_true", help="Do not create a PR for the optimization, only update the code locally."
+        "--tests-root",
+        type=str,
+        help="Path to the test directory of the project, where all the tests are located.",
     )
     parser.add_argument(
-        "--no-gen-tests", action="store_true", help="Do not generate tests, use only existing tests for optimization."
+        "--config-file",
+        type=str,
+        help="Path to the pyproject.toml with codeflash configs.",
     )
-    parser.add_argument("--staging-review", action="store_true", help="Upload optimizations to staging for review")
+    parser.add_argument(
+        "--replay-test",
+        type=str,
+        nargs="+",
+        help="Paths to replay test to optimize functions from",
+    )
+    parser.add_argument(
+        "--no-pr",
+        action="store_true",
+        help="Do not create a PR for the optimization, only update the code locally.",
+    )
+    parser.add_argument(
+        "--no-gen-tests",
+        action="store_true",
+        help="Do not generate tests, use only existing tests for optimization.",
+    )
+    parser.add_argument(
+        "--staging-review",
+        action="store_true",
+        help="Upload optimizations to staging for review",
+    )
     parser.add_argument(
         "--verify-setup",
         action="store_true",
         help="Verify that codeflash is set up correctly by optimizing bubble sort as a test.",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Print verbose debug logs")
-    parser.add_argument("--version", action="store_true", help="Print the version of codeflash")
     parser.add_argument(
-        "--benchmark", action="store_true", help="Trace benchmark tests and calculate optimization impact on benchmarks"
+        "-v", "--verbose", action="store_true", help="Print verbose debug logs"
+    )
+    parser.add_argument(
+        "--version", action="store_true", help="Print the version of codeflash"
+    )
+    parser.add_argument(
+        "--benchmark",
+        action="store_true",
+        help="Trace benchmark tests and calculate optimization impact on benchmarks",
     )
     parser.add_argument(
         "--benchmarks-root",
         type=str,
         help="Path to the directory of the project, where all the pytest-benchmark tests are located.",
     )
-    parser.add_argument("--no-draft", default=False, action="store_true", help="Skip optimization for draft PRs")
-    parser.add_argument("--worktree", default=False, action="store_true", help="Use worktree for optimization")
+    parser.add_argument(
+        "--no-draft",
+        default=False,
+        action="store_true",
+        help="Skip optimization for draft PRs",
+    )
+    parser.add_argument(
+        "--worktree",
+        default=False,
+        action="store_true",
+        help="Use worktree for optimization",
+    )
     parser.add_argument(
         "--async",
         default=False,
@@ -108,7 +153,11 @@ def parse_args() -> Namespace:
         help="(Deprecated) Async function optimization is now enabled by default. This flag is ignored.",
     )
     parser.add_argument(
-        "--effort", type=str, help="Effort level for optimization", choices=["low", "medium", "high"], default="medium"
+        "--effort",
+        type=str,
+        help="Effort level for optimization",
+        choices=["low", "medium", "high"],
+        default="medium",
     )
 
     args, unknown_args = parser.parse_known_args()
@@ -140,10 +189,16 @@ def process_and_validate_cmd_args(args: Namespace) -> Namespace:
 
     if not check_running_in_git_repo(module_root=args.module_root):
         if not confirm_proceeding_with_no_git_repo():
-            exit_with_message("No git repository detected and user aborted run. Exiting...", error_on_exit=True)
+            exit_with_message(
+                "No git repository detected and user aborted run. Exiting...",
+                error_on_exit=True,
+            )
         args.no_pr = True
     if args.function and not args.file:
-        exit_with_message("If you specify a --function, you must specify the --file it is in", error_on_exit=True)
+        exit_with_message(
+            "If you specify a --function, you must specify the --file it is in",
+            error_on_exit=True,
+        )
     if args.file:
         if not Path(args.file).exists():
             exit_with_message(f"File {args.file} does not exist", error_on_exit=True)
@@ -154,8 +209,12 @@ def process_and_validate_cmd_args(args: Namespace) -> Namespace:
     if args.replay_test:
         for test_path in args.replay_test:
             if not Path(test_path).is_file():
-                exit_with_message(f"Replay test file {test_path} does not exist", error_on_exit=True)
-        args.replay_test = [Path(replay_test).resolve() for replay_test in args.replay_test]
+                exit_with_message(
+                    f"Replay test file {test_path} does not exist", error_on_exit=True
+                )
+        args.replay_test = [
+            Path(replay_test).resolve() for replay_test in args.replay_test
+        ]
         if env_utils.is_ci():
             args.no_pr = True
 
@@ -186,16 +245,25 @@ def process_pyproject_config(args: Namespace) -> Namespace:
     ]
     for key in supported_keys:
         if key in pyproject_config and (
-            (hasattr(args, key.replace("-", "_")) and getattr(args, key.replace("-", "_")) is None)
+            (
+                hasattr(args, key.replace("-", "_"))
+                and getattr(args, key.replace("-", "_")) is None
+            )
             or not hasattr(args, key.replace("-", "_"))
         ):
             setattr(args, key.replace("-", "_"), pyproject_config[key])
     assert args.module_root is not None, "--module-root must be specified"
-    assert Path(args.module_root).is_dir(), f"--module-root {args.module_root} must be a valid directory"
+    assert Path(args.module_root).is_dir(), (
+        f"--module-root {args.module_root} must be a valid directory"
+    )
     assert args.tests_root is not None, "--tests-root must be specified"
-    assert Path(args.tests_root).is_dir(), f"--tests-root {args.tests_root} must be a valid directory"
+    assert Path(args.tests_root).is_dir(), (
+        f"--tests-root {args.tests_root} must be a valid directory"
+    )
     if args.benchmark:
-        assert args.benchmarks_root is not None, "--benchmarks-root must be specified when running with --benchmark"
+        assert args.benchmarks_root is not None, (
+            "--benchmarks-root must be specified when running with --benchmark"
+        )
         assert Path(args.benchmarks_root).is_dir(), (
             f"--benchmarks-root {args.benchmarks_root} must be a valid directory"
         )
@@ -203,7 +271,10 @@ def process_pyproject_config(args: Namespace) -> Namespace:
             import git
 
             from codeflash.code_utils.git_utils import get_repo_owner_and_name
-            from codeflash.code_utils.github_utils import get_github_secrets_page_url, require_github_app_or_exit
+            from codeflash.code_utils.github_utils import (
+                get_github_secrets_page_url,
+                require_github_app_or_exit,
+            )
 
             assert env_utils.ensure_codeflash_api_key(), (
                 "Codeflash API key not found. When running in a Github Actions Context, provide the "
@@ -224,21 +295,24 @@ def process_pyproject_config(args: Namespace) -> Namespace:
         normalized_ignore_paths = []
         for path in args.ignore_paths:
             path_obj = Path(path)
-            assert path_obj.exists(), f"ignore-paths config must be a valid path. Path {path} does not exist"
+            assert path_obj.exists(), (
+                f"ignore-paths config must be a valid path. Path {path} does not exist"
+            )
             normalized_ignore_paths.append(path_obj.resolve())
         args.ignore_paths = normalized_ignore_paths
     # Project root path is one level above the specified directory, because that's where the module can be imported from
     args.module_root = Path(args.module_root).resolve()
     # If module-root is "." then all imports are relatives to it.
     # in this case, the ".." becomes outside project scope, causing issues with un-importable paths
-    args.project_root = project_root_from_module_root(args.module_root, pyproject_file_path)
+    args.project_root = project_root_from_module_root(
+        args.module_root, pyproject_file_path
+    )
     args.tests_root = Path(args.tests_root).resolve()
     if args.benchmarks_root:
         args.benchmarks_root = Path(args.benchmarks_root).resolve()
-    args.test_project_root = project_root_from_module_root(args.tests_root, pyproject_file_path)
-    if is_LSP_enabled():
-        args.all = None
-        return args
+    args.test_project_root = project_root_from_module_root(
+        args.tests_root, pyproject_file_path
+    )
     return handle_optimize_all_arg_parsing(args)
 
 
@@ -255,7 +329,10 @@ def handle_optimize_all_arg_parsing(args: Namespace) -> Namespace:
         if not no_pr:
             import git
 
-            from codeflash.code_utils.git_utils import check_and_push_branch, get_repo_owner_and_name
+            from codeflash.code_utils.git_utils import (
+                check_and_push_branch,
+                get_repo_owner_and_name,
+            )
             from codeflash.code_utils.github_utils import require_github_app_or_exit
 
             # Ensure that the user can actually open PRs on the repo.

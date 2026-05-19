@@ -13,10 +13,13 @@ from pydantic.json import pydantic_encoder
 
 from codeflash.cli_cmds.console import console, logger
 from codeflash.code_utils.code_utils import exit_with_message
-from codeflash.code_utils.env_utils import ensure_codeflash_api_key, get_codeflash_api_key, get_pr_number
+from codeflash.code_utils.env_utils import (
+    ensure_codeflash_api_key,
+    get_codeflash_api_key,
+    get_pr_number,
+)
 from codeflash.code_utils.git_utils import get_current_branch, get_repo_owner_and_name
 from codeflash.github.PrComment import FileDiffContent, PrComment
-from codeflash.lsp.helpers import is_LSP_enabled
 from codeflash.version import __version__
 
 if TYPE_CHECKING:
@@ -76,9 +79,13 @@ def make_cfapi_request(
         if method.upper() == "POST":
             json_payload = json.dumps(payload, indent=None, default=pydantic_encoder)
             cfapi_headers["Content-Type"] = "application/json"
-            response = requests.post(url, data=json_payload, headers=cfapi_headers, timeout=60)
+            response = requests.post(
+                url, data=json_payload, headers=cfapi_headers, timeout=60
+            )
         else:
-            response = requests.get(url, headers=cfapi_headers, params=params, timeout=60)
+            response = requests.get(
+                url, headers=cfapi_headers, params=params, timeout=60
+            )
         response.raise_for_status()
         return response  # noqa: TRY300
     except requests.exceptions.HTTPError:
@@ -107,7 +114,6 @@ def get_user_id(api_key: Optional[str] = None) -> Optional[str]:  # noqa: PLR091
     :param api_key: The API key to use. If None, uses get_codeflash_api_key().
     :return: The userid or None if the request fails.
     """
-    lsp_enabled = is_LSP_enabled()
     if not api_key and not ensure_codeflash_api_key():
         return None
 
@@ -128,9 +134,6 @@ def get_user_id(api_key: Optional[str] = None) -> Optional[str]:  # noqa: PLR091
             if min_version and version.parse(min_version) > version.parse(__version__):
                 msg = "Your Codeflash CLI version is outdated. Please update to the latest version using `pip install --upgrade codeflash`."
                 console.print(f"[bold red]{msg}[/bold red]")
-                if lsp_enabled:
-                    logger.debug(msg)
-                    return f"Error: {msg}"
                 exit_with_message(msg, error_on_exit=True)
             return userid
 
@@ -138,9 +141,9 @@ def get_user_id(api_key: Optional[str] = None) -> Optional[str]:  # noqa: PLR091
         return None
 
     if response.status_code == 403:
-        error_title = "Invalid Codeflash API key. The API key you provided is not valid."
-        if lsp_enabled:
-            return f"Error: {error_title}"
+        error_title = (
+            "Invalid Codeflash API key. The API key you provided is not valid."
+        )
         msg = (
             f"{error_title}\n"
             "Please generate a new one at https://app.codeflash.ai/app/apikeys ,\n"
@@ -153,7 +156,9 @@ def get_user_id(api_key: Optional[str] = None) -> Optional[str]:  # noqa: PLR091
         exit_with_message(msg, error_on_exit=True)
 
     # For other errors, log and return None (backward compatibility)
-    logger.error(f"Failed to look up your userid; is your CF API key valid? ({response.reason})")
+    logger.error(
+        f"Failed to look up your userid; is your CF API key valid? ({response.reason})"
+    )
     return None
 
 
@@ -197,7 +202,9 @@ def suggest_changes(
         "concolicTests": concolic_tests,
         "optimizationReview": optimization_review,  # impact keyword left for legacy reasons, touches js/ts code
     }
-    return make_cfapi_request(endpoint="/suggest-pr-changes", method="POST", payload=payload)
+    return make_cfapi_request(
+        endpoint="/suggest-pr-changes", method="POST", payload=payload
+    )
 
 
 def create_pr(
@@ -242,7 +249,9 @@ def create_pr(
     return make_cfapi_request(endpoint="/create-pr", method="POST", payload=payload)
 
 
-def setup_github_actions(owner: str, repo: str, base_branch: str, workflow_content: str) -> Response:
+def setup_github_actions(
+    owner: str, repo: str, base_branch: str, workflow_content: str
+) -> Response:
     """Set up GitHub Actions workflow by creating a PR with the workflow file.
 
     :param owner: Repository owner (username or organization)
@@ -251,9 +260,16 @@ def setup_github_actions(owner: str, repo: str, base_branch: str, workflow_conte
     :param workflow_content: Content of the GitHub Actions workflow file (YAML)
     :return: Response object with pr_url and pr_number on success
     """
-    payload = {"owner": owner, "repo": repo, "baseBranch": base_branch, "workflowContent": workflow_content}
+    payload = {
+        "owner": owner,
+        "repo": repo,
+        "baseBranch": base_branch,
+        "workflowContent": workflow_content,
+    }
 
-    return make_cfapi_request(endpoint="/setup-github-actions", method="POST", payload=payload)
+    return make_cfapi_request(
+        endpoint="/setup-github-actions", method="POST", payload=payload
+    )
 
 
 def create_staging(
@@ -283,7 +299,9 @@ def create_staging(
     relative_path = explanation.file_path.relative_to(root_dir).as_posix()
 
     build_file_changes = {
-        Path(p).relative_to(root_dir).as_posix(): FileDiffContent(oldContent=original_code[p], newContent=new_code[p])
+        Path(p).relative_to(root_dir).as_posix(): FileDiffContent(
+            oldContent=original_code[p], newContent=new_code[p]
+        )
         for p in original_code
     }
 
@@ -311,10 +329,14 @@ def create_staging(
         "optimizationReview": optimization_review,  # Impact keyword left for legacy reasons, it touches js/ts codebase
     }
 
-    return make_cfapi_request(endpoint="/create-staging", method="POST", payload=payload)
+    return make_cfapi_request(
+        endpoint="/create-staging", method="POST", payload=payload
+    )
 
 
-def is_github_app_installed_on_repo(owner: str, repo: str, *, suppress_errors: bool = False) -> bool:
+def is_github_app_installed_on_repo(
+    owner: str, repo: str, *, suppress_errors: bool = False
+) -> bool:
     """Check if the Codeflash GitHub App is installed on the specified repository.
 
     :param owner: The owner of the repository.
@@ -323,7 +345,9 @@ def is_github_app_installed_on_repo(owner: str, repo: str, *, suppress_errors: b
     :return: True if the app is installed, False otherwise.
     """
     response = make_cfapi_request(
-        endpoint=f"/is-github-app-installed?repo={repo}&owner={owner}", method="GET", suppress_errors=suppress_errors
+        endpoint=f"/is-github-app-installed?repo={repo}&owner={owner}",
+        method="GET",
+        suppress_errors=suppress_errors,
     )
     return response.ok and response.text == "true"
 
@@ -341,14 +365,21 @@ def get_blocklisted_functions() -> dict[str, set[str]] | dict[str, Any]:
         owner, repo = get_repo_owner_and_name()
         information = {"pr_number": pr_number, "repo_owner": owner, "repo_name": repo}
 
-        req = make_cfapi_request(endpoint="/verify-existing-optimizations", method="POST", payload=information)
+        req = make_cfapi_request(
+            endpoint="/verify-existing-optimizations",
+            method="POST",
+            payload=information,
+        )
         req.raise_for_status()
         content: dict[str, list[str]] = req.json()
     except Exception as e:
         logger.error(f"Error getting blocklisted functions: {e}")
         return {}
 
-    return {Path(k).name: {v.replace("()", "") for v in values} for k, values in content.items()}
+    return {
+        Path(k).name: {v.replace("()", "") for v in values}
+        for k, values in content.items()
+    }
 
 
 def is_function_being_optimized_again(
@@ -358,7 +389,12 @@ def is_function_being_optimized_again(
     response = make_cfapi_request(
         "/is-already-optimized",
         "POST",
-        {"owner": owner, "repo": repo, "pr_number": pr_number, "code_contexts": code_contexts},
+        {
+            "owner": owner,
+            "repo": repo,
+            "pr_number": pr_number,
+            "code_contexts": code_contexts,
+        },
     )
     response.raise_for_status()
     return response.json()
@@ -379,11 +415,18 @@ def add_code_context_hash(code_context_hash: str) -> None:
         make_cfapi_request(
             "/add-code-hash",
             "POST",
-            {"owner": owner, "repo": repo, "pr_number": pr_number, "code_hash": code_context_hash},
+            {
+                "owner": owner,
+                "repo": repo,
+                "pr_number": pr_number,
+                "code_hash": code_context_hash,
+            },
         )
 
 
-def mark_optimization_success(trace_id: str, *, is_optimization_found: bool) -> Response:
+def mark_optimization_success(
+    trace_id: str, *, is_optimization_found: bool
+) -> Response:
     """Mark an optimization event as success or not.
 
     :param trace_id: The unique identifier for the optimization event.
@@ -391,7 +434,9 @@ def mark_optimization_success(trace_id: str, *, is_optimization_found: bool) -> 
     :return: The response object from the API.
     """
     payload = {"trace_id": trace_id, "is_optimization_found": is_optimization_found}
-    return make_cfapi_request(endpoint="/mark-as-success", method="POST", payload=payload)
+    return make_cfapi_request(
+        endpoint="/mark-as-success", method="POST", payload=payload
+    )
 
 
 def send_completion_email() -> Response:
@@ -404,4 +449,6 @@ def send_completion_email() -> Response:
         response.status_code = 500
         return response
     payload = {"owner": owner, "repo": repo}
-    return make_cfapi_request(endpoint="/send-completion-email", method="POST", payload=payload)
+    return make_cfapi_request(
+        endpoint="/send-completion-email", method="POST", payload=payload
+    )

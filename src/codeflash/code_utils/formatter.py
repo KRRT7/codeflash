@@ -13,10 +13,11 @@ from typing import Any, Optional, Union
 import isort
 
 from codeflash.cli_cmds.console import console, logger
-from codeflash.lsp.helpers import is_LSP_enabled
 
 
-def generate_unified_diff(original: str, modified: str, from_file: str, to_file: str) -> str:
+def generate_unified_diff(
+    original: str, modified: str, from_file: str, to_file: str
+) -> str:
     line_pattern = re.compile(r"(.*?(?:\r\n|\n|\r|$))")
 
     def split_lines(text: str) -> list[str]:
@@ -29,7 +30,9 @@ def generate_unified_diff(original: str, modified: str, from_file: str, to_file:
     modified_lines = split_lines(modified)
 
     diff_output = []
-    for line in difflib.unified_diff(original_lines, modified_lines, fromfile=from_file, tofile=to_file, n=5):
+    for line in difflib.unified_diff(
+        original_lines, modified_lines, fromfile=from_file, tofile=to_file, n=5
+    ):
         if line.endswith("\n"):
             diff_output.append(line)
         else:
@@ -60,20 +63,33 @@ def apply_formatter_cmds(
     changed = False
     for command in cmds:
         formatter_cmd_list = shlex.split(command, posix=os.name != "nt")
-        formatter_cmd_list = [file_path.as_posix() if chunk == file_token else chunk for chunk in formatter_cmd_list]
+        formatter_cmd_list = [
+            file_path.as_posix() if chunk == file_token else chunk
+            for chunk in formatter_cmd_list
+        ]
         try:
-            result = subprocess.run(formatter_cmd_list, capture_output=True, check=False)
+            result = subprocess.run(
+                formatter_cmd_list, capture_output=True, check=False
+            )
             if result.returncode == 0:
                 if print_status:
-                    console.rule(f"Formatted Successfully with: {command.replace('$file', path.name)}")
+                    console.rule(
+                        f"Formatted Successfully with: {command.replace('$file', path.name)}"
+                    )
                 changed = True
             else:
-                logger.error(f"Failed to format code with {' '.join(formatter_cmd_list)}")
+                logger.error(
+                    f"Failed to format code with {' '.join(formatter_cmd_list)}"
+                )
         except FileNotFoundError as e:
             from rich.panel import Panel
 
             command_str = " ".join(str(part) for part in formatter_cmd_list)
-            panel = Panel(f"⚠️  Formatter command not found: {command_str}", expand=False, border_style="yellow")
+            panel = Panel(
+                f"⚠️  Formatter command not found: {command_str}",
+                expand=False,
+                border_style="yellow",
+            )
             console.print(panel)
             if exit_on_failure:
                 raise e from None
@@ -100,7 +116,11 @@ def format_generated_code(generated_test_source: str, formatter_cmds: list[str])
         original_temp = Path(test_dir_str) / "original_temp.py"
         original_temp.write_text(generated_test_source, encoding="utf8")
         _, formatted_code, changed = apply_formatter_cmds(
-            formatter_cmds, original_temp, test_dir_str, print_status=False, exit_on_failure=False
+            formatter_cmds,
+            original_temp,
+            test_dir_str,
+            print_status=False,
+            exit_on_failure=False,
         )
         if not changed:
             return re.sub(r"\n{2,}", "\n\n", formatted_code)
@@ -115,9 +135,6 @@ def format_code(
     print_status: bool = True,  # noqa
     exit_on_failure: bool = True,  # noqa
 ) -> str:
-    if is_LSP_enabled():
-        exit_on_failure = False
-
     if isinstance(path, str):
         path = Path(path)
 
@@ -138,7 +155,11 @@ def format_code(
             original_temp.write_text(original_code_without_opfunc, encoding="utf8")
 
             formatted_temp, formatted_code, changed = apply_formatter_cmds(
-                formatter_cmds, original_temp, test_dir_str, print_status=False, exit_on_failure=exit_on_failure
+                formatter_cmds,
+                original_temp,
+                test_dir_str,
+                print_status=False,
+                exit_on_failure=exit_on_failure,
             )
 
             if not changed:
@@ -148,7 +169,10 @@ def format_code(
                 return original_code
 
             diff_output = generate_unified_diff(
-                original_code_without_opfunc, formatted_code, from_file=str(original_temp), to_file=str(formatted_temp)
+                original_code_without_opfunc,
+                formatted_code,
+                from_file=str(original_temp),
+                to_file=str(formatted_temp),
             )
             diff_lines_count = get_diff_lines_count(diff_output)
 
@@ -162,7 +186,11 @@ def format_code(
 
         # TODO : We can avoid formatting the whole file again and only formatting the optimized code standalone and replace in formatted file above.
         _, formatted_code, changed = apply_formatter_cmds(
-            formatter_cmds, path, test_dir_str=None, print_status=print_status, exit_on_failure=exit_on_failure
+            formatter_cmds,
+            path,
+            test_dir_str=None,
+            print_status=print_status,
+            exit_on_failure=exit_on_failure,
         )
         if not changed:
             logger.warning(
@@ -178,7 +206,9 @@ def sort_imports(code: str, **kwargs: Any) -> str:  # noqa : ANN401
     try:
         # Deduplicate and sort imports, modify the code in memory, not on disk
         sorted_code = isort.code(code, **kwargs)
-    except Exception:  # this will also catch the FileSkipComment exception, use this fn everywhere
+    except (
+        Exception
+    ):  # this will also catch the FileSkipComment exception, use this fn everywhere
         logger.exception("Failed to sort imports with isort.")
         return code  # Fall back to original code if isort fails
 

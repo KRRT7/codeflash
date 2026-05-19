@@ -7,13 +7,19 @@ from collections import defaultdict
 from pathlib import Path
 
 import pytest
-from codeflash.context.code_context_extractor import get_code_optimization_context, get_imported_class_definitions
+from codeflash.context.code_context_extractor import (
+    get_code_optimization_context,
+    get_imported_class_definitions,
+)
 from codeflash.models.models import CodeString, CodeStringsMarkdown
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.models import FunctionParent
 from codeflash.optimization.optimizer import Optimizer
 from codeflash.code_utils.code_replacer import replace_functions_and_add_imports
-from codeflash.code_utils.code_extractor import add_global_assignments, GlobalAssignmentCollector
+from codeflash.code_utils.code_extractor import (
+    add_global_assignments,
+    GlobalAssignmentCollector,
+)
 
 
 class HelperClass:
@@ -80,14 +86,24 @@ def test_code_replacement10() -> None:
     file_path = Path(__file__).resolve()
 
     func_top_optimize = FunctionToOptimize(
-        function_name="main_method", file_path=file_path, parents=[FunctionParent("MainClass", "ClassDef")]
+        function_name="main_method",
+        file_path=file_path,
+        parents=[FunctionParent("MainClass", "ClassDef")],
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize=func_top_optimize, project_root_path=file_path.parent)
+    code_ctx = get_code_optimization_context(
+        function_to_optimize=func_top_optimize, project_root_path=file_path.parent
+    )
     qualified_names = {func.qualified_name for func in code_ctx.helper_functions}
     # HelperClass.__init__ is now tracked because HelperClass(self.name) instantiates the class
-    assert qualified_names == {"HelperClass.helper_method", "HelperClass.__init__"}  # Nested method should not be in here
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    assert qualified_names == {
+        "HelperClass.helper_method",
+        "HelperClass.__init__",
+    }  # Nested method should not be in here
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
 
     expected_read_write_context = f"""
@@ -145,8 +161,13 @@ def test_class_method_dependencies() -> None:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, file_path.parent.resolve())
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, file_path.parent.resolve()
+    )
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
 
     expected_read_write_context = f"""
@@ -211,7 +232,7 @@ class Graph:
 def test_bubble_sort_helper() -> None:
     path_to_fto = (
         Path(__file__).resolve().parent
-        /"code_to_optimize"
+        / "code_to_optimize"
         / "code_directories"
         / "retriever"
         / "bubble_sort_imported.py"
@@ -225,8 +246,13 @@ def test_bubble_sort_helper() -> None:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, Path(__file__).resolve().parent)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, Path(__file__).resolve().parent
+    )
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
 
     expected_read_write_context = f"""
@@ -455,8 +481,13 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
 ```python:{file_path.relative_to(opt.args.project_root)}
@@ -704,8 +735,13 @@ class HelperClass:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
 
     expected_read_write_context = f"""
@@ -757,7 +793,10 @@ class HelperClass:
 
 def test_example_class_token_limit_1(tmp_path: Path) -> None:
     docstring_filler = " ".join(
-        ["This is a long docstring that will be used to fill up the token limit." for _ in range(1000)]
+        [
+            "This is a long docstring that will be used to fill up the token limit."
+            for _ in range(1000)
+        ]
     )
     code = f"""
 class MyClass:
@@ -801,8 +840,13 @@ class HelperClass:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     # In this scenario, the read-only code context is too long, so the read-only docstrings are removed.
     expected_read_write_context = f"""
@@ -852,7 +896,10 @@ class HelperClass:
 
 def test_example_class_token_limit_2(tmp_path: Path) -> None:
     string_filler = " ".join(
-        ["This is a long string that will be used to fill up the token limit." for _ in range(1000)]
+        [
+            "This is a long string that will be used to fill up the token limit."
+            for _ in range(1000)
+        ]
     )
     code = f"""
 class MyClass:
@@ -896,8 +943,13 @@ class HelperClass:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root, 8000, 100000)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root, 8000, 100000
+    )
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     # In this scenario, the read-only code context is too long even after removing docstrings, hence we remove it completely.
     expected_read_write_context = f"""
@@ -948,7 +1000,10 @@ class HelperClass:
 
 def test_example_class_token_limit_3(tmp_path: Path) -> None:
     string_filler = " ".join(
-        ["This is a long string that will be used to fill up the token limit." for _ in range(1000)]
+        [
+            "This is a long string that will be used to fill up the token limit."
+            for _ in range(1000)
+        ]
     )
     code = f"""
 class MyClass:
@@ -991,13 +1046,20 @@ class HelperClass:
         ending_line=None,
     )
     # In this scenario, the read-writable code is too long, so we abort.
-    with pytest.raises(ValueError, match="Read-writable code has exceeded token limit, cannot proceed"):
-        code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    with pytest.raises(
+        ValueError, match="Read-writable code has exceeded token limit, cannot proceed"
+    ):
+        code_ctx = get_code_optimization_context(
+            function_to_optimize, opt.args.project_root
+        )
 
 
 def test_example_class_token_limit_4(tmp_path: Path) -> None:
     string_filler = " ".join(
-        ["This is a long string that will be used to fill up the token limit." for _ in range(1000)]
+        [
+            "This is a long string that will be used to fill up the token limit."
+            for _ in range(1000)
+        ]
     )
     code = f"""
 class MyClass:
@@ -1043,13 +1105,20 @@ class HelperClass:
     )
 
     # In this scenario, the read-writable code context becomes too large because the __init__ function is referencing the global x variable instead of the class attribute self.x, so we abort.
-    with pytest.raises(ValueError, match="Read-writable code has exceeded token limit, cannot proceed"):
-        code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    with pytest.raises(
+        ValueError, match="Read-writable code has exceeded token limit, cannot proceed"
+    ):
+        code_ctx = get_code_optimization_context(
+            function_to_optimize, opt.args.project_root
+        )
 
 
 def test_example_class_token_limit_5(tmp_path: Path) -> None:
     string_filler = " ".join(
-        ["This is a long string that will be used to fill up the token limit." for _ in range(1000)]
+        [
+            "This is a long string that will be used to fill up the token limit."
+            for _ in range(1000)
+        ]
     )
     code = f"""
 class MyClass:
@@ -1093,10 +1162,14 @@ class HelperClass:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
 
     # the global x variable shouldn't be included in any context type
-    assert code_ctx.read_writable_code.flat == '''# file: test_code.py
+    assert (
+        code_ctx.read_writable_code.flat
+        == '''# file: test_code.py
 class MyClass:
     def __init__(self):
         self.x = 1
@@ -1111,7 +1184,10 @@ class HelperClass:
     def helper_method(self):
         return self.x
 '''
-    assert code_ctx.testgen_context.flat == '''# file: test_code.py
+    )
+    assert (
+        code_ctx.testgen_context.flat
+        == '''# file: test_code.py
 class MyClass:
     """A class with a helper method. """
     def __init__(self):
@@ -1131,10 +1207,16 @@ class HelperClass:
     def helper_method(self):
         return self.x
 '''
+    )
 
 
 def test_repo_helper() -> None:
-    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
+    project_root = (
+        Path(__file__).resolve().parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "retriever"
+    )
     path_to_file = project_root / "main.py"
     path_to_utils = project_root / "utils.py"
     function_to_optimize = FunctionToOptimize(
@@ -1146,7 +1228,10 @@ def test_repo_helper() -> None:
     )
 
     code_ctx = get_code_optimization_context(function_to_optimize, project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
 ```python:{path_to_utils.relative_to(project_root)}
@@ -1226,7 +1311,12 @@ def fetch_and_process_data():
 
 
 def test_repo_helper_of_helper() -> None:
-    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
+    project_root = (
+        Path(__file__).resolve().parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "retriever"
+    )
     path_to_file = project_root / "main.py"
     path_to_utils = project_root / "utils.py"
     path_to_transform_utils = project_root / "transform_utils.py"
@@ -1239,7 +1329,10 @@ def test_repo_helper_of_helper() -> None:
     )
 
     code_ctx = get_code_optimization_context(function_to_optimize, project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
 ```python:{path_to_utils.relative_to(project_root)}
@@ -1327,7 +1420,12 @@ def fetch_and_transform_data():
 
 
 def test_repo_helper_of_helper_same_class() -> None:
-    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
+    project_root = (
+        Path(__file__).resolve().parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "retriever"
+    )
     path_to_utils = project_root / "utils.py"
     path_to_transform_utils = project_root / "transform_utils.py"
     function_to_optimize = FunctionToOptimize(
@@ -1339,7 +1437,10 @@ def test_repo_helper_of_helper_same_class() -> None:
     )
 
     code_ctx = get_code_optimization_context(function_to_optimize, project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
 ```python:{path_to_transform_utils.relative_to(project_root)}
@@ -1407,7 +1508,12 @@ class DataProcessor:
 
 
 def test_repo_helper_of_helper_same_file() -> None:
-    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
+    project_root = (
+        Path(__file__).resolve().parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "retriever"
+    )
     path_to_utils = project_root / "utils.py"
     path_to_transform_utils = project_root / "transform_utils.py"
     function_to_optimize = FunctionToOptimize(
@@ -1419,7 +1525,10 @@ def test_repo_helper_of_helper_same_file() -> None:
     )
 
     code_ctx = get_code_optimization_context(function_to_optimize, project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
 ```python:{path_to_transform_utils.relative_to(project_root)}
@@ -1483,7 +1592,12 @@ class DataProcessor:
 
 
 def test_repo_helper_all_same_file() -> None:
-    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
+    project_root = (
+        Path(__file__).resolve().parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "retriever"
+    )
     path_to_transform_utils = project_root / "transform_utils.py"
     function_to_optimize = FunctionToOptimize(
         function_name="transform_data_all_same_file",
@@ -1494,7 +1608,10 @@ def test_repo_helper_all_same_file() -> None:
     )
 
     code_ctx = get_code_optimization_context(function_to_optimize, project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
 ```python:{path_to_transform_utils.relative_to(project_root)}
@@ -1546,7 +1663,12 @@ def update_data(data):
 
 
 def test_repo_helper_circular_dependency() -> None:
-    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
+    project_root = (
+        Path(__file__).resolve().parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "retriever"
+    )
     path_to_utils = project_root / "utils.py"
     path_to_transform_utils = project_root / "transform_utils.py"
     function_to_optimize = FunctionToOptimize(
@@ -1558,7 +1680,10 @@ def test_repo_helper_circular_dependency() -> None:
     )
 
     code_ctx = get_code_optimization_context(function_to_optimize, project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
 ```python:{path_to_utils.relative_to(project_root)}
@@ -1657,8 +1782,13 @@ def outside_method():
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
 ```python:{file_path.relative_to(opt.args.project_root)}
@@ -1690,9 +1820,17 @@ class MyClass:
 
 
 def test_direct_module_import() -> None:
-    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
-    path_to_main = project_root / "main.py"
-    path_to_fto = project_root / "import_test.py"
+    code_to_optimize_dir = (
+        Path(__file__).resolve().parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "retriever"
+    )
+    project_root = (
+        code_to_optimize_dir.parent.parent.parent
+    )  # Main project root (parent of tests)
+    path_to_main = code_to_optimize_dir / "main.py"
+    path_to_fto = code_to_optimize_dir / "import_test.py"
     function_to_optimize = FunctionToOptimize(
         function_name="function_to_optimize",
         file_path=str(path_to_fto),
@@ -1701,8 +1839,11 @@ def test_direct_module_import() -> None:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, project_root)
-    read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+    code_ctx = get_code_optimization_context(function_to_optimize, code_to_optimize_dir)
+    read_write_context, read_only_context = (
+        code_ctx.read_writable_code,
+        code_ctx.read_only_context_code,
+    )
     hashing_context = code_ctx.hashing_code_context
 
     expected_read_only_context = """
@@ -1748,7 +1889,7 @@ def function_to_optimize():
 ```
 """
     expected_read_write_context = f"""
-```python:{path_to_main.relative_to(project_root)}
+```python:{path_to_main.relative_to(code_to_optimize_dir)}
 import requests
 from globals import API_URL
 from utils import DataProcessor
@@ -1766,7 +1907,7 @@ def fetch_and_transform_data():
 
     return transformed
 ```
-```python:{path_to_fto.relative_to(project_root)}
+```python:{path_to_fto.relative_to(code_to_optimize_dir)}
 import tests.code_to_optimize.code_directories.retriever.main
 
 def function_to_optimize():
@@ -1928,8 +2069,13 @@ def get_system_details():
         )
 
         # Get the code optimization context
-        code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
-        read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+        code_ctx = get_code_optimization_context(
+            function_to_optimize, opt.args.project_root
+        )
+        read_write_context, read_only_context = (
+            code_ctx.read_writable_code,
+            code_ctx.read_only_context_code,
+        )
         hashing_context = code_ctx.hashing_code_context
         # The expected contexts
         # Resolve both paths to handle symlink issues on macOS
@@ -2020,7 +2166,9 @@ class Calculator:
 ```
 """
         # Verify the contexts match the expected values
-        assert read_write_context.markdown.strip() == expected_read_write_context.strip()
+        assert (
+            read_write_context.markdown.strip() == expected_read_write_context.strip()
+        )
         assert read_only_context.strip() == expected_read_only_context.strip()
         assert hashing_context.strip() == expected_hashing_context.strip()
 
@@ -2175,8 +2323,13 @@ def get_system_details():
         )
 
         # Get the code optimization context
-        code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
-        read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
+        code_ctx = get_code_optimization_context(
+            function_to_optimize, opt.args.project_root
+        )
+        read_write_context, read_only_context = (
+            code_ctx.read_writable_code,
+            code_ctx.read_only_context_code,
+        )
         # The expected contexts
         relative_path = file_path.relative_to(project_root)
         expected_read_write_context = f"""
@@ -2242,11 +2395,15 @@ except ImportError:
     CALCULATION_BACKEND = "python"
 ```
 """
-        assert read_write_context.markdown.strip() == expected_read_write_context.strip()
+        assert (
+            read_write_context.markdown.strip() == expected_read_write_context.strip()
+        )
         assert read_only_context.strip() == expected_read_only_context.strip()
 
 
-def test_hashing_code_context_removes_imports_docstrings_and_init(tmp_path: Path) -> None:
+def test_hashing_code_context_removes_imports_docstrings_and_init(
+    tmp_path: Path,
+) -> None:
     """Test that hashing context removes imports, docstrings, and __init__ methods properly."""
     code = '''
 import os
@@ -2305,7 +2462,9 @@ def standalone_function():
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
     hashing_context = code_ctx.hashing_code_context
 
     # Expected behavior based on current implementation:
@@ -2323,7 +2482,9 @@ def standalone_function():
     assert "import" not in hashing_context  # Should not contain imports
     assert "__init__" not in hashing_context  # Should not contain __init__ methods
     assert "target_method" in hashing_context  # Should contain target function
-    assert "standalone_function" not in hashing_context  # Should not contain unused functions
+    assert (
+        "standalone_function" not in hashing_context
+    )  # Should not contain unused functions
 
     # Test that helper functions are included when they're called
     assert "helper_method" in hashing_context  # Should contain called helper method
@@ -2384,7 +2545,9 @@ class OuterClass:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
     hashing_context = code_ctx.hashing_code_context
 
     # Test basic requirements
@@ -2395,16 +2558,22 @@ class OuterClass:
 
     # Verify nested classes are excluded from the hashing context
     # The prune_cst_for_code_hashing function should not recurse into nested classes
-    assert "class NestedClass:" not in hashing_context  # Nested class definition should not be present
+    assert (
+        "class NestedClass:" not in hashing_context
+    )  # Nested class definition should not be present
 
     # The target method will reference NestedClass, but the actual nested class definition should not be included
     # The call to self.NestedClass().nested_method() should be in the target method but the nested class itself excluded
     target_method_call_present = "self.NestedClass().nested_method()" in hashing_context
-    assert target_method_call_present, "The target method should contain the call to nested class"
+    assert target_method_call_present, (
+        "The target method should contain the call to nested class"
+    )
 
     # But the actual nested method definition should not be present
     nested_method_definition_present = "def nested_method(self):" in hashing_context
-    assert not nested_method_definition_present, "Nested method definition should not be present in hashing context"
+    assert not nested_method_definition_present, (
+        "Nested method definition should not be present in hashing context"
+    )
 
 
 def test_hashing_code_context_hash_consistency(tmp_path: Path) -> None:
@@ -2436,8 +2605,12 @@ class TestClass:
     )
 
     # Generate context twice
-    code_ctx1 = get_code_optimization_context(function_to_optimize, opt.args.project_root)
-    code_ctx2 = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    code_ctx1 = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
+    code_ctx2 = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
 
     # Hash should be consistent
     assert code_ctx1.hashing_code_context_hash == code_ctx2.hashing_code_context_hash
@@ -2446,7 +2619,9 @@ class TestClass:
     # Hash should be valid SHA256
     import hashlib
 
-    expected_hash = hashlib.sha256(code_ctx1.hashing_code_context.encode("utf-8")).hexdigest()
+    expected_hash = hashlib.sha256(
+        code_ctx1.hashing_code_context.encode("utf-8")
+    ).hexdigest()
     assert code_ctx1.hashing_code_context_hash == expected_hash
 
 
@@ -2505,8 +2680,12 @@ class TestClass:
         ending_line=None,
     )
 
-    code_ctx1 = get_code_optimization_context(function_to_optimize1, opt1.args.project_root)
-    code_ctx2 = get_code_optimization_context(function_to_optimize2, opt2.args.project_root)
+    code_ctx1 = get_code_optimization_context(
+        function_to_optimize1, opt1.args.project_root
+    )
+    code_ctx2 = get_code_optimization_context(
+        function_to_optimize2, opt2.args.project_root
+    )
 
     # Different code should produce different hashes
     assert code_ctx1.hashing_code_context_hash != code_ctx2.hashing_code_context_hash
@@ -2541,7 +2720,9 @@ class SimpleClass:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
     hashing_context = code_ctx.hashing_code_context
 
     # Should be formatted as markdown code block
@@ -2567,21 +2748,33 @@ class SimpleClass:
 
 # This shouldn't happen as we are now using a scoped optimization context, but keep it just in case
 def test_circular_deps():
-    path_to_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "circular_deps"
+    path_to_root = (
+        Path(__file__).resolve().parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "circular_deps"
+    )
     file_abs_path = path_to_root / "api_client.py"
     optimized_code = Path(path_to_root / "optimized.py").read_text(encoding="utf-8")
     content = Path(file_abs_path).read_text(encoding="utf-8")
     new_code = replace_functions_and_add_imports(
-        source_code= add_global_assignments(optimized_code, content),
-        function_names= ["ApiClient.get_console_url"],
-        optimized_code= optimized_code,
-        module_abspath= Path(file_abs_path),
-        preexisting_objects= {('ApiClient', ()), ('get_console_url', (FunctionParent(name='ApiClient', type='ClassDef'),))},
-        project_root_path= Path(path_to_root),
+        source_code=add_global_assignments(optimized_code, content),
+        function_names=["ApiClient.get_console_url"],
+        optimized_code=optimized_code,
+        module_abspath=Path(file_abs_path),
+        preexisting_objects={
+            ("ApiClient", ()),
+            ("get_console_url", (FunctionParent(name="ApiClient", type="ClassDef"),)),
+        },
+        project_root_path=Path(path_to_root),
     )
     assert "import ApiClient" not in new_code, "Error: Circular dependency found"
 
-    assert "import urllib.parse" in new_code, "Make sure imports for optimization global assignments exist"
+    assert "import urllib.parse" in new_code, (
+        "Make sure imports for optimization global assignments exist"
+    )
+
+
 def test_global_assignment_collector_with_async_function():
     """Test GlobalAssignmentCollector correctly identifies global assignments outside async functions."""
     import libcst as cst
@@ -2775,7 +2968,9 @@ def target_function():
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
 
     # The __init__ method should be tracked as a helper since DataDumper() instantiates the class
     qualified_names = {func.qualified_name for func in code_ctx.helper_functions}
@@ -2785,7 +2980,9 @@ def target_function():
 
     # The testgen context should contain the class with __init__ (critical for LLM to know constructor)
     testgen_context = code_ctx.testgen_context.markdown
-    assert "class DataDumper:" in testgen_context, "DataDumper class should be in testgen context"
+    assert "class DataDumper:" in testgen_context, (
+        "DataDumper class should be in testgen context"
+    )
     assert "def __init__(self, data):" in testgen_context, (
         "__init__ method should be included in testgen context"
     )
@@ -2854,7 +3051,9 @@ def dump_layout(layout_type, layout):
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, opt.args.project_root)
+    code_ctx = get_code_optimization_context(
+        function_to_optimize, opt.args.project_root
+    )
     qualified_names = {func.qualified_name for func in code_ctx.helper_functions}
 
     # Both class __init__ methods should be tracked as helpers
@@ -2867,7 +3066,9 @@ def dump_layout(layout_type, layout):
 
     # The testgen context should include both classes with their __init__ methods
     testgen_context = code_ctx.testgen_context.markdown
-    assert "class LayoutDumper:" in testgen_context, "LayoutDumper should be in testgen context"
+    assert "class LayoutDumper:" in testgen_context, (
+        "LayoutDumper should be in testgen context"
+    )
     assert "class ObjectDetectionLayoutDumper" in testgen_context, (
         "ObjectDetectionLayoutDumper should be in testgen context"
     )
@@ -2878,7 +3079,9 @@ def dump_layout(layout_type, layout):
     )
 
 
-def test_get_imported_class_definitions_extracts_project_classes(tmp_path: Path) -> None:
+def test_get_imported_class_definitions_extracts_project_classes(
+    tmp_path: Path,
+) -> None:
     """Test that get_imported_class_definitions extracts class definitions from project modules."""
     # Create a package structure with two modules
     package_dir = tmp_path / "mypackage"
@@ -2911,7 +3114,7 @@ class Text(Element):
     elements_path.write_text(elements_code, encoding="utf-8")
 
     # Create another module that imports from elements
-    chunking_code = '''
+    chunking_code = """
 from mypackage.elements import Element
 
 class PreChunk:
@@ -2921,7 +3124,7 @@ class PreChunk:
 class Accumulator:
     def will_fit(self, chunk: PreChunk) -> bool:
         return True
-'''
+"""
     chunking_path = package_dir / "chunking.py"
     chunking_path.write_text(chunking_code, encoding="utf-8")
 
@@ -2941,10 +3144,14 @@ class Accumulator:
     assert "class Element" in extracted_code, "Should contain Element class definition"
     assert "def __init__" in extracted_code, "Should contain __init__ method"
     assert "element_id" in extracted_code, "Should contain constructor parameter"
-    assert "import abc" in extracted_code, "Should include necessary imports for base class"
+    assert "import abc" in extracted_code, (
+        "Should include necessary imports for base class"
+    )
 
 
-def test_get_imported_class_definitions_skips_existing_definitions(tmp_path: Path) -> None:
+def test_get_imported_class_definitions_skips_existing_definitions(
+    tmp_path: Path,
+) -> None:
     """Test that get_imported_class_definitions skips classes already defined in context."""
     # Create a package structure
     package_dir = tmp_path / "mypackage"
@@ -2952,16 +3159,16 @@ def test_get_imported_class_definitions_skips_existing_definitions(tmp_path: Pat
     (package_dir / "__init__.py").write_text("", encoding="utf-8")
 
     # Create a module with a class definition
-    elements_code = '''
+    elements_code = """
 class Element:
     def __init__(self, text: str):
         self.text = text
-'''
+"""
     elements_path = package_dir / "elements.py"
     elements_path.write_text(elements_code, encoding="utf-8")
 
     # Create code that imports Element but also redefines it locally
-    code_with_local_def = '''
+    code_with_local_def = """
 from mypackage.elements import Element
 
 # Local redefinition (this happens when LLM redefines classes)
@@ -2972,7 +3179,7 @@ class Element:
 class User:
     def process(self, elem: Element):
         pass
-'''
+"""
     code_path = package_dir / "user.py"
     code_path.write_text(code_with_local_def, encoding="utf-8")
 
@@ -2984,7 +3191,9 @@ class User:
     result = get_imported_class_definitions(context, tmp_path)
 
     # Should NOT extract Element since it's already defined locally
-    assert len(result.code_strings) == 0, "Should not extract classes already defined in context"
+    assert len(result.code_strings) == 0, (
+        "Should not extract classes already defined in context"
+    )
 
 
 def test_get_imported_class_definitions_skips_third_party(tmp_path: Path) -> None:
@@ -2995,7 +3204,7 @@ def test_get_imported_class_definitions_skips_third_party(tmp_path: Path) -> Non
     (package_dir / "__init__.py").write_text("", encoding="utf-8")
 
     # Code with stdlib/third-party imports
-    code = '''
+    code = """
 from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass
@@ -3003,7 +3212,7 @@ from dataclasses import dataclass
 class MyClass:
     def __init__(self, path: Path):
         self.path = path
-'''
+"""
     code_path = package_dir / "main.py"
     code_path.write_text(code, encoding="utf-8")
 
@@ -3015,10 +3224,14 @@ class MyClass:
     result = get_imported_class_definitions(context, tmp_path)
 
     # Should not extract any classes (Path, Optional, dataclass are stdlib/third-party)
-    assert len(result.code_strings) == 0, "Should not extract stdlib/third-party classes"
+    assert len(result.code_strings) == 0, (
+        "Should not extract stdlib/third-party classes"
+    )
 
 
-def test_get_imported_class_definitions_handles_multiple_imports(tmp_path: Path) -> None:
+def test_get_imported_class_definitions_handles_multiple_imports(
+    tmp_path: Path,
+) -> None:
     """Test that get_imported_class_definitions handles multiple class imports."""
     # Create a package structure
     package_dir = tmp_path / "mypackage"
@@ -3026,7 +3239,7 @@ def test_get_imported_class_definitions_handles_multiple_imports(tmp_path: Path)
     (package_dir / "__init__.py").write_text("", encoding="utf-8")
 
     # Create a module with multiple class definitions
-    types_code = '''
+    types_code = """
 class TypeA:
     def __init__(self, value: int):
         self.value = value
@@ -3038,18 +3251,18 @@ class TypeB:
 class TypeC:
     def __init__(self):
         pass
-'''
+"""
     types_path = package_dir / "types.py"
     types_path.write_text(types_code, encoding="utf-8")
 
     # Create code that imports multiple classes
-    code = '''
+    code = """
 from mypackage.types import TypeA, TypeB
 
 class Processor:
     def process(self, a: TypeA, b: TypeB):
         pass
-'''
+"""
     code_path = package_dir / "processor.py"
     code_path.write_text(code, encoding="utf-8")
 
@@ -3061,9 +3274,13 @@ class Processor:
     result = get_imported_class_definitions(context, tmp_path)
 
     # Should extract both TypeA and TypeB (but not TypeC since it's not imported)
-    assert len(result.code_strings) == 2, "Should extract exactly two classes (TypeA, TypeB)"
+    assert len(result.code_strings) == 2, (
+        "Should extract exactly two classes (TypeA, TypeB)"
+    )
 
     all_extracted_code = "\n".join(cs.code for cs in result.code_strings)
     assert "class TypeA" in all_extracted_code, "Should contain TypeA class"
     assert "class TypeB" in all_extracted_code, "Should contain TypeB class"
-    assert "class TypeC" not in all_extracted_code, "Should NOT contain TypeC (not imported)"
+    assert "class TypeC" not in all_extracted_code, (
+        "Should NOT contain TypeC (not imported)"
+    )

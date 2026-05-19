@@ -5,8 +5,6 @@ from typing import Any
 
 import tomlkit
 
-from codeflash.lsp.helpers import is_LSP_enabled
-
 PYPROJECT_TOML_CACHE = {}
 ALL_CONFIG_FILES = {}  # map path to closest config file
 
@@ -43,7 +41,13 @@ def find_pyproject_toml(config_file: Path | None = None) -> Path:
 
 def get_all_closest_config_files() -> list[Path]:
     all_closest_config_files = []
-    for file_type in ["pyproject.toml", "pytest.ini", ".pytest.ini", "tox.ini", "setup.cfg"]:
+    for file_type in [
+        "pyproject.toml",
+        "pytest.ini",
+        ".pytest.ini",
+        "tox.ini",
+        "setup.cfg",
+    ]:
         closest_config_file = find_closest_config_file(file_type)
         if closest_config_file:
             all_closest_config_files.append(closest_config_file)
@@ -95,28 +99,24 @@ def parse_config_file(
         msg = f"Error while parsing the config file {config_file_path}. Please recheck the file for syntax errors. Error: {e}"
         raise ValueError(msg) from None
 
-    lsp_mode = is_LSP_enabled()
-
     try:
         tool = data["tool"]
         assert isinstance(tool, dict)
         config = tool["codeflash"]
     except tomlkit.exceptions.NonExistentKey as e:
-        if lsp_mode:
-            # don't fail in lsp mode if codeflash config is not found.
-            return {}, config_file_path
         msg = f"Could not find the 'codeflash' block in the config file {config_file_path}. Please run 'codeflash init' to add Codeflash config in the pyproject.toml config file."
         raise ValueError(msg) from e
     assert isinstance(config, dict)
-
-    if config == {} and lsp_mode:
-        return {}, config_file_path
 
     # default values:
     path_keys = ["module-root", "tests-root", "benchmarks-root"]
     path_list_keys = ["ignore-paths"]
     str_keys = {"pytest-cmd": "pytest", "git-remote": "origin"}
-    bool_keys = {"override-fixtures": False, "disable-imports-sorting": False, "benchmark": False}
+    bool_keys = {
+        "override-fixtures": False,
+        "disable-imports-sorting": False,
+        "benchmark": False,
+    }
     list_str_keys = {"formatter-cmds": ["black $file"]}
 
     for key, default_value in str_keys.items():
@@ -131,7 +131,9 @@ def parse_config_file(
             config[key] = default_value
     for key in path_keys:
         if key in config:
-            config[key] = str((Path(config_file_path).parent / Path(config[key])).resolve())
+            config[key] = str(
+                (Path(config_file_path).parent / Path(config[key])).resolve()
+            )
     for key, default_value in list_str_keys.items():
         if key in config:
             config[key] = [str(cmd) for cmd in config[key]]
@@ -140,12 +142,19 @@ def parse_config_file(
 
     for key in path_list_keys:
         if key in config:
-            config[key] = [str((Path(config_file_path).parent / path).resolve()) for path in config[key]]
+            config[key] = [
+                str((Path(config_file_path).parent / path).resolve())
+                for path in config[key]
+            ]
         else:
             config[key] = []
 
     # see if this is happening during GitHub actions setup
-    if config.get("formatter-cmds") and len(config.get("formatter-cmds")) > 0 and not override_formatter_check:
+    if (
+        config.get("formatter-cmds")
+        and len(config.get("formatter-cmds")) > 0
+        and not override_formatter_check
+    ):
         assert config.get("formatter-cmds")[0] != "your-formatter $file", (
             "The formatter command is not set correctly in pyproject.toml. Please set the "
             "formatter command in the 'formatter-cmds' key. More info - https://docs.codeflash.ai/configuration"

@@ -35,11 +35,17 @@ def test_get_outside_method_helper() -> None:
     )
 
     function_to_optimize = FunctionToOptimize(
-        function_name="OptimizeMe", file_path=file_path, parents=[], starting_line=None, ending_line=None
+        function_name="OptimizeMe",
+        file_path=file_path,
+        parents=[],
+        starting_line=None,
+        ending_line=None,
     )
     with open(file_path) as f:
         original_code = f.read()
-    ctx_result = opt.get_code_optimization_context(function_to_optimize, opt.args.project_root, original_code)
+    ctx_result = opt.get_code_optimization_context(
+        function_to_optimize, opt.args.project_root, original_code
+    )
     if not is_successful(ctx_result):
         pytest.fail()
     code_context = ctx_result.unwrap()
@@ -232,17 +238,22 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
             test_framework="pytest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=function_to_optimize, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=function_to_optimize, test_cfg=test_config
+        )
         with open(file_path) as f:
             original_code = f.read()
         ctx_result = func_optimizer.get_code_optimization_context()
         if not is_successful(ctx_result):
             pytest.fail()
         code_context = ctx_result.unwrap()
-        assert code_context.helper_functions[0].qualified_name == "AbstractCacheBackend.get_cache_or_call"
         assert (
-                code_context.testgen_context.flat
-                == f'''# file: {file_path.relative_to(project_root_path)}
+            code_context.helper_functions[0].qualified_name
+            == "AbstractCacheBackend.get_cache_or_call"
+        )
+        assert (
+            code_context.testgen_context.flat
+            == f'''# file: {file_path.relative_to(project_root_path)}
 _P = ParamSpec("_P")
 _KEY_T = TypeVar("_KEY_T")
 _STORE_T = TypeVar("_STORE_T")
@@ -390,12 +401,20 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
 
 
 def test_bubble_sort_deps() -> None:
-    file_path = (Path(__file__) / ".." / "code_to_optimize" / "bubble_sort_deps.py").resolve()
+    file_path = (
+        Path(__file__) / ".." / "code_to_optimize" / "bubble_sort_deps.py"
+    ).resolve()
 
     function_to_optimize = FunctionToOptimize(
-        function_name="sorter_deps", file_path=file_path, parents=[], starting_line=None, ending_line=None
+        function_name="sorter_deps",
+        file_path=file_path,
+        parents=[],
+        starting_line=None,
+        ending_line=None,
     )
-    project_root = file_path.parent.parent.resolve()
+    project_root = (
+        file_path.parent.parent.parent.resolve()
+    )  # Main project root (parent of tests)
     test_config = TestConfig(
         tests_root=str(file_path.parent / "tests"),
         tests_project_rootdir=file_path.parent.resolve(),
@@ -403,7 +422,9 @@ def test_bubble_sort_deps() -> None:
         test_framework="pytest",
         pytest_cmd="pytest",
     )
-    func_optimizer = FunctionOptimizer(function_to_optimize=function_to_optimize, test_cfg=test_config)
+    func_optimizer = FunctionOptimizer(
+        function_to_optimize=function_to_optimize, test_cfg=test_config
+    )
     with open(file_path) as f:
         original_code = f.read()
     ctx_result = func_optimizer.get_code_optimization_context()
@@ -411,8 +432,8 @@ def test_bubble_sort_deps() -> None:
         pytest.fail()
     code_context = ctx_result.unwrap()
     assert (
-            code_context.testgen_context.flat
-            == f"""{get_code_block_splitter(Path("tests/code_to_optimize/bubble_sort_dep1_helper.py"))}
+        code_context.testgen_context.flat
+        == f"""{get_code_block_splitter(Path("tests/code_to_optimize/bubble_sort_dep1_helper.py"))}
 def dep1_comparer(arr, j: int) -> bool:
     return arr[j] > arr[j + 1]
 
@@ -437,7 +458,10 @@ def sorter_deps(arr):
     )
     assert len(code_context.helper_functions) == 2
     assert (
-            code_context.helper_functions[0].fully_qualified_name
-            == "tests.code_to_optimize.bubble_sort_dep1_helper.dep1_comparer"
+        code_context.helper_functions[0].fully_qualified_name
+        == "tests.code_to_optimize.bubble_sort_dep1_helper.dep1_comparer"
     )
-    assert code_context.helper_functions[1].fully_qualified_name == "tests.code_to_optimize.bubble_sort_dep2_swap.dep2_swap"
+    assert (
+        code_context.helper_functions[1].fully_qualified_name
+        == "tests.code_to_optimize.bubble_sort_dep2_swap.dep2_swap"
+    )

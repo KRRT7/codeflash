@@ -16,8 +16,10 @@ from tempfile import TemporaryDirectory
 import tomlkit
 
 from codeflash.cli_cmds.console import logger, paneled_text
-from codeflash.code_utils.config_parser import find_pyproject_toml, get_all_closest_config_files
-from codeflash.lsp.helpers import is_LSP_enabled
+from codeflash.code_utils.config_parser import (
+    find_pyproject_toml,
+    get_all_closest_config_files,
+)
 
 _INVALID_CHARS_NT = {"<", ">", ":", '"', "|", "?", "*"}
 
@@ -25,10 +27,20 @@ _INVALID_CHARS_UNIX = {"\0"}
 
 ImportErrorPattern = re.compile(r"ModuleNotFoundError.*$", re.MULTILINE)
 
-BLACKLIST_ADDOPTS = ("--benchmark", "--sugar", "--codespeed", "--cov", "--profile", "--junitxml", "-n")
+BLACKLIST_ADDOPTS = (
+    "--benchmark",
+    "--sugar",
+    "--codespeed",
+    "--cov",
+    "--profile",
+    "--junitxml",
+    "-n",
+)
 
 
-def unified_diff_strings(code1: str, code2: str, fromfile: str = "original", tofile: str = "modified") -> str:
+def unified_diff_strings(
+    code1: str, code2: str, fromfile: str = "original", tofile: str = "modified"
+) -> str:
     """Return the unified diff between two code strings as a single string.
 
     :param code1: First code string (original).
@@ -40,7 +52,9 @@ def unified_diff_strings(code1: str, code2: str, fromfile: str = "original", tof
     code1_lines = code1.splitlines(keepends=True)
     code2_lines = code2.splitlines(keepends=True)
 
-    diff = difflib.unified_diff(code1_lines, code2_lines, fromfile=fromfile, tofile=tofile, lineterm="")
+    diff = difflib.unified_diff(
+        code1_lines, code2_lines, fromfile=fromfile, tofile=tofile, lineterm=""
+    )
 
     return "".join(diff)
 
@@ -73,7 +87,9 @@ def normalize_by_max(values: list[float]) -> list[float]:
     return [v / mx for v in values]
 
 
-def create_score_dictionary_from_metrics(weights: list[float], *metrics: list[float]) -> dict[int, int]:
+def create_score_dictionary_from_metrics(
+    weights: list[float], *metrics: list[float]
+) -> dict[int, int]:
     """Combine multiple metrics into a single weighted score dictionary.
 
     Each metric is a list of values (smaller = better).
@@ -176,48 +192,75 @@ def modify_addopts(config_file: Path) -> tuple[str, bool]:  # noqa : PLR0911
     with Path.open(config_file, encoding="utf-8") as f:
         content = f.read()
     try:
+        was_modified = False
         if filename == "pyproject.toml":
             # use tomlkit
             data = tomlkit.parse(content)
-            original_addopts = data.get("tool", {}).get("pytest", {}).get("ini_options", {}).get("addopts", "")
-            # nothing to do if no addopts present
-            if original_addopts == "":
-                return content, False
+            original_addopts = (
+                data.get("tool", {})
+                .get("pytest", {})
+                .get("ini_options", {})
+                .get("addopts", "")
+            )
             if isinstance(original_addopts, list):
                 original_addopts = " ".join(original_addopts)
             original_addopts = original_addopts.replace("=", " ")
-            addopts_args = (
-                original_addopts.split()
-            )  # any number of space characters as delimiter, doesn't look at = which is fine
+            addopts_args = original_addopts.split()
+            new_addopts_args = filter_args(addopts_args)
+            if new_addopts_args != addopts_args:
+                data["tool"]["pytest"]["ini_options"]["addopts"] = " ".join(
+                    new_addopts_args
+                )
+                was_modified = True
+            # Also clear norecursedirs to allow test discovery in excluded dirs
+            norecursedirs = (
+                data.get("tool", {})
+                .get("pytest", {})
+                .get("ini_options", {})
+                .get("norecursedirs")
+            )
+            if norecursedirs:
+                del data["tool"]["pytest"]["ini_options"]["norecursedirs"]
+                was_modified = True
+            if not was_modified:
+                return content, False
+            # Write modified file
+            with Path.open(config_file, "w", encoding="utf-8") as f:
+                f.write(tomlkit.dumps(data))
+                return content, True
         else:
             # use configparser
             config = configparser.ConfigParser()
             config.read_string(content)
             data = {section: dict(config[section]) for section in config.sections()}
             if config_file.name in {"pytest.ini", ".pytest.ini", "tox.ini"}:
-                original_addopts = data.get("pytest", {}).get("addopts", "")  # should only be a string
+                original_addopts = data.get("pytest", {}).get(
+                    "addopts", ""
+                )  # should only be a string
             else:
-                original_addopts = data.get("tool:pytest", {}).get("addopts", "")  # should only be a string
+                original_addopts = data.get("tool:pytest", {}).get(
+                    "addopts", ""
+                )  # should only be a string
             original_addopts = original_addopts.replace("=", " ")
             addopts_args = original_addopts.split()
-        new_addopts_args = filter_args(addopts_args)
-        if new_addopts_args == addopts_args:
-            return content, False
-        # change addopts now
-        if file_type == ".toml":
-            data["tool"]["pytest"]["ini_options"]["addopts"] = " ".join(new_addopts_args)
-            # Write modified file
-            with Path.open(config_file, "w", encoding="utf-8") as f:
-                f.write(tomlkit.dumps(data))
-                return content, True
-        elif config_file.name in {"pytest.ini", ".pytest.ini", "tox.ini"}:
-            config.set("pytest", "addopts", " ".join(new_addopts_args))
-            # Write modified file
-            with Path.open(config_file, "w", encoding="utf-8") as f:
-                config.write(f)
-                return content, True
-        else:
-            config.set("tool:pytest", "addopts", " ".join(new_addopts_args))
+            new_addopts_args = filter_args(addopts_args)
+            if new_addopts_args != addopts_args:
+                if config_file.name in {"pytest.ini", ".pytest.ini", "tox.ini"}:
+                    config.set("pytest", "addopts", " ".join(new_addopts_args))
+                else:
+                    config.set("tool:pytest", "addopts", " ".join(new_addopts_args))
+                was_modified = True
+            # Also clear norecursedirs
+            section = (
+                "pytest"
+                if config_file.name in {"pytest.ini", ".pytest.ini", "tox.ini"}
+                else "tool:pytest"
+            )
+            if config.has_option(section, "norecursedirs"):
+                config.remove_option(section, "norecursedirs")
+                was_modified = True
+            if not was_modified:
+                return content, False
             # Write modified file
             with Path.open(config_file, "w", encoding="utf-8") as f:
                 config.write(f)
@@ -299,7 +342,9 @@ def get_qualified_name(module_name: str, full_qualified_name: str) -> str:
     return full_qualified_name[len(module_name) + 1 :]
 
 
-def module_name_from_file_path(file_path: Path, project_root_path: Path, *, traverse_up: bool = False) -> str:
+def module_name_from_file_path(
+    file_path: Path, project_root_path: Path, *, traverse_up: bool = False
+) -> str:
     try:
         relative_path = file_path.resolve().relative_to(project_root_path.resolve())
         return relative_path.with_suffix("").as_posix().replace("/", ".")
@@ -322,7 +367,9 @@ def file_path_from_module_name(module_name: str, project_root_path: Path) -> Pat
 
 
 @lru_cache(maxsize=100)
-def file_name_from_test_module_name(test_module_name: str, base_dir: Path) -> Path | None:
+def file_name_from_test_module_name(
+    test_module_name: str, base_dir: Path
+) -> Path | None:
     partial_test_class = test_module_name
     while partial_test_class:
         test_path = file_path_from_module_name(partial_test_class, base_dir)
@@ -333,11 +380,13 @@ def file_name_from_test_module_name(test_module_name: str, base_dir: Path) -> Pa
 
 
 def get_imports_from_file(
-    file_path: Path | None = None, file_string: str | None = None, file_ast: ast.AST | None = None
+    file_path: Path | None = None,
+    file_string: str | None = None,
+    file_ast: ast.AST | None = None,
 ) -> list[ast.Import | ast.ImportFrom]:
-    assert sum([file_path is not None, file_string is not None, file_ast is not None]) == 1, (
-        "Must provide exactly one of file_path, file_string, or file_ast"
-    )
+    assert (
+        sum([file_path is not None, file_string is not None, file_ast is not None]) == 1
+    ), "Must provide exactly one of file_path, file_string, or file_ast"
     if file_path:
         with file_path.open(encoding="utf8") as file:
             file_string = file.read()
@@ -350,7 +399,11 @@ def get_imports_from_file(
         except SyntaxError as e:
             logger.exception(f"Syntax error in code: {e}")
             return []
-    return [node for node in ast.walk(file_ast) if isinstance(node, (ast.Import, ast.ImportFrom))]
+    return [
+        node
+        for node in ast.walk(file_ast)
+        if isinstance(node, (ast.Import, ast.ImportFrom))
+    ]
 
 
 def get_all_function_names(code: str) -> tuple[bool, list[str]]:
@@ -361,7 +414,9 @@ def get_all_function_names(code: str) -> tuple[bool, list[str]]:
         return False, []
 
     function_names = [
-        node.name for node in ast.walk(module) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        node.name
+        for node in ast.walk(module)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
     ]
     return True, function_names
 
@@ -377,7 +432,10 @@ def get_run_tmp_file(file_path: Path | str) -> Path:
 def path_belongs_to_site_packages(file_path: Path) -> bool:
     file_path_resolved = file_path.resolve()
     site_packages = [Path(p).resolve() for p in site.getsitepackages()]
-    return any(file_path_resolved.is_relative_to(site_package_path) for site_package_path in site_packages)
+    return any(
+        file_path_resolved.is_relative_to(site_package_path)
+        for site_package_path in site_packages
+    )
 
 
 def is_class_defined_in_file(class_name: str, file_path: Path) -> bool:
@@ -386,7 +444,10 @@ def is_class_defined_in_file(class_name: str, file_path: Path) -> bool:
     with file_path.open(encoding="utf8") as file:
         source = file.read()
     tree = ast.parse(source)
-    return any(isinstance(node, ast.ClassDef) and node.name == class_name for node in ast.walk(tree))
+    return any(
+        isinstance(node, ast.ClassDef) and node.name == class_name
+        for node in ast.walk(tree)
+    )
 
 
 def validate_python_code(code: str) -> str:
@@ -414,10 +475,7 @@ def restore_conftest(path_to_content_map: dict[Path, str]) -> None:
 
 
 def exit_with_message(message: str, *, error_on_exit: bool = False) -> None:
-    """Don't Call it inside the lsp process, it will terminate the lsp server."""
-    if is_LSP_enabled():
-        logger.error(message)
-        return
+    """Display an error message and exit."""
     paneled_text(message, panel_args={"style": "red"})
 
     sys.exit(1 if error_on_exit else 0)
@@ -468,7 +526,10 @@ def validate_relative_directory_path(path: str) -> tuple[bool, str]:
     # Normalize path separators for checking
     normalized = path.replace("\\", "/")
     if ".." in normalized:
-        return False, "Path cannot contain '..'. Use a relative path like 'tests' or 'src/app' instead"
+        return (
+            False,
+            "Path cannot contain '..'. Use a relative path like 'tests' or 'src/app' instead",
+        )
 
     # Check for absolute paths, invalid characters, and validate path format
     error_msg = ""

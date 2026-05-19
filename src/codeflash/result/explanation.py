@@ -10,7 +10,6 @@ from rich.console import Console
 from rich.table import Table
 
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.lsp.helpers import is_LSP_enabled
 from codeflash.models.models import BenchmarkDetail, TestResults
 from codeflash.result.critic import throughput_gain
 
@@ -44,7 +43,8 @@ class Explanation:
             and self.original_async_throughput > 0
         ):
             throughput_improvement = throughput_gain(
-                original_throughput=self.original_async_throughput, optimized_throughput=self.best_async_throughput
+                original_throughput=self.original_async_throughput,
+                optimized_throughput=self.best_async_throughput,
             )
 
             # Use throughput metrics if throughput improvement is better or runtime got worse
@@ -78,12 +78,21 @@ class Explanation:
                 terminal_width = 200  # Fallback width
 
             # Create a rich table for better formatting
-            table = Table(title="Benchmark Performance Details", width=terminal_width, show_lines=True)
+            table = Table(
+                title="Benchmark Performance Details",
+                width=terminal_width,
+                show_lines=True,
+            )
 
             # Add columns - split Benchmark File and Function into separate columns
             # Using proportional width for benchmark file column (40% of terminal width)
             benchmark_col_width = max(int(terminal_width * 0.4), 40)
-            table.add_column("Benchmark Module Path", style="cyan", width=benchmark_col_width, overflow="fold")
+            table.add_column(
+                "Benchmark Module Path",
+                style="cyan",
+                width=benchmark_col_width,
+                overflow="fold",
+            )
             table.add_column("Test Function", style="cyan", overflow="fold")
             table.add_column("Original Runtime", style="magenta", justify="right")
             table.add_column("Expected New Runtime", style="green", justify="right")
@@ -106,9 +115,14 @@ class Explanation:
             string_buffer = StringIO()
             console = Console(file=string_buffer, width=terminal_width)
             console.print(table)
-            benchmark_info = cast("StringIO", console.file).getvalue() + "\n"  # Cast for mypy
+            benchmark_info = (
+                cast("StringIO", console.file).getvalue() + "\n"
+            )  # Cast for mypy
 
-        if self.original_async_throughput is not None and self.best_async_throughput is not None:
+        if (
+            self.original_async_throughput is not None
+            and self.best_async_throughput is not None
+        ):
             performance_description = (
                 f"Throughput improved from {self.original_async_throughput} to {self.best_async_throughput} operations/second "
                 f"(runtime: {original_runtime_human} → {best_runtime_human})\n\n"
@@ -123,13 +137,8 @@ class Explanation:
             + (benchmark_info if benchmark_info else "")
             + self.raw_explanation_message
             + " \n\n"
-            + (
-                # in the lsp (extension) we display the test results before the optimization summary
-                ""
-                if is_LSP_enabled()
-                else "The new optimized code was tested for correctness. The results are listed below.\n"
-                f"{TestResults.report_to_string(self.winning_behavior_test_results.get_test_pass_fail_report_by_type())}\n"
-            )
+            + "The new optimized code was tested for correctness. The results are listed below.\n"
+            f"{TestResults.report_to_string(self.winning_behavior_test_results.get_test_pass_fail_report_by_type())}\n"
         )
 
     def explanation_message(self) -> str:

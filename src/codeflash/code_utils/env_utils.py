@@ -12,11 +12,15 @@ from typing import Any, Optional
 from codeflash.cli_cmds.console import logger
 from codeflash.code_utils.code_utils import exit_with_message
 from codeflash.code_utils.formatter import format_code
-from codeflash.code_utils.shell_utils import read_api_key_from_shell_config, save_api_key_to_rc
-from codeflash.lsp.helpers import is_LSP_enabled
+from codeflash.code_utils.shell_utils import (
+    read_api_key_from_shell_config,
+    save_api_key_to_rc,
+)
 
 
-def check_formatter_installed(formatter_cmds: list[str], exit_on_failure: bool = True) -> bool:  # noqa
+def check_formatter_installed(
+    formatter_cmds: list[str], exit_on_failure: bool = True
+) -> bool:  # noqa
     if not formatter_cmds or formatter_cmds[0] == "disabled":
         return True
     first_cmd = formatter_cmds[0]
@@ -40,7 +44,9 @@ def check_formatter_installed(formatter_cmds: list[str], exit_on_failure: bool =
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_file = Path(tmpdir) / "test_codeflash_formatter.py"
             tmp_file.write_text(tmp_code, encoding="utf-8")
-            format_code(formatter_cmds, tmp_file, print_status=False, exit_on_failure=False)
+            format_code(
+                formatter_cmds, tmp_file, print_status=False, exit_on_failure=False
+            )
             return True
     except FileNotFoundError:
         logger.error(
@@ -66,23 +72,26 @@ def get_codeflash_api_key() -> str:
         try:
             from codeflash.either import is_successful
 
-            logger.debug("env_utils.py:get_codeflash_api_key - Saving API key from environment to shell config")
+            logger.debug(
+                "env_utils.py:get_codeflash_api_key - Saving API key from environment to shell config"
+            )
             result = save_api_key_to_rc(env_api_key)
             if is_successful(result):
                 logger.debug(
                     f"env_utils.py:get_codeflash_api_key - Automatically saved API key from environment to shell config: {result.unwrap()}"
                 )
             else:
-                logger.debug(f"env_utils.py:get_codeflash_api_key - Failed to save API key: {result.failure()}")
+                logger.debug(
+                    f"env_utils.py:get_codeflash_api_key - Failed to save API key: {result.failure()}"
+                )
         except Exception as e:
             logger.debug(
                 f"env_utils.py:get_codeflash_api_key - Failed to automatically save API key to shell config: {e}"
             )
 
-    # Prefer the shell configuration over environment variables for lsp,
-    # as the API key may change in the RC file during lsp runtime. Since the LSP client (extension) can restart
-    # within the same process, the environment variable could become outdated.
-    api_key = shell_api_key or env_api_key if is_LSP_enabled() else env_api_key or shell_api_key
+    # Prefer the shell configuration over environment variables,
+    # as the API key may change in the RC file during runtime.
+    api_key = env_api_key or shell_api_key
 
     api_secret_docs_message = "For more information, refer to the documentation at [https://docs.codeflash.ai/optimizing-with-codeflash/codeflash-github-actions#manual-setup]."  # noqa
     if not api_key:
@@ -160,7 +169,9 @@ def get_cached_gh_event_data() -> dict[str, Any]:
 
 def is_repo_a_fork() -> bool:
     event = get_cached_gh_event_data()
-    return bool(event.get("pull_request", {}).get("head", {}).get("repo", {}).get("fork", False))
+    return bool(
+        event.get("pull_request", {}).get("head", {}).get("repo", {}).get("fork", False)
+    )
 
 
 @lru_cache(maxsize=1)

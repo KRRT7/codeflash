@@ -13,9 +13,18 @@ from codeflash.benchmarking.plugin.plugin import codeflash_benchmark_plugin
 from codeflash.benchmarking.replay_test import generate_replay_test
 from codeflash.benchmarking.trace_benchmarks import trace_benchmarks_pytest
 from codeflash.benchmarking.utils import validate_and_format_benchmark_table
-from codeflash.code_utils.instrument_existing_tests import inject_profiling_into_existing_test
+from codeflash.code_utils.instrument_existing_tests import (
+    inject_profiling_into_existing_test,
+)
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import CodePosition, TestFile, TestFiles, TestingMode, TestsInFile, TestType
+from codeflash.models.models import (
+    CodePosition,
+    TestFile,
+    TestFiles,
+    TestingMode,
+    TestsInFile,
+    TestType,
+)
 from codeflash.optimization.optimizer import Optimizer
 from codeflash.verification.equivalence import compare_test_results
 import time
@@ -31,12 +40,14 @@ except ImportError:
     HAS_SQLALCHEMY = False
 
 from codeflash.picklepatch.pickle_patcher import PicklePatcher
-from codeflash.picklepatch.pickle_placeholder import PicklePlaceholder, PicklePlaceholderAccessError
+from codeflash.picklepatch.pickle_placeholder import (
+    PicklePlaceholder,
+    PicklePlaceholderAccessError,
+)
 
 
 def test_picklepatch_simple_nested():
-    """Test that a simple nested data structure pickles and unpickles correctly.
-    """
+    """Test that a simple nested data structure pickles and unpickles correctly."""
     original_data = {
         "numbers": [1, 2, 3],
         "nested_dict": {"key": "value", "another": 42},
@@ -85,15 +96,14 @@ def test_picklepatch_with_socket():
 
 
 def test_picklepatch_deeply_nested():
-    """Test that deep nesting with unpicklable objects works correctly.
-    """
+    """Test that deep nesting with unpicklable objects works correctly."""
     # Create a deeply nested structure with an unpicklable object
     deep_nested = {
         "level1": {
             "level2": {
                 "level3": {
                     "normal": "value",
-                    "socket": socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    "socket": socket.socket(socket.AF_INET, socket.SOCK_STREAM),
                 }
             }
         }
@@ -106,11 +116,14 @@ def test_picklepatch_deeply_nested():
     assert reloaded["level1"]["level2"]["level3"]["normal"] == "value"
 
     # The socket should be replaced with a placeholder
-    assert isinstance(reloaded["level1"]["level2"]["level3"]["socket"], PicklePlaceholder)
+    assert isinstance(
+        reloaded["level1"]["level2"]["level3"]["socket"], PicklePlaceholder
+    )
+
 
 def test_picklepatch_class_with_unpicklable_attr():
-    """Test that a class with an unpicklable attribute works correctly.
-    """
+    """Test that a class with an unpicklable attribute works correctly."""
+
     class TestClass:
         def __init__(self):
             self.normal = "normal value"
@@ -126,8 +139,6 @@ def test_picklepatch_class_with_unpicklable_attr():
 
     # Unpicklable attribute should be replaced with a placeholder
     assert isinstance(reloaded.unpicklable, PicklePlaceholder)
-
-
 
 
 def test_picklepatch_with_database_connection():
@@ -158,7 +169,7 @@ def test_picklepatch_with_database_connection():
         reloaded["connection"].execute("SELECT 1")
 
     cursor.close()
-    conn.close()    
+    conn.close()
 
 
 def test_picklepatch_with_generator():
@@ -178,7 +189,7 @@ def test_picklepatch_with_generator():
     data_with_generator = {
         "description": "Contains a generator",
         "generator": gen,
-        "normal_list": [1, 2, 3]
+        "normal_list": [1, 2, 3],
     }
 
     dumped = PicklePatcher.dumps(data_with_generator)
@@ -234,9 +245,7 @@ def test_picklepatch_loads_dill_pickle():
     original_data = {
         "numbers": [1, 2, 3],
         "function": lambda x: x * 2,
-        "nested": {
-            "another_function": lambda y: y ** 2
-        }
+        "nested": {"another_function": lambda y: y**2},
     }
 
     # Pickle it with dill
@@ -253,6 +262,7 @@ def test_picklepatch_loads_dill_pickle():
     assert reloaded["function"](5) == 10
     assert reloaded["nested"]["another_function"](4) == 16
 
+
 def test_run_and_parse_picklepatch() -> None:
     """Test the end to end functionality of picklepatch, from tracing benchmarks to running the replay tests.
 
@@ -266,13 +276,37 @@ def test_run_and_parse_picklepatch() -> None:
     # Init paths
     project_root = Path(__file__).parent.parent.resolve()
     tests_root = project_root / "tests" / "code_to_optimize" / "tests" / "pytest"
-    benchmarks_root = project_root / "tests" / "code_to_optimize" / "tests" / "pytest" / "benchmarks_socket_test"
+    benchmarks_root = (
+        project_root
+        / "tests"
+        / "code_to_optimize"
+        / "tests"
+        / "pytest"
+        / "benchmarks_socket_test"
+    )
     replay_tests_dir = benchmarks_root / "codeflash_replay_tests"
     output_file = (benchmarks_root / Path("test_trace_benchmarks.trace")).resolve()
-    fto_unused_socket_path = (project_root / "tests" / "code_to_optimize" / "bubble_sort_picklepatch_test_unused_socket.py").resolve()
-    fto_used_socket_path = (project_root / "tests" / "code_to_optimize" / "bubble_sort_picklepatch_test_used_socket.py").resolve()
+    fto_unused_socket_path = (
+        project_root
+        / "tests"
+        / "code_to_optimize"
+        / "bubble_sort_picklepatch_test_unused_socket.py"
+    ).resolve()
+    fto_used_socket_path = (
+        project_root
+        / "tests"
+        / "code_to_optimize"
+        / "bubble_sort_picklepatch_test_used_socket.py"
+    ).resolve()
     original_fto_unused_socket_code = fto_unused_socket_path.read_text("utf-8")
     original_fto_used_socket_code = fto_used_socket_path.read_text("utf-8")
+
+    # Clean up any previous run
+    if output_file.exists():
+        output_file.unlink()
+    if replay_tests_dir.exists():
+        shutil.rmtree(replay_tests_dir)
+
     # Trace benchmarks
     trace_benchmarks_pytest(benchmarks_root, tests_root, project_root, output_file)
     assert output_file.exists()
@@ -282,70 +316,124 @@ def test_run_and_parse_picklepatch() -> None:
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT function_name, class_name, module_name, file_path, benchmark_function_name, benchmark_module_path, benchmark_line_number FROM benchmark_function_timings ORDER BY benchmark_module_path, benchmark_function_name, function_name")
+            "SELECT function_name, class_name, module_name, file_path, benchmark_function_name, benchmark_module_path, benchmark_line_number FROM benchmark_function_timings ORDER BY benchmark_module_path, benchmark_function_name, function_name"
+        )
         function_calls = cursor.fetchall()
 
         # Assert the length of function calls
-        assert len(function_calls) == 2, f"Expected 2 function calls, but got {len(function_calls)}"
-        function_benchmark_timings = codeflash_benchmark_plugin.get_function_benchmark_timings(output_file)
-        total_benchmark_timings = codeflash_benchmark_plugin.get_benchmark_timings(output_file)
-        function_to_results = validate_and_format_benchmark_table(function_benchmark_timings, total_benchmark_timings)
-        assert "tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket.bubble_sort_with_unused_socket" in function_to_results
-        
+        assert len(function_calls) == 2, (
+            f"Expected 2 function calls, but got {len(function_calls)}"
+        )
+        function_benchmark_timings = (
+            codeflash_benchmark_plugin.get_function_benchmark_timings(output_file)
+        )
+        total_benchmark_timings = codeflash_benchmark_plugin.get_benchmark_timings(
+            output_file
+        )
+        function_to_results = validate_and_format_benchmark_table(
+            function_benchmark_timings, total_benchmark_timings
+        )
+        assert (
+            "tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket.bubble_sort_with_unused_socket"
+            in function_to_results
+        )
+
         # Close the connection to allow file cleanup on Windows
         conn.close()
         time.sleep(1)
 
         # Handle the case where function runs too fast to be measured
-        unused_socket_results = function_to_results["tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket.bubble_sort_with_unused_socket"]
+        unused_socket_results = function_to_results[
+            "tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket.bubble_sort_with_unused_socket"
+        ]
         if unused_socket_results:
             test_name, total_time, function_time, percent = unused_socket_results[0]
             assert total_time >= 0.0
             # Function might be too fast, so we allow 0.0 function_time
             assert function_time >= 0.0
             assert percent >= 0.0
-        used_socket_results = function_to_results["tests.code_to_optimize.bubble_sort_picklepatch_test_used_socket.bubble_sort_with_used_socket"]
+        used_socket_results = function_to_results[
+            "tests.code_to_optimize.bubble_sort_picklepatch_test_used_socket.bubble_sort_with_used_socket"
+        ]
         # on windows , if the socket is not used we might not have resultssss
         if used_socket_results:
             test_name, total_time, function_time, percent = used_socket_results[0]
             assert total_time >= 0.0
-            assert function_time >= 0.0 
+            assert function_time >= 0.0
             assert percent >= 0.0
 
-        bubble_sort_unused_socket_path = (project_root / "tests" / "code_to_optimize"/ "bubble_sort_picklepatch_test_unused_socket.py").as_posix()
-        bubble_sort_used_socket_path = (project_root / "tests" / "code_to_optimize" / "bubble_sort_picklepatch_test_used_socket.py").as_posix()
+        bubble_sort_unused_socket_path = (
+            project_root
+            / "tests"
+            / "code_to_optimize"
+            / "bubble_sort_picklepatch_test_unused_socket.py"
+        ).as_posix()
+        bubble_sort_used_socket_path = (
+            project_root
+            / "tests"
+            / "code_to_optimize"
+            / "bubble_sort_picklepatch_test_used_socket.py"
+        ).as_posix()
         # Expected function calls
         expected_calls = [
-            ("bubble_sort_with_unused_socket", "", "tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket",
-             f"{bubble_sort_unused_socket_path}",
-             "test_socket_picklepatch", "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket", 12),
-            ("bubble_sort_with_used_socket", "", "tests.code_to_optimize.bubble_sort_picklepatch_test_used_socket",
-             f"{bubble_sort_used_socket_path}",
-             "test_used_socket_picklepatch", "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket", 20)
+            (
+                "bubble_sort_with_unused_socket",
+                "",
+                "tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket",
+                f"{bubble_sort_unused_socket_path}",
+                "test_socket_picklepatch",
+                "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket",
+                12,
+            ),
+            (
+                "bubble_sort_with_used_socket",
+                "",
+                "tests.code_to_optimize.bubble_sort_picklepatch_test_used_socket",
+                f"{bubble_sort_used_socket_path}",
+                "test_used_socket_picklepatch",
+                "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket",
+                20,
+            ),
         ]
         for idx, (actual, expected) in enumerate(zip(function_calls, expected_calls)):
-            assert actual[0] == expected[0], f"Mismatch at index {idx} for function_name"
+            assert actual[0] == expected[0], (
+                f"Mismatch at index {idx} for function_name"
+            )
             assert actual[1] == expected[1], f"Mismatch at index {idx} for class_name"
             assert actual[2] == expected[2], f"Mismatch at index {idx} for module_name"
-            assert Path(actual[3]).name == Path(expected[3]).name, f"Mismatch at index {idx} for file_path"
-            assert actual[4] == expected[4], f"Mismatch at index {idx} for benchmark_function_name"
-            assert actual[5] == expected[5], f"Mismatch at index {idx} for benchmark_module_path"
-            assert actual[6] == expected[6], f"Mismatch at index {idx} for benchmark_line_number"
+            assert Path(actual[3]).name == Path(expected[3]).name, (
+                f"Mismatch at index {idx} for file_path"
+            )
+            assert actual[4] == expected[4], (
+                f"Mismatch at index {idx} for benchmark_function_name"
+            )
+            assert actual[5] == expected[5], (
+                f"Mismatch at index {idx} for benchmark_module_path"
+            )
+            assert actual[6] == expected[6], (
+                f"Mismatch at index {idx} for benchmark_line_number"
+            )
             conn.close()
-            
+
             time.sleep(1)
 
         # Generate replay test
-        generate_replay_test(output_file, replay_tests_dir)
+        count = generate_replay_test(output_file, replay_tests_dir)
         replay_test_path = replay_tests_dir / Path(
-            "test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0.py")
+            "test_tests_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0.py"
+        )
         replay_test_perf_path = replay_tests_dir / Path(
-            "test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0_perf.py")
+            "test_tests_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__perf_test_0.py"
+        )
         assert replay_test_path.exists()
         original_replay_test_code = replay_test_path.read_text("utf-8")
 
         # Instrument the replay test
-        func = FunctionToOptimize(function_name="bubble_sort_with_unused_socket", parents=[], file_path=Path(fto_unused_socket_path))
+        func = FunctionToOptimize(
+            function_name="bubble_sort_with_unused_socket",
+            parents=[],
+            file_path=Path(fto_unused_socket_path),
+        )
         original_cwd = Path.cwd()
         run_cwd = project_root
         os.chdir(run_cwd)
@@ -376,7 +464,7 @@ def test_run_and_parse_picklepatch() -> None:
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
         test_type = TestType.REPLAY_TEST
-        replay_test_function = "test_code_to_optimize_bubble_sort_picklepatch_test_unused_socket_bubble_sort_with_unused_socket_test_socket_picklepatch"
+        replay_test_function = "test_tests_code_to_optimize_bubble_sort_picklepatch_test_unused_socket_bubble_sort_with_unused_socket_test_socket_picklepatch"
         func_optimizer = opt.create_function_optimizer(func)
         func_optimizer.test_files = TestFiles(
             test_files=[
@@ -385,7 +473,14 @@ def test_run_and_parse_picklepatch() -> None:
                     test_type=test_type,
                     original_file_path=replay_test_path,
                     benchmarking_file_path=replay_test_perf_path,
-                    tests_in_file=[TestsInFile(test_file=replay_test_path, test_class=None, test_function=replay_test_function, test_type=test_type)],
+                    tests_in_file=[
+                        TestsInFile(
+                            test_file=replay_test_path,
+                            test_class=None,
+                            test_function=replay_test_function,
+                            test_type=test_type,
+                        )
+                    ],
                 )
             ]
         )
@@ -399,8 +494,14 @@ def test_run_and_parse_picklepatch() -> None:
             testing_time=1.0,
         )
         assert len(test_results_unused_socket) == 1
-        assert test_results_unused_socket.test_results[0].id.test_module_path == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
-        assert test_results_unused_socket.test_results[0].id.test_function_name == "test_code_to_optimize_bubble_sort_picklepatch_test_unused_socket_bubble_sort_with_unused_socket_test_socket_picklepatch"
+        assert (
+            test_results_unused_socket.test_results[0].id.test_module_path
+            == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_tests_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
+        )
+        assert (
+            test_results_unused_socket.test_results[0].id.test_function_name
+            == "test_tests_code_to_optimize_bubble_sort_picklepatch_test_unused_socket_bubble_sort_with_unused_socket_test_socket_picklepatch"
+        )
         assert test_results_unused_socket.test_results[0].did_pass == True
 
         # Replace with optimized candidate
@@ -414,26 +515,34 @@ def bubble_sort_with_unused_socket(data_container):
     return sorted(numbers)
 """)
         # Run optimized code for unused socket
-        optimized_test_results_unused_socket, coverage_data = func_optimizer.run_and_parse_tests(
-            testing_type=TestingMode.BEHAVIOR,
-            test_env=test_env,
-            test_files=func_optimizer.test_files,
-            optimization_iteration=0,
-            pytest_min_loops=1,
-            pytest_max_loops=1,
-            testing_time=1.0,
+        optimized_test_results_unused_socket, coverage_data = (
+            func_optimizer.run_and_parse_tests(
+                testing_type=TestingMode.BEHAVIOR,
+                test_env=test_env,
+                test_files=func_optimizer.test_files,
+                optimization_iteration=0,
+                pytest_min_loops=1,
+                pytest_max_loops=1,
+                testing_time=1.0,
+            )
         )
         assert len(optimized_test_results_unused_socket) == 1
-        match, _ = compare_test_results(test_results_unused_socket, optimized_test_results_unused_socket)
+        match, _ = compare_test_results(
+            test_results_unused_socket, optimized_test_results_unused_socket
+        )
         assert match
 
         # Remove the previous instrumentation
         replay_test_path.write_text(original_replay_test_code)
         # Instrument the replay test
-        func = FunctionToOptimize(function_name="bubble_sort_with_used_socket", parents=[], file_path=Path(fto_used_socket_path))
+        func = FunctionToOptimize(
+            function_name="bubble_sort_with_used_socket",
+            parents=[],
+            file_path=Path(fto_used_socket_path),
+        )
         success, new_test = inject_profiling_into_existing_test(
             replay_test_path,
-            [CodePosition(23,15)],
+            [CodePosition(23, 15)],
             func,
             project_root,
             mode=TestingMode.BEHAVIOR,
@@ -448,9 +557,12 @@ def bubble_sort_with_unused_socket(data_container):
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
         test_type = TestType.REPLAY_TEST
-        func = FunctionToOptimize(function_name="bubble_sort_with_used_socket", parents=[],
-                                  file_path=Path(fto_used_socket_path))
-        replay_test_function = "test_code_to_optimize_bubble_sort_picklepatch_test_used_socket_bubble_sort_with_used_socket_test_used_socket_picklepatch"
+        func = FunctionToOptimize(
+            function_name="bubble_sort_with_used_socket",
+            parents=[],
+            file_path=Path(fto_used_socket_path),
+        )
+        replay_test_function = "test_tests_code_to_optimize_bubble_sort_picklepatch_test_used_socket_bubble_sort_with_used_socket_test_used_socket_picklepatch"
         func_optimizer = opt.create_function_optimizer(func)
         func_optimizer.test_files = TestFiles(
             test_files=[
@@ -460,8 +572,13 @@ def bubble_sort_with_unused_socket(data_container):
                     original_file_path=replay_test_path,
                     benchmarking_file_path=replay_test_perf_path,
                     tests_in_file=[
-                        TestsInFile(test_file=replay_test_path, test_class=None, test_function=replay_test_function,
-                                    test_type=test_type)],
+                        TestsInFile(
+                            test_file=replay_test_path,
+                            test_class=None,
+                            test_function=replay_test_function,
+                            test_type=test_type,
+                        )
+                    ],
                 )
             ]
         )
@@ -475,10 +592,14 @@ def bubble_sort_with_unused_socket(data_container):
             testing_time=1.0,
         )
         assert len(test_results_used_socket) == 1
-        assert test_results_used_socket.test_results[
-                   0].id.test_module_path == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
-        assert test_results_used_socket.test_results[
-                   0].id.test_function_name == "test_code_to_optimize_bubble_sort_picklepatch_test_used_socket_bubble_sort_with_used_socket_test_used_socket_picklepatch"
+        assert (
+            test_results_used_socket.test_results[0].id.test_module_path
+            == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_tests_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
+        )
+        assert (
+            test_results_used_socket.test_results[0].id.test_function_name
+            == "test_tests_code_to_optimize_bubble_sort_picklepatch_test_used_socket_bubble_sort_with_used_socket_test_used_socket_picklepatch"
+        )
         assert test_results_used_socket.test_results[0].did_pass is False
         print("test results used socket")
         print(test_results_used_socket)
@@ -496,24 +617,32 @@ def bubble_sort_with_used_socket(data_container):
         """)
 
         # Run test for optimized function code that uses the socket. This should fail, as the PicklePlaceholder is accessed.
-        optimized_test_results_used_socket, coverage_data = func_optimizer.run_and_parse_tests(
-            testing_type=TestingMode.BEHAVIOR,
-            test_env=test_env,
-            test_files=func_optimizer.test_files,
-            optimization_iteration=0,
-            pytest_min_loops=1,
-            pytest_max_loops=1,
-            testing_time=1.0,
+        optimized_test_results_used_socket, coverage_data = (
+            func_optimizer.run_and_parse_tests(
+                testing_type=TestingMode.BEHAVIOR,
+                test_env=test_env,
+                test_files=func_optimizer.test_files,
+                optimization_iteration=0,
+                pytest_min_loops=1,
+                pytest_max_loops=1,
+                testing_time=1.0,
+            )
         )
         assert len(test_results_used_socket) == 1
-        assert test_results_used_socket.test_results[
-                   0].id.test_module_path == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
-        assert test_results_used_socket.test_results[
-                   0].id.test_function_name == "test_code_to_optimize_bubble_sort_picklepatch_test_used_socket_bubble_sort_with_used_socket_test_used_socket_picklepatch"
+        assert (
+            test_results_used_socket.test_results[0].id.test_module_path
+            == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_tests_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
+        )
+        assert (
+            test_results_used_socket.test_results[0].id.test_function_name
+            == "test_tests_code_to_optimize_bubble_sort_picklepatch_test_used_socket_bubble_sort_with_used_socket_test_used_socket_picklepatch"
+        )
         assert test_results_used_socket.test_results[0].did_pass is False
 
         # Even though tests threw the same error, we reject this as the behavior of the unpickleable object could not be determined.
-        match, _ = compare_test_results(test_results_used_socket, optimized_test_results_used_socket)
+        match, _ = compare_test_results(
+            test_results_used_socket, optimized_test_results_used_socket
+        )
         assert not match
     finally:
         # cleanup
