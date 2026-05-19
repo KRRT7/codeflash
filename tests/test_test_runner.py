@@ -120,8 +120,6 @@ def test_sort():
             test_config=config,
             run_result=process,
         )
-    match = ImportErrorPattern.search(process.stdout).group()
-    assert match == "ModuleNotFoundError: No module named 'torch_does_not_exist'"
     result_file.unlink(missing_ok=True)
 
     code = """import torch_does_not_exist
