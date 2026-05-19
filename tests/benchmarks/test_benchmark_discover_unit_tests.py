@@ -15,8 +15,8 @@ def test_benchmark_code_to_optimize_test_discovery(benchmark) -> None:
     )
     benchmark(discover_unit_tests, test_config)
 def test_benchmark_codeflash_test_discovery(benchmark) -> None:
-    project_path = Path(__file__).parent.parent.parent.resolve() / "codeflash"
-    tests_path = project_path / "tests"
+    project_path = Path(__file__).parent.parent.parent.resolve() / "src" / "codeflash"
+    tests_path = project_path.parent.parent / "tests"
     test_config = TestConfig(
         tests_root=tests_path,
         project_root_path=project_path,

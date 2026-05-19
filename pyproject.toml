@@ -48,6 +48,7 @@ dependencies = [
 filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
 markers = ["ci_skip: mark test to skip in CI environment"]
 norecursedirs = ["tests/code_to_optimize"]
+pythonpath = ["."]
 
 [tool.hatch.version]
 source = "uv-dynamic-versioning"

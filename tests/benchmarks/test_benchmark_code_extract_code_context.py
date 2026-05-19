@@ -8,11 +8,11 @@ from codeflash.optimization.optimizer import Optimizer
 
 
 def test_benchmark_extract(benchmark)->None:
-    file_path = Path(__file__).parent.parent.parent.resolve() / "codeflash"
+    file_path = Path(__file__).parent.parent.parent.resolve() / "src" / "codeflash"
     opt = Optimizer(
         Namespace(
             project_root=file_path.resolve(),
-            tests_root=(file_path / "tests").resolve(),
+            tests_root=(file_path.parent.parent / "tests").resolve(),
             test_framework="pytest",
             pytest_cmd="pytest",
             experiment_id=None,

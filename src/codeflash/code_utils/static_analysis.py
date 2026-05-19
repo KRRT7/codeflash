@@ -82,13 +82,15 @@ def get_module_full_name(node: ast.Import | ast.ImportFrom, current_module: str)
 
 def is_internal_module(module_name: str, project_root: Path) -> bool:
     module_path = module_name.replace(".", "/")
-    possible_paths = [project_root / f"{module_path}.py", project_root / module_path / "__init__.py"]
+    roots = [project_root, project_root / "src"]
+    possible_paths = [r / f"{module_path}.py" for r in roots] + [r / module_path / "__init__.py" for r in roots]
     return any(path.exists() for path in possible_paths)
 
 
 def get_module_file_path(module_name: str, project_root: Path) -> Path | None:
     module_path = module_name.replace(".", "/")
-    possible_paths = [project_root / f"{module_path}.py", project_root / module_path / "__init__.py"]
+    roots = [project_root, project_root / "src"]
+    possible_paths = [r / f"{module_path}.py" for r in roots] + [r / module_path / "__init__.py" for r in roots]
     for path in possible_paths:
         if path.exists():
             return path.resolve()

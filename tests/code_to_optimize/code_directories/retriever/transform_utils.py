@@ -1,4 +1,4 @@
-from tests.code_to_optimize.code_directories.retriever.utils import DataProcessor
+from utils import DataProcessor
 
 
 class DataTransformer:

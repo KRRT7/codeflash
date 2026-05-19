@@ -225,7 +225,7 @@ def test_bubble_sort_helper() -> None:
         ending_line=None,
     )
 
-    code_ctx = get_code_optimization_context(function_to_optimize, Path(__file__).resolve().parent.parent)
+    code_ctx = get_code_optimization_context(function_to_optimize, Path(__file__).resolve().parent)
     read_write_context, read_only_context = code_ctx.read_writable_code, code_ctx.read_only_context_code
     hashing_context = code_ctx.hashing_code_context
 
@@ -1577,7 +1577,7 @@ class DataProcessor:
         return DataTransformer().circular_dependency(data)
 ```
 ```python:{path_to_transform_utils.relative_to(project_root)}
-from tests.code_to_optimize.code_directories.retriever.utils import DataProcessor
+from utils import DataProcessor
 
 class DataTransformer:
     def __init__(self):

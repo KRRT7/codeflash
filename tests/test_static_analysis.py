@@ -38,7 +38,7 @@ def a_function():
         ImportedInternalModuleAnalysis(
             name="static_analysis",
             full_name="codeflash.code_utils.static_analysis",
-            file_path=project_root / Path("codeflash/code_utils/static_analysis.py"),
+            file_path=project_root / Path("src/codeflash/code_utils/static_analysis.py"),
         ),
         ImportedInternalModuleAnalysis(
             name="mymodule", full_name="tests.mymodule", file_path=project_root / Path("tests/mymodule.py")
