@@ -50,8 +50,11 @@ markers = ["ci_skip: mark test to skip in CI environment"]
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/codeflash"]
+
 [tool.hatch.build.hooks.version]
-path = "codeflash/version.py"
+path = "src/codeflash/version.py"
 template = """# These version placeholders will be replaced by uv-dynamic-versioning during build.
 __version__ = "{version}"
 """

@@ -79,7 +79,7 @@ def resolve_test_file_from_class_path(test_class_path: str, base_dir: Path) -> P
 
     Examples:
         >>> # base_dir = "/path/to/tests"
-        >>> # test_class_path = "code_to_optimize.tests.unittest.test_file.TestClass"
+        >>> # test_class_path = "tests.code_to_optimize.tests.unittest.test_file.TestClass"
         >>> # Should find: /path/to/tests/unittest/test_file.py
 
     """
