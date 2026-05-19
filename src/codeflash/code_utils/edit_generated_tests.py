@@ -21,7 +21,10 @@ if TYPE_CHECKING:
 
 class CommentMapper(ast.NodeVisitor):
     def __init__(
-        self, test: GeneratedTests, original_runtimes: dict[str, int], optimized_runtimes: dict[str, int]
+        self,
+        test: GeneratedTests,
+        original_runtimes: dict[str, int],
+        optimized_runtimes: dict[str, int],
     ) -> None:
         self.results: dict[int, str] = {}
         self.test: GeneratedTests = test
@@ -45,7 +48,13 @@ class CommentMapper(ast.NodeVisitor):
         original_time = self.original_runtimes[match_key]
         optimized_time = self.optimized_runtimes[match_key]
         perf_gain = format_perf(
-            abs(performance_gain(original_runtime_ns=original_time, optimized_runtime_ns=optimized_time) * 100)
+            abs(
+                performance_gain(
+                    original_runtime_ns=original_time,
+                    optimized_runtime_ns=optimized_time,
+                )
+                * 100
+            )
         )
         status = "slower" if optimized_time > original_time else "faster"
         # Create the runtime comment
@@ -55,11 +64,15 @@ class CommentMapper(ast.NodeVisitor):
         self._process_function_def_common(node)
         return node
 
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AsyncFunctionDef:
+    def visit_AsyncFunctionDef(
+        self, node: ast.AsyncFunctionDef
+    ) -> ast.AsyncFunctionDef:
         self._process_function_def_common(node)
         return node
 
-    def _process_function_def_common(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+    def _process_function_def_common(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> None:
         self.context_stack.append(node.name)
         i = len(node.body) - 1
         test_qualified_name = ".".join(self.context_stack)
@@ -76,20 +89,30 @@ class CommentMapper(ast.NodeVisitor):
                         if isinstance(internal_node, (ast.stmt, ast.Assign)):
                             inv_id = str(i) + "_" + str(j)
                             match_key = key + "#" + inv_id
-                            if match_key in self.original_runtimes and match_key in self.optimized_runtimes:
-                                self.results[internal_node.lineno] = self.get_comment(match_key)
+                            if (
+                                match_key in self.original_runtimes
+                                and match_key in self.optimized_runtimes
+                            ):
+                                self.results[internal_node.lineno] = self.get_comment(
+                                    match_key
+                                )
                     j -= 1
             else:
                 inv_id = str(i)
                 match_key = key + "#" + inv_id
-                if match_key in self.original_runtimes and match_key in self.optimized_runtimes:
+                if (
+                    match_key in self.original_runtimes
+                    and match_key in self.optimized_runtimes
+                ):
                     self.results[line_node.lineno] = self.get_comment(match_key)
             i -= 1
         self.context_stack.pop()
 
 
 def get_fn_call_linenos(
-    test: GeneratedTests, original_runtimes: dict[str, int], optimized_runtimes: dict[str, int]
+    test: GeneratedTests,
+    original_runtimes: dict[str, int],
+    optimized_runtimes: dict[str, int],
 ) -> dict[int, str]:
     line_comment_ast_mapper = CommentMapper(test, original_runtimes, optimized_runtimes)
     source_code = test.generated_original_test_source
@@ -115,7 +138,9 @@ class CommentAdder(cst.CSTTransformer):
         super().__init__()
 
     def leave_SimpleStatementLine(
-        self, original_node: cst.SimpleStatementLine, updated_node: cst.SimpleStatementLine
+        self,
+        original_node: cst.SimpleStatementLine,
+        updated_node: cst.SimpleStatementLine,
     ) -> cst.SimpleStatementLine:
         """Add comment to simple statement lines."""
         pos = self.get_metadata(PositionProvider, original_node)
@@ -123,7 +148,8 @@ class CommentAdder(cst.CSTTransformer):
         if pos and pos.start.line in self.line_to_comments:
             # Create a comment with trailing whitespace
             comment = cst.TrailingWhitespace(
-                whitespace=cst.SimpleWhitespace(" "), comment=cst.Comment(self.line_to_comments[pos.start.line])
+                whitespace=cst.SimpleWhitespace(" "),
+                comment=cst.Comment(self.line_to_comments[pos.start.line]),
             )
 
             # Update the trailing whitespace of the line itself
@@ -132,7 +158,9 @@ class CommentAdder(cst.CSTTransformer):
         return updated_node
 
     def leave_SimpleStatementSuite(
-        self, original_node: cst.SimpleStatementSuite, updated_node: cst.SimpleStatementSuite
+        self,
+        original_node: cst.SimpleStatementSuite,
+        updated_node: cst.SimpleStatementSuite,
     ) -> cst.SimpleStatementSuite:
         """Add comment to simple statement suites (e.g., after if/for/while)."""
         pos = self.get_metadata(PositionProvider, original_node)
@@ -140,7 +168,8 @@ class CommentAdder(cst.CSTTransformer):
         if pos and pos.start.line in self.line_to_comments:
             # Create a comment with trailing whitespace
             comment = cst.TrailingWhitespace(
-                whitespace=cst.SimpleWhitespace("  "), comment=cst.Comment(self.line_to_comments[pos.start.line])
+                whitespace=cst.SimpleWhitespace("  "),
+                comment=cst.Comment(self.line_to_comments[pos.start.line]),
             )
 
             # Update the trailing whitespace of the suite
@@ -149,7 +178,9 @@ class CommentAdder(cst.CSTTransformer):
         return updated_node
 
 
-def unique_inv_id(inv_id_runtimes: dict[InvocationId, list[int]], tests_project_rootdir: Path) -> dict[str, int]:
+def unique_inv_id(
+    inv_id_runtimes: dict[InvocationId, list[int]], tests_project_rootdir: Path
+) -> dict[str, int]:
     unique_inv_ids: dict[str, int] = {}
     for inv_id, runtimes in inv_id_runtimes.items():
         test_qualified_name = (
@@ -157,13 +188,19 @@ def unique_inv_id(inv_id_runtimes: dict[InvocationId, list[int]], tests_project_
             if inv_id.test_class_name
             else inv_id.test_function_name
         )
-        abs_path = tests_project_rootdir / Path(inv_id.test_module_path.replace(".", os.sep)).with_suffix(".py")
+        abs_path = tests_project_rootdir / Path(
+            inv_id.test_module_path.replace(".", os.sep)
+        ).with_suffix(".py")
         abs_path_str = str(abs_path.resolve().with_suffix(""))
         if "__unit_test_" not in abs_path_str or not test_qualified_name:
             continue
         key = test_qualified_name + "#" + abs_path_str
         parts = inv_id.iteration_id.split("_").__len__()  # type: ignore[union-attr]
-        cur_invid = inv_id.iteration_id.split("_")[0] if parts < 3 else "_".join(inv_id.iteration_id.split("_")[:-1])  # type: ignore[union-attr]
+        cur_invid = (
+            inv_id.iteration_id.split("_")[0]
+            if parts < 3
+            else "_".join(inv_id.iteration_id.split("_")[:-1])
+        )  # type: ignore[union-attr]
         match_key = key + "#" + cur_invid
         if match_key not in unique_inv_ids:
             unique_inv_ids[match_key] = 0
@@ -178,15 +215,21 @@ def add_runtime_comments_to_generated_tests(
     tests_project_rootdir: Path | None = None,
 ) -> GeneratedTestsList:
     """Add runtime performance comments to function calls in generated tests."""
-    original_runtimes_dict = unique_inv_id(original_runtimes, tests_project_rootdir or Path())
-    optimized_runtimes_dict = unique_inv_id(optimized_runtimes, tests_project_rootdir or Path())
+    original_runtimes_dict = unique_inv_id(
+        original_runtimes, tests_project_rootdir or Path()
+    )
+    optimized_runtimes_dict = unique_inv_id(
+        optimized_runtimes, tests_project_rootdir or Path()
+    )
     # Process each generated test
     modified_tests = []
     for test in generated_tests.generated_tests:
         try:
             tree = cst.parse_module(test.generated_original_test_source)
             wrapper = MetadataWrapper(tree)
-            line_to_comments = get_fn_call_linenos(test, original_runtimes_dict, optimized_runtimes_dict)
+            line_to_comments = get_fn_call_linenos(
+                test, original_runtimes_dict, optimized_runtimes_dict
+            )
             comment_adder = CommentAdder(line_to_comments)
             modified_tree = wrapper.visit(comment_adder)
             modified_source = modified_tree.code
@@ -239,7 +282,9 @@ def remove_functions_from_generated_tests(
 
 
 # Pre-compile all function removal regexes upfront for efficiency.
-def _compile_function_patterns(test_functions_to_remove: list[str]) -> list[re.Pattern[str]]:
+def _compile_function_patterns(
+    test_functions_to_remove: list[str],
+) -> list[re.Pattern[str]]:
     return [
         re.compile(
             rf"(@pytest\.mark\.parametrize\(.*?\)\s*)?(async\s+)?def\s+{re.escape(func)}\(.*?\):.*?(?=\n(async\s+)?def\s|$)",

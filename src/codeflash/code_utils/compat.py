@@ -22,7 +22,11 @@ class Compat:
 
     @property
     def codeflash_cache_dir(self) -> Path:
-        return Path(user_config_dir(appname="codeflash", appauthor="codeflash-ai", ensure_exists=True))
+        return Path(
+            user_config_dir(
+                appname="codeflash", appauthor="codeflash-ai", ensure_exists=True
+            )
+        )
 
     @property
     def codeflash_temp_dir(self) -> Path:

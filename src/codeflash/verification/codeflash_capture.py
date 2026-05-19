@@ -8,7 +8,6 @@ import os
 import sqlite3
 import time
 import warnings
-from enum import Enum
 from pathlib import Path
 from typing import Callable
 

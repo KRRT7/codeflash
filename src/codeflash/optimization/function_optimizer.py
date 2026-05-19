@@ -1,8 +1,23 @@
 from __future__ import annotations
-from codeflash.code_utils.cleanup import cleanup_paths, get_run_tmp_file, restore_conftest
-from codeflash.code_utils.diff_utils import choose_weights, create_rank_dictionary_compact, create_score_dictionary_from_metrics, diff_length, encoded_tokens_len, normalize_by_max, unified_diff_strings
+from codeflash.code_utils.cleanup import (
+    cleanup_paths,
+    get_run_tmp_file,
+    restore_conftest,
+)
+from codeflash.code_utils.diff_utils import (
+    choose_weights,
+    create_rank_dictionary_compact,
+    create_score_dictionary_from_metrics,
+    diff_length,
+    encoded_tokens_len,
+    normalize_by_max,
+    unified_diff_strings,
+)
 from codeflash.code_utils.pytest_utils import extract_unique_errors
-from codeflash.code_utils.path_utils import file_name_from_test_module_name, module_name_from_file_path
+from codeflash.code_utils.path_utils import (
+    file_name_from_test_module_name,
+    module_name_from_file_path,
+)
 
 import ast
 import concurrent.futures
@@ -123,7 +138,7 @@ from codeflash.verification.parse_test_output import (
     calculate_function_throughput_from_test_results,
     parse_test_results,
 )
-from codeflash.verification.test_runner import PytestRunResult, run_pytest_tests
+from codeflash.verification.test_runner import run_pytest_tests
 from codeflash.verification.verification_utils import get_test_file_path
 from codeflash.verification.verifier import generate_tests
 
@@ -2376,9 +2391,7 @@ class FunctionOptimizer:
             "h4|Test results did not match the test results of the original code ❌"
         )
         rule()
-        return Err(
-            "Test results did not match the test results of the original code."
-        )
+        return Err("Test results did not match the test results of the original code.")
 
     def repair_if_possible(
         self,

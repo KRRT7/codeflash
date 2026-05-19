@@ -9,7 +9,13 @@ from codeflash.code_utils.formatter import sort_imports
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from libcst import BaseStatement, ClassDef, FlattenSentinel, FunctionDef, RemovalSentinel
+    from libcst import (
+        BaseStatement,
+        ClassDef,
+        FlattenSentinel,
+        FunctionDef,
+        RemovalSentinel,
+    )
 
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 
@@ -42,7 +48,9 @@ class AddDecoratorTransformer(cst.CSTTransformer):
         self.function_name = node.name.value
         return None
 
-    def leave_FunctionDef(self, original_node: FunctionDef, updated_node: FunctionDef) -> FunctionDef:
+    def leave_FunctionDef(
+        self, original_node: FunctionDef, updated_node: FunctionDef
+    ) -> FunctionDef:
         if self.function_name == original_node.name.value:
             self.function_name = ""
         if (self.class_name, original_node.name.value) in self.target_functions:
@@ -53,7 +61,9 @@ class AddDecoratorTransformer(cst.CSTTransformer):
 
         return updated_node
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:  # noqa: ARG002
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:  # noqa: ARG002
         # Create import statement for codeflash_trace
         if not self.added_codeflash_trace:
             return updated_node
@@ -61,7 +71,10 @@ class AddDecoratorTransformer(cst.CSTTransformer):
             body=[
                 cst.ImportFrom(
                     module=cst.Attribute(
-                        value=cst.Attribute(value=cst.Name(value="codeflash"), attr=cst.Name(value="benchmarking")),
+                        value=cst.Attribute(
+                            value=cst.Name(value="codeflash"),
+                            attr=cst.Name(value="benchmarking"),
+                        ),
                         attr=cst.Name(value="codeflash_trace"),
                     ),
                     names=[cst.ImportAlias(name=cst.Name(value="codeflash_trace"))],
@@ -75,7 +88,9 @@ class AddDecoratorTransformer(cst.CSTTransformer):
         return updated_node.with_changes(body=new_body)
 
 
-def add_codeflash_decorator_to_code(code: str, functions_to_optimize: list[FunctionToOptimize]) -> str:
+def add_codeflash_decorator_to_code(
+    code: str, functions_to_optimize: list[FunctionToOptimize]
+) -> str:
     """Add codeflash_trace to a function.
 
     Args:
@@ -91,7 +106,10 @@ def add_codeflash_decorator_to_code(code: str, functions_to_optimize: list[Funct
     target_functions = set()
     for function_to_optimize in functions_to_optimize:
         class_name = ""
-        if len(function_to_optimize.parents) == 1 and function_to_optimize.parents[0].type == "ClassDef":
+        if (
+            len(function_to_optimize.parents) == 1
+            and function_to_optimize.parents[0].type == "ClassDef"
+        ):
             class_name = function_to_optimize.parents[0].name
         target_functions.add((class_name, function_to_optimize.function_name))
 
@@ -102,7 +120,9 @@ def add_codeflash_decorator_to_code(code: str, functions_to_optimize: list[Funct
     return modified_module.code
 
 
-def instrument_codeflash_trace_decorator(file_to_funcs_to_optimize: dict[Path, list[FunctionToOptimize]]) -> None:
+def instrument_codeflash_trace_decorator(
+    file_to_funcs_to_optimize: dict[Path, list[FunctionToOptimize]],
+) -> None:
     """Instrument codeflash_trace decorator to functions to optimize."""
     for file_path, functions_to_optimize in file_to_funcs_to_optimize.items():
         original_code = file_path.read_text(encoding="utf-8")

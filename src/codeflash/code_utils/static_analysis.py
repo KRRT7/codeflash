@@ -54,10 +54,16 @@ class FunctionKind(Enum):
 
 
 def parse_imports(code: str) -> list[ast.Import | ast.ImportFrom]:
-    return [node for node in ast.walk(ast.parse(code)) if isinstance(node, (ast.Import, ast.ImportFrom))]
+    return [
+        node
+        for node in ast.walk(ast.parse(code))
+        if isinstance(node, (ast.Import, ast.ImportFrom))
+    ]
 
 
-def resolve_relative_name(module: str | None, level: int, current_module: str) -> str | None:
+def resolve_relative_name(
+    module: str | None, level: int, current_module: str
+) -> str | None:
     if level == 0:
         return module
     current_parts = current_module.split(".")
@@ -69,7 +75,9 @@ def resolve_relative_name(module: str | None, level: int, current_module: str) -
     return ".".join(base_parts)
 
 
-def get_module_full_name(node: ast.Import | ast.ImportFrom, current_module: str) -> list[str]:
+def get_module_full_name(
+    node: ast.Import | ast.ImportFrom, current_module: str
+) -> list[str]:
     if isinstance(node, ast.Import):
         return [alias.name for alias in node.names]
     base_module = resolve_relative_name(node.module, node.level, current_module)
@@ -83,14 +91,18 @@ def get_module_full_name(node: ast.Import | ast.ImportFrom, current_module: str)
 def is_internal_module(module_name: str, project_root: Path) -> bool:
     module_path = module_name.replace(".", "/")
     roots = [project_root, project_root / "src"]
-    possible_paths = [r / f"{module_path}.py" for r in roots] + [r / module_path / "__init__.py" for r in roots]
+    possible_paths = [r / f"{module_path}.py" for r in roots] + [
+        r / module_path / "__init__.py" for r in roots
+    ]
     return any(path.exists() for path in possible_paths)
 
 
 def get_module_file_path(module_name: str, project_root: Path) -> Path | None:
     module_path = module_name.replace(".", "/")
     roots = [project_root, project_root / "src"]
-    possible_paths = [r / f"{module_path}.py" for r in roots] + [r / module_path / "__init__.py" for r in roots]
+    possible_paths = [r / f"{module_path}.py" for r in roots] + [
+        r / module_path / "__init__.py" for r in roots
+    ]
     for path in possible_paths:
         if path.exists():
             return path.resolve()
@@ -107,9 +119,15 @@ def analyze_imported_modules(
     module_names: set[str] = set()
     for node in imports:
         module_names.update(get_module_full_name(node, current_module))
-    internal_modules = {module_name for module_name in module_names if is_internal_module(module_name, project_root)}
+    internal_modules = {
+        module_name
+        for module_name in module_names
+        if is_internal_module(module_name, project_root)
+    }
     return [
-        ImportedInternalModuleAnalysis(name=str(mod_name).split(".")[-1], full_name=mod_name, file_path=file_path)
+        ImportedInternalModuleAnalysis(
+            name=str(mod_name).split(".")[-1], full_name=mod_name, file_path=file_path
+        )
         for mod_name in internal_modules
         if (file_path := get_module_file_path(mod_name, project_root)) is not None
     ]
@@ -123,7 +141,9 @@ def get_first_top_level_object_def_ast(
             return child
         if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             continue
-        if descendant := get_first_top_level_object_def_ast(object_name, object_type, child):
+        if descendant := get_first_top_level_object_def_ast(
+            object_name, object_type, child
+        ):
             return descendant
     return None
 
@@ -132,21 +152,33 @@ def get_first_top_level_function_or_method_ast(
     function_name: str, parents: list[FunctionParent], node: ast.AST
 ) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
     if not parents:
-        result = get_first_top_level_object_def_ast(function_name, ast.FunctionDef, node)
+        result = get_first_top_level_object_def_ast(
+            function_name, ast.FunctionDef, node
+        )
         if result is not None:
             return result
-        return get_first_top_level_object_def_ast(function_name, ast.AsyncFunctionDef, node)
+        return get_first_top_level_object_def_ast(
+            function_name, ast.AsyncFunctionDef, node
+        )
     if parents[0].type == "ClassDef" and (
-        class_node := get_first_top_level_object_def_ast(parents[0].name, ast.ClassDef, node)
+        class_node := get_first_top_level_object_def_ast(
+            parents[0].name, ast.ClassDef, node
+        )
     ):
-        result = get_first_top_level_object_def_ast(function_name, ast.FunctionDef, class_node)
+        result = get_first_top_level_object_def_ast(
+            function_name, ast.FunctionDef, class_node
+        )
         if result is not None:
             return result
-        return get_first_top_level_object_def_ast(function_name, ast.AsyncFunctionDef, class_node)
+        return get_first_top_level_object_def_ast(
+            function_name, ast.AsyncFunctionDef, class_node
+        )
     return None
 
 
-def function_kind(node: ast.FunctionDef | ast.AsyncFunctionDef, parents: list[FunctionParent]) -> FunctionKind | None:
+def function_kind(
+    node: ast.FunctionDef | ast.AsyncFunctionDef, parents: list[FunctionParent]
+) -> FunctionKind | None:
     if not parents or parents[0].type in ["FunctionDef", "AsyncFunctionDef"]:
         return FunctionKind.FUNCTION
     if parents[0].type == "ClassDef":
@@ -160,7 +192,9 @@ def function_kind(node: ast.FunctionDef | ast.AsyncFunctionDef, parents: list[Fu
     return None
 
 
-def has_typed_parameters(node: ast.FunctionDef | ast.AsyncFunctionDef, parents: list[FunctionParent]) -> bool:
+def has_typed_parameters(
+    node: ast.FunctionDef | ast.AsyncFunctionDef, parents: list[FunctionParent]
+) -> bool:
     kind = function_kind(node, parents)
     if kind in [FunctionKind.FUNCTION, FunctionKind.STATIC_METHOD]:
         return all(arg.annotation for arg in node.args.args)

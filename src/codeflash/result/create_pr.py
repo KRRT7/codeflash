@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import git
 
 from codeflash.api import cfapi
-from codeflash.cli_cmds.logging_config import logger
+from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_replacer import is_zero_diff
 from codeflash.code_utils.git_utils import (

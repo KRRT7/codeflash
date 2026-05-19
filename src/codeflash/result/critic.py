@@ -12,7 +12,11 @@ from codeflash.code_utils.config_consts import (
 from codeflash.models import models
 
 if TYPE_CHECKING:
-    from codeflash.models.models import CoverageData, OptimizedCandidateResult, OriginalCodeBaseline
+    from codeflash.models.models import (
+        CoverageData,
+        OptimizedCandidateResult,
+        OriginalCodeBaseline,
+    )
 
 
 def performance_gain(*, original_runtime_ns: int, optimized_runtime_ns: int) -> float:
@@ -60,33 +64,51 @@ def speedup_critic(
     - Throughput improvements complement runtime improvements for async functions
     """
     # Runtime performance evaluation
-    noise_floor = 3 * MIN_IMPROVEMENT_THRESHOLD if original_code_runtime < 10000 else MIN_IMPROVEMENT_THRESHOLD
+    noise_floor = (
+        3 * MIN_IMPROVEMENT_THRESHOLD
+        if original_code_runtime < 10000
+        else MIN_IMPROVEMENT_THRESHOLD
+    )
     if not disable_gh_action_noise and env_utils.is_ci():
         noise_floor = noise_floor * 2  # Increase the noise floor in GitHub Actions mode
 
     perf_gain = performance_gain(
-        original_runtime_ns=original_code_runtime, optimized_runtime_ns=candidate_result.best_test_runtime
+        original_runtime_ns=original_code_runtime,
+        optimized_runtime_ns=candidate_result.best_test_runtime,
     )
     runtime_improved = perf_gain > noise_floor
 
     # Check runtime comparison with best so far
-    runtime_is_best = best_runtime_until_now is None or candidate_result.best_test_runtime < best_runtime_until_now
+    runtime_is_best = (
+        best_runtime_until_now is None
+        or candidate_result.best_test_runtime < best_runtime_until_now
+    )
 
     throughput_improved = True  # Default to True if no throughput data
     throughput_is_best = True  # Default to True if no throughput data
 
-    if original_async_throughput is not None and candidate_result.async_throughput is not None:
+    if (
+        original_async_throughput is not None
+        and candidate_result.async_throughput is not None
+    ):
         if original_async_throughput > 0:
             throughput_gain_value = throughput_gain(
-                original_throughput=original_async_throughput, optimized_throughput=candidate_result.async_throughput
+                original_throughput=original_async_throughput,
+                optimized_throughput=candidate_result.async_throughput,
             )
-            throughput_improved = throughput_gain_value > MIN_THROUGHPUT_IMPROVEMENT_THRESHOLD
+            throughput_improved = (
+                throughput_gain_value > MIN_THROUGHPUT_IMPROVEMENT_THRESHOLD
+            )
 
         throughput_is_best = (
-            best_throughput_until_now is None or candidate_result.async_throughput > best_throughput_until_now
+            best_throughput_until_now is None
+            or candidate_result.async_throughput > best_throughput_until_now
         )
 
-    if original_async_throughput is not None and candidate_result.async_throughput is not None:
+    if (
+        original_async_throughput is not None
+        and candidate_result.async_throughput is not None
+    ):
         # When throughput data is available, accept if EITHER throughput OR runtime improves significantly
         throughput_acceptance = throughput_improved and throughput_is_best
         runtime_acceptance = runtime_improved and runtime_is_best
@@ -94,7 +116,9 @@ def speedup_critic(
     return runtime_improved and runtime_is_best
 
 
-def quantity_of_tests_critic(candidate_result: OptimizedCandidateResult | OriginalCodeBaseline) -> bool:
+def quantity_of_tests_critic(
+    candidate_result: OptimizedCandidateResult | OriginalCodeBaseline,
+) -> bool:
     test_results = candidate_result.behavior_test_results
     report = test_results.get_test_pass_fail_report_by_type()
 

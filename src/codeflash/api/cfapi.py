@@ -12,7 +12,7 @@ import git
 import requests
 from pydantic.json import pydantic_encoder
 
-from codeflash.cli_cmds.logging_config import logger
+from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils.env_utils import (
     ensure_codeflash_api_key,
     get_codeflash_api_key,

@@ -4,7 +4,9 @@ import sqlite3
 import textwrap
 from typing import TYPE_CHECKING, Any
 
-from codeflash.discovery.functions_to_optimize import inspect_top_level_functions_or_methods
+from codeflash.discovery.functions_to_optimize import (
+    inspect_top_level_functions_or_methods,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -14,7 +16,11 @@ if TYPE_CHECKING:
 
 
 def get_next_arg_and_return(
-    trace_file: str, function_name: str, file_name: str, class_name: str | None = None, num_to_get: int = 25
+    trace_file: str,
+    function_name: str,
+    file_name: str,
+    class_name: str | None = None,
+    num_to_get: int = 25,
 ) -> Generator[Any]:
     db = sqlite3.connect(trace_file)
     cur = db.cursor()
@@ -43,7 +49,9 @@ def get_function_alias(module: str, function_name: str) -> str:
     return "_".join(module.split(".")) + "_" + function_name
 
 
-def create_trace_replay_test(trace_file: str, functions: list[FunctionModules], max_run_count: int = 100) -> str:
+def create_trace_replay_test(
+    trace_file: str, functions: list[FunctionModules], max_run_count: int = 100
+) -> str:
     imports = """import warnings
 import dill as pickle
 from dill import PicklingWarning
@@ -82,7 +90,11 @@ from codeflash.tracing.replay_test import get_next_arg_and_return
             )
 
     imports += "\n".join(function_imports)
-    functions_to_optimize = [function.function_name for function in functions if function.function_name != "__init__"]
+    functions_to_optimize = [
+        function.function_name
+        for function in functions
+        if function.function_name != "__init__"
+    ]
     metadata = f"""functions = {functions_to_optimize}
 trace_file_path = r"{trace_file}"
 """  # trace_file_path path is parsed with regex later, format is important
@@ -124,11 +136,16 @@ trace_file_path = r"{trace_file}"
                 args="**args" if func_property.has_args else "",
             )
         elif func_property.is_staticmethod:
-            class_name_alias = get_function_alias(func.module_name, func_property.staticmethod_class_name)
-            alias = get_function_alias(
-                func.module_name, func_property.staticmethod_class_name + "_" + func.function_name
+            class_name_alias = get_function_alias(
+                func.module_name, func_property.staticmethod_class_name
             )
-            method_name = "." + func.function_name if func.function_name != "__init__" else ""
+            alias = get_function_alias(
+                func.module_name,
+                func_property.staticmethod_class_name + "_" + func.function_name,
+            )
+            method_name = (
+                "." + func.function_name if func.function_name != "__init__" else ""
+            )
             test_body = test_class_staticmethod_body.format(
                 orig_function_name=func.function_name,
                 file_name=func.file_name,
@@ -139,7 +156,9 @@ trace_file_path = r"{trace_file}"
             )
         else:
             class_name_alias = get_function_alias(func.module_name, func.class_name)
-            alias = get_function_alias(func.module_name, func.class_name + "_" + func.function_name)
+            alias = get_function_alias(
+                func.module_name, func.class_name + "_" + func.function_name
+            )
 
             if func_property.is_classmethod:
                 filter_variables = '\n    args.pop("cls", None)'
@@ -147,7 +166,9 @@ trace_file_path = r"{trace_file}"
                 filter_variables = '\n    args.pop("__class__", None)'
             else:
                 filter_variables = ""
-            method_name = "." + func.function_name if func.function_name != "__init__" else ""
+            method_name = (
+                "." + func.function_name if func.function_name != "__init__" else ""
+            )
             test_body = test_class_method_body.format(
                 orig_function_name=func.function_name,
                 file_name=func.file_name,

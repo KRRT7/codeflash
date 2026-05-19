@@ -8,7 +8,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.verification.verification_utils import ModifyInspiredTests, delete_multiple_if_name_main
+from codeflash.verification.verification_utils import (
+    ModifyInspiredTests,
+    delete_multiple_if_name_main,
+)
 
 if TYPE_CHECKING:
     from codeflash.api.aiservice import AiServiceClient
@@ -32,7 +35,9 @@ def generate_tests(
     # TODO: Sometimes this recreates the original Class definition. This overrides and messes up the original
     #  class import. Remove the recreation of the class definition
     start_time = time.perf_counter()
-    test_module_path = Path(module_name_from_file_path(test_path, test_cfg.tests_project_rootdir))
+    test_module_path = Path(
+        module_name_from_file_path(test_path, test_cfg.tests_project_rootdir)
+    )
     response = aiservice_client.generate_regression_tests(
         source_code_being_tested=source_code_being_tested,
         function_to_optimize=function_to_optimize,
@@ -45,7 +50,11 @@ def generate_tests(
         test_index=test_index,
     )
     if response and isinstance(response, tuple) and len(response) == 3:
-        generated_test_source, instrumented_behavior_test_source, instrumented_perf_test_source = response
+        (
+            generated_test_source,
+            instrumented_behavior_test_source,
+            instrumented_perf_test_source,
+        ) = response
         temp_run_dir = get_run_tmp_file(Path()).as_posix()
 
         instrumented_behavior_test_source = instrumented_behavior_test_source.replace(
@@ -55,7 +64,9 @@ def generate_tests(
             "{codeflash_run_tmp_dir_client_side}", temp_run_dir
         )
     else:
-        logger.warning(f"Failed to generate and instrument tests for {function_to_optimize.function_name}")
+        logger.warning(
+            f"Failed to generate and instrument tests for {function_to_optimize.function_name}"
+        )
         return None
     end_time = time.perf_counter()
     logger.debug(f"Generated tests in {end_time - start_time:.2f} seconds")
@@ -68,7 +79,9 @@ def generate_tests(
     )
 
 
-def merge_unit_tests(unit_test_source: str, inspired_unit_tests: str, test_framework: str) -> str:
+def merge_unit_tests(
+    unit_test_source: str, inspired_unit_tests: str, test_framework: str
+) -> str:
     try:
         inspired_unit_tests_ast = ast.parse(inspired_unit_tests)
         unit_test_source_ast = ast.parse(unit_test_source)
@@ -76,7 +89,9 @@ def merge_unit_tests(unit_test_source: str, inspired_unit_tests: str, test_frame
         logger.exception(f"Syntax error in code: {e}")
         return unit_test_source
     import_list: list[ast.stmt] = []
-    modified_ast = ModifyInspiredTests(import_list, test_framework).visit(inspired_unit_tests_ast)
+    modified_ast = ModifyInspiredTests(import_list, test_framework).visit(
+        inspired_unit_tests_ast
+    )
     if test_framework == "pytest":
         # Because we only want to modify the top level test functions
         for node in ast.iter_child_nodes(modified_ast):

@@ -130,9 +130,15 @@ class CodeflashTrace:
                 self._thread_local.active_functions.remove(func_id)
                 return result
             # Get benchmark info from environment
-            benchmark_function_name = os.environ.get("CODEFLASH_BENCHMARK_FUNCTION_NAME", "")
-            benchmark_module_path = os.environ.get("CODEFLASH_BENCHMARK_MODULE_PATH", "")
-            benchmark_line_number = os.environ.get("CODEFLASH_BENCHMARK_LINE_NUMBER", "")
+            benchmark_function_name = os.environ.get(
+                "CODEFLASH_BENCHMARK_FUNCTION_NAME", ""
+            )
+            benchmark_module_path = os.environ.get(
+                "CODEFLASH_BENCHMARK_MODULE_PATH", ""
+            )
+            benchmark_line_number = os.environ.get(
+                "CODEFLASH_BENCHMARK_LINE_NUMBER", ""
+            )
             # Get class name
             class_name = ""
             qualname = func.__qualname__
@@ -164,8 +170,12 @@ class CodeflashTrace:
 
             try:
                 # Pickle the arguments
-                pickled_args = PicklePatcher.dumps(args, protocol=pickle.HIGHEST_PROTOCOL)
-                pickled_kwargs = PicklePatcher.dumps(kwargs, protocol=pickle.HIGHEST_PROTOCOL)
+                pickled_args = PicklePatcher.dumps(
+                    args, protocol=pickle.HIGHEST_PROTOCOL
+                )
+                pickled_kwargs = PicklePatcher.dumps(
+                    kwargs, protocol=pickle.HIGHEST_PROTOCOL
+                )
             except Exception as e:
                 print(f"Error pickling arguments for function {func.__name__}: {e}")
                 # Add to the list of function calls without pickled args. Used for timing info only

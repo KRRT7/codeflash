@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from codeflash.cli_cmds.logging_config import logger
+from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE
 from codeflash.code_utils.concolic_utils import clean_concolic_tests
 from codeflash.code_utils.static_analysis import has_typed_parameters

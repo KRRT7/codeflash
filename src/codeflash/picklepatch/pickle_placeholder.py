@@ -14,7 +14,9 @@ class PicklePlaceholder:
     placeholder will raise a PicklePlaceholderAccessError.
     """
 
-    def __init__(self, obj_type: str, obj_str: str, error_msg: str, path: list[str] | None = None) -> None:
+    def __init__(
+        self, obj_type: str, obj_str: str, error_msg: str, path: list[str] | None = None
+    ) -> None:
         """Initialize a placeholder for an unpicklable object.
 
         Args:
@@ -33,7 +35,9 @@ class PicklePlaceholder:
 
     def __getattr__(self, name) -> Any:  # noqa: ANN001, ANN401
         """Raise a custom error when any attribute is accessed."""
-        path_str = ".".join(self.__dict__["path"]) if self.__dict__["path"] else "root object"
+        path_str = (
+            ".".join(self.__dict__["path"]) if self.__dict__["path"] else "root object"
+        )
         msg = (
             f"Attempt to access unpickleable object: Cannot access attribute '{name}' on unpicklable object at {path_str}. "
             f"Original type: {self.__dict__['obj_type']}. Error: {self.__dict__['error_msg']}"
@@ -46,7 +50,9 @@ class PicklePlaceholder:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ARG002
         """Raise a custom error when the object is called."""
-        path_str = ".".join(self.__dict__["path"]) if self.__dict__["path"] else "root object"
+        path_str = (
+            ".".join(self.__dict__["path"]) if self.__dict__["path"] else "root object"
+        )
         msg = (
             f"Attempt to access unpickleable object: Cannot call unpicklable object at {path_str}. "
             f"Original type: {self.__dict__['obj_type']}. Error: {self.__dict__['error_msg']}"
@@ -56,7 +62,9 @@ class PicklePlaceholder:
     def __repr__(self) -> str:
         """Return a string representation of the placeholder."""
         try:
-            path_str = ".".join(self.__dict__["path"]) if self.__dict__["path"] else "root"
+            path_str = (
+                ".".join(self.__dict__["path"]) if self.__dict__["path"] else "root"
+            )
             return f"<PicklePlaceholder at {path_str}: {self.__dict__['obj_type']} {self.__dict__['obj_str']}>"
         except:  # noqa: E722
             return "<PicklePlaceholder: (error displaying details)>"
@@ -69,5 +77,10 @@ class PicklePlaceholder:
         """Make sure pickling of the placeholder itself works correctly."""
         return (
             PicklePlaceholder,
-            (self.__dict__["obj_type"], self.__dict__["obj_str"], self.__dict__["error_msg"], self.__dict__["path"]),
+            (
+                self.__dict__["obj_type"],
+                self.__dict__["obj_str"],
+                self.__dict__["error_msg"],
+                self.__dict__["path"],
+            ),
         )

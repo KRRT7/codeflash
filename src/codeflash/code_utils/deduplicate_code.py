@@ -21,7 +21,11 @@ class VariableNormalizer(ast.NodeTransformer):
     def enter_scope(self):  # noqa : ANN201
         """Enter a new scope (function/class)."""
         self.scope_stack.append(
-            {"var_mapping": dict(self.var_mapping), "var_counter": self.var_counter, "parameters": set(self.parameters)}
+            {
+                "var_mapping": dict(self.var_mapping),
+                "var_counter": self.var_counter,
+                "parameters": set(self.parameters),
+            }
         )
 
     def exit_scope(self):  # noqa : ANN201
@@ -154,7 +158,9 @@ class VariableNormalizer(ast.NodeTransformer):
         return self.generic_visit(node)
 
 
-def normalize_code(code: str, remove_docstrings: bool = True, return_ast_dump: bool = False) -> str:  # noqa : FBT002, FBT001
+def normalize_code(
+    code: str, remove_docstrings: bool = True, return_ast_dump: bool = False
+) -> str:  # noqa : FBT002, FBT001
     """Normalize Python code by parsing, cleaning, and normalizing only variable names.
 
     Function names, class names, and parameters are preserved.
@@ -181,7 +187,9 @@ def normalize_code(code: str, remove_docstrings: bool = True, return_ast_dump: b
         normalized_tree = normalizer.visit(tree)
         if return_ast_dump:
             # This is faster than unparsing etc
-            return ast.dump(normalized_tree, annotate_fields=False, include_attributes=False)
+            return ast.dump(
+                normalized_tree, annotate_fields=False, include_attributes=False
+            )
 
         # Fix missing locations in the AST
         ast.fix_missing_locations(normalized_tree)

@@ -34,7 +34,6 @@ from pydantic import (
 )
 from pydantic.dataclasses import dataclass
 
-from codeflash.cli_cmds.logging_config import logger
 from codeflash._constants import VerificationType
 from codeflash.code_utils.env_utils import is_end_to_end
 from codeflash.verification.comparator import comparator

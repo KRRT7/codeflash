@@ -64,7 +64,9 @@ class FunctionRanker:
         for key, stats in self._function_stats.items():
             func_name = stats.get("function_name")
             if func_name:
-                self._function_stats_by_name.setdefault(func_name, []).append((key, stats))
+                self._function_stats_by_name.setdefault(func_name, []).append(
+                    (key, stats)
+                )
 
     def load_function_stats(self) -> None:
         try:
@@ -84,7 +86,11 @@ class FunctionRanker:
                     continue
 
                 # Parse function name to handle methods within classes
-                class_name, qualified_name, base_function_name = (None, func_name, func_name)
+                class_name, qualified_name, base_function_name = (
+                    None,
+                    func_name,
+                    func_name,
+                )
                 if "." in func_name and not func_name.startswith("<"):
                     parts = func_name.split(".", 1)
                     if len(parts) == 2:
@@ -117,12 +123,18 @@ class FunctionRanker:
             )
 
         except Exception as e:
-            logger.warning(f"Failed to process function stats from trace file {self.trace_file_path}: {e}")
+            logger.warning(
+                f"Failed to process function stats from trace file {self.trace_file_path}: {e}"
+            )
             self._function_stats = {}
 
-    def get_function_stats_summary(self, function_to_optimize: FunctionToOptimize) -> dict | None:
+    def get_function_stats_summary(
+        self, function_to_optimize: FunctionToOptimize
+    ) -> dict | None:
         target_filename = function_to_optimize.file_path.name
-        candidates = self._function_stats_by_name.get(function_to_optimize.function_name)
+        candidates = self._function_stats_by_name.get(
+            function_to_optimize.function_name
+        )
         if not candidates:
             logger.debug(
                 f"Could not find stats for function {function_to_optimize.function_name} in file {target_filename}"
@@ -139,7 +151,9 @@ class FunctionRanker:
         )
         return None
 
-    def get_function_addressable_time(self, function_to_optimize: FunctionToOptimize) -> float:
+    def get_function_addressable_time(
+        self, function_to_optimize: FunctionToOptimize
+    ) -> float:
         """Get the addressable time in nanoseconds for a function.
 
         Addressable time = own_time + (time_in_callees / call_count)
@@ -148,7 +162,9 @@ class FunctionRanker:
         stats = self.get_function_stats_summary(function_to_optimize)
         return stats["addressable_time_ns"] if stats else 0.0
 
-    def rank_functions(self, functions_to_optimize: list[FunctionToOptimize]) -> list[FunctionToOptimize]:
+    def rank_functions(
+        self, functions_to_optimize: list[FunctionToOptimize]
+    ) -> list[FunctionToOptimize]:
         """Ranks and filters functions based on their % of addressable time and importance.
 
         Filters out functions whose own_time is less than DEFAULT_IMPORTANCE_THRESHOLD
@@ -183,7 +199,8 @@ class FunctionRanker:
                 for s in self._function_stats.values()
                 if s.get("own_time_ns", 0) > 0
                 and any(
-                    str(s.get("filename", "")).endswith("/" + target_file) or s.get("filename") == target_file
+                    str(s.get("filename", "")).endswith("/" + target_file)
+                    or s.get("filename") == target_file
                     for target_file in target_files
                 )
             )
@@ -193,11 +210,15 @@ class FunctionRanker:
             )
         else:
             total_program_time = sum(
-                s["own_time_ns"] for s in self._function_stats.values() if s.get("own_time_ns", 0) > 0
+                s["own_time_ns"]
+                for s in self._function_stats.values()
+                if s.get("own_time_ns", 0) > 0
             )
 
         if total_program_time == 0:
-            logger.warning("Total program time is zero, cannot determine function importance.")
+            logger.warning(
+                "Total program time is zero, cannot determine function importance."
+            )
             functions_to_rank = functions_to_optimize
         else:
             functions_to_rank = []
@@ -218,7 +239,9 @@ class FunctionRanker:
                 f"from {len(functions_to_optimize)} total functions"
             )
 
-        ranked = sorted(functions_to_rank, key=self.get_function_addressable_time, reverse=True)
+        ranked = sorted(
+            functions_to_rank, key=self.get_function_addressable_time, reverse=True
+        )
         logger.debug(
             f"Function ranking order: {[f'{func.function_name} (addressable_time={self.get_function_addressable_time(func):.2f}ns)' for func in ranked]}"
         )

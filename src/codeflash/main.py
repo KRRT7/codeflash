@@ -36,8 +36,7 @@ def main() -> None:
 
 
 def print_codeflash_banner() -> None:
-    print(
-        CODEFLASH_LOGO)
+    print(CODEFLASH_LOGO)
 
 
 if __name__ == "__main__":

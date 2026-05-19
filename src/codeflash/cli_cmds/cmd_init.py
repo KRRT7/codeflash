@@ -29,7 +29,7 @@ from codeflash.cli_cmds.cli_common import (
     prompt_choice,
     prompt_text,
 )
-from codeflash.cli_cmds.logging_config import logger
+from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.cli_cmds.extension import install_vscode_extension
 from codeflash.code_utils.compat import LF
 from codeflash.code_utils.config_parser import parse_config_file
@@ -49,7 +49,6 @@ from codeflash.code_utils.shell_utils import (
     is_powershell,
     save_api_key_to_rc,
 )
-from codeflash.danom import Ok, Err
 from codeflash.version import __version__ as version
 
 if TYPE_CHECKING:

@@ -10,9 +10,12 @@ from typing import TYPE_CHECKING, Any, cast
 import requests
 from pydantic.json import pydantic_encoder
 
-from codeflash.cli_cmds.logging_config import logger
+from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils.env_utils import get_codeflash_api_key
-from codeflash.code_utils.git_utils import get_last_commit_author_if_pr_exists, get_repo_owner_and_name
+from codeflash.code_utils.git_utils import (
+    get_last_commit_author_if_pr_exists,
+    get_repo_owner_and_name,
+)
 from codeflash.code_utils.time_utils import humanize_runtime
 from codeflash.models.models import ExperimentMetadata
 from codeflash.models.models import (
@@ -28,19 +31,20 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import ExperimentMetadata
 from codeflash.models.models import (
-        AIServiceAdaptiveOptimizeRequest,
-        AIServiceCodeRepairRequest,
-        AIServiceRefinerRequest,
-    )
+    AIServiceAdaptiveOptimizeRequest,
+    AIServiceCodeRepairRequest,
+)
 from codeflash.result.explanation import Explanation
 
 
 class AiServiceClient:
     def __init__(self) -> None:
         self.base_url = self.get_aiservice_base_url()
-        self.headers = {"Authorization": f"Bearer {get_codeflash_api_key()}", "Connection": "close"}
+        self.headers = {
+            "Authorization": f"Bearer {get_codeflash_api_key()}",
+            "Connection": "close",
+        }
         self.llm_call_counter = count(1)
         self.is_local = self.base_url == "http://localhost:8000"
         self.timeout: float | None = None if self.is_local else 90
@@ -93,7 +97,9 @@ class AiServiceClient:
         if method.upper() == "POST":
             json_payload = json.dumps(payload, indent=None, default=pydantic_encoder)
             headers = {**self.headers, "Content-Type": "application/json"}
-            response = requests.post(url, data=json_payload, headers=headers, timeout=timeout)
+            response = requests.post(
+                url, data=json_payload, headers=headers, timeout=timeout
+            )
         else:
             response = requests.get(url, headers=self.headers, timeout=timeout)
         # response.raise_for_status()  # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
@@ -164,10 +170,14 @@ class AiServiceClient:
             "call_sequence": self.get_next_sequence(),
             "n_candidates": n_candidates,
         }
-        logger.debug(f"Sending optimize request: trace_id={trace_id}, n_candidates={payload['n_candidates']}")
+        logger.debug(
+            f"Sending optimize request: trace_id={trace_id}, n_candidates={payload['n_candidates']}"
+        )
 
         try:
-            response = self.make_ai_service_request("/optimize", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/optimize", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             logger.exception(f"Error generating optimized candidates: {e}")
             rule()
@@ -176,15 +186,23 @@ class AiServiceClient:
         if response.status_code == 200:
             optimizations_json = response.json()["optimizations"]
             end_time = time.perf_counter()
-            logger.debug(f"!lsp|Generating possible optimizations took {end_time - start_time:.2f} seconds.")
-            logger.info(f"!lsp|Received {len(optimizations_json)} optimization candidates.")
+            logger.debug(
+                f"!lsp|Generating possible optimizations took {end_time - start_time:.2f} seconds."
+            )
+            logger.info(
+                f"!lsp|Received {len(optimizations_json)} optimization candidates."
+            )
             rule()
-            return self._get_valid_candidates(optimizations_json, OptimizedCandidateSource.OPTIMIZE)
+            return self._get_valid_candidates(
+                optimizations_json, OptimizedCandidateSource.OPTIMIZE
+            )
         try:
             error = response.json()["error"]
         except Exception:
             error = response.text
-        logger.error(f"Error generating optimized candidates: {response.status_code} - {error}")
+        logger.error(
+            f"Error generating optimized candidates: {response.status_code} - {error}"
+        )
         rule()
         return []
 
@@ -233,7 +251,9 @@ class AiServiceClient:
         }
 
         try:
-            response = self.make_ai_service_request("/optimize-line-profiler", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/optimize-line-profiler", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             logger.exception(f"Error generating optimized candidates: {e}")
             rule()
@@ -241,25 +261,35 @@ class AiServiceClient:
 
         if response.status_code == 200:
             optimizations_json = response.json()["optimizations"]
-            logger.info(f"!lsp|Received {len(optimizations_json)} line profiler optimization candidates.")
+            logger.info(
+                f"!lsp|Received {len(optimizations_json)} line profiler optimization candidates."
+            )
             rule()
-            return self._get_valid_candidates(optimizations_json, OptimizedCandidateSource.OPTIMIZE_LP)
+            return self._get_valid_candidates(
+                optimizations_json, OptimizedCandidateSource.OPTIMIZE_LP
+            )
         try:
             error = response.json()["error"]
         except Exception:
             error = response.text
-        logger.error(f"Error generating optimized candidates: {response.status_code} - {error}")
+        logger.error(
+            f"Error generating optimized candidates: {response.status_code} - {error}"
+        )
         rule()
         return []
 
-    def adaptive_optimize(self, request: AIServiceAdaptiveOptimizeRequest) -> OptimizedCandidate | None:
+    def adaptive_optimize(
+        self, request: AIServiceAdaptiveOptimizeRequest
+    ) -> OptimizedCandidate | None:
         try:
             payload = {
                 "trace_id": request.trace_id,
                 "original_source_code": request.original_source_code,
                 "candidates": request.candidates,
             }
-            response = self.make_ai_service_request("/adaptive_optimize", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/adaptive_optimize", payload=payload, timeout=self.timeout
+            )
         except (requests.exceptions.RequestException, TypeError) as e:
             logger.exception(f"Error generating adaptive optimized candidates: {e}")
             return None
@@ -268,9 +298,13 @@ class AiServiceClient:
             fixed_optimization = response.json()
             rule()
 
-            valid_candidates = self._get_valid_candidates([fixed_optimization], OptimizedCandidateSource.ADAPTIVE)
+            valid_candidates = self._get_valid_candidates(
+                [fixed_optimization], OptimizedCandidateSource.ADAPTIVE
+            )
             if not valid_candidates:
-                logger.error("Adaptive optimization failed to generate a valid candidate.")
+                logger.error(
+                    "Adaptive optimization failed to generate a valid candidate."
+                )
                 return None
 
             return valid_candidates[0]
@@ -279,10 +313,14 @@ class AiServiceClient:
             error = response.json()["error"]
         except Exception:
             error = response.text
-        logger.error(f"Error generating optimized candidates: {response.status_code} - {error}")
+        logger.error(
+            f"Error generating optimized candidates: {response.status_code} - {error}"
+        )
         return None
 
-    def optimize_python_code_refinement(self, request: list[AIServiceRefinerRequest]) -> list[OptimizedCandidate]:
+    def optimize_python_code_refinement(
+        self, request: list[AIServiceRefinerRequest]
+    ) -> list[OptimizedCandidate]:
         """Optimize the given python code for performance by making a request to the Django endpoint.
 
         Args:
@@ -313,7 +351,9 @@ class AiServiceClient:
             for opt in request
         ]
         try:
-            response = self.make_ai_service_request("/refinement", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/refinement", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             logger.exception(f"Error generating optimization refinements: {e}")
             return []
@@ -321,17 +361,23 @@ class AiServiceClient:
         if response.status_code == 200:
             refined_optimizations = response.json()["refinements"]
 
-            return self._get_valid_candidates(refined_optimizations, OptimizedCandidateSource.REFINE)
+            return self._get_valid_candidates(
+                refined_optimizations, OptimizedCandidateSource.REFINE
+            )
 
         try:
             error = response.json()["error"]
         except Exception:
             error = response.text
-        logger.error(f"Error generating optimized candidates: {response.status_code} - {error}")
+        logger.error(
+            f"Error generating optimized candidates: {response.status_code} - {error}"
+        )
         rule()
         return []
 
-    def code_repair(self, request: AIServiceCodeRepairRequest) -> OptimizedCandidate | None:
+    def code_repair(
+        self, request: AIServiceCodeRepairRequest
+    ) -> OptimizedCandidate | None:
         """Repair the optimization candidate that is not matching the test result of the original code.
 
         Args:
@@ -351,7 +397,9 @@ class AiServiceClient:
                 "trace_id": request.trace_id,
                 "test_diffs": request.test_diffs,
             }
-            response = self.make_ai_service_request("/code_repair", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/code_repair", payload=payload, timeout=self.timeout
+            )
         except (requests.exceptions.RequestException, TypeError) as e:
             logger.exception(f"Error generating optimization repair: {e}")
             return None
@@ -360,7 +408,9 @@ class AiServiceClient:
             fixed_optimization = response.json()
             rule()
 
-            valid_candidates = self._get_valid_candidates([fixed_optimization], OptimizedCandidateSource.REPAIR)
+            valid_candidates = self._get_valid_candidates(
+                [fixed_optimization], OptimizedCandidateSource.REPAIR
+            )
             if not valid_candidates:
                 logger.error("Code repair failed to generate a valid candidate.")
                 return None
@@ -371,7 +421,9 @@ class AiServiceClient:
             error = response.json()["error"]
         except Exception:
             error = response.text
-        logger.error(f"Error generating optimized candidates: {response.status_code} - {error}")
+        logger.error(
+            f"Error generating optimized candidates: {response.status_code} - {error}"
+        )
         rule()
         return None
 
@@ -444,7 +496,9 @@ class AiServiceClient:
         logger.info("loading|Generating explanation")
         rule()
         try:
-            response = self.make_ai_service_request("/explain", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/explain", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             logger.exception(f"Error generating explanations: {e}")
             return ""
@@ -457,7 +511,9 @@ class AiServiceClient:
             error = response.json()["error"]
         except Exception:
             error = response.text
-        logger.error(f"Error generating optimized candidates: {response.status_code} - {error}")
+        logger.error(
+            f"Error generating optimized candidates: {response.status_code} - {error}"
+        )
         rule()
         return ""
 
@@ -494,7 +550,9 @@ class AiServiceClient:
         logger.info("loading|Generating ranking")
         rule()
         try:
-            response = self.make_ai_service_request("/rank", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/rank", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             logger.exception(f"Error generating ranking: {e}")
             return None
@@ -548,7 +606,9 @@ class AiServiceClient:
             "optimizations_post": optimizations_post,
         }
         try:
-            self.make_ai_service_request("/log_features", payload=payload, timeout=self.timeout)
+            self.make_ai_service_request(
+                "/log_features", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             logger.exception(f"Error logging features: {e}")
 
@@ -601,7 +661,9 @@ class AiServiceClient:
             "call_sequence": self.get_next_sequence(),
         }
         try:
-            response = self.make_ai_service_request("/testgen", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/testgen", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             logger.exception(f"Error generating tests: {e}")
             return None
@@ -610,7 +672,9 @@ class AiServiceClient:
 
         if response.status_code == 200:
             response_json = response.json()
-            logger.debug(f"Generated tests for function {function_to_optimize.function_name}")
+            logger.debug(
+                f"Generated tests for function {function_to_optimize.function_name}"
+            )
             return (
                 response_json["generated_tests"],
                 response_json["instrumented_behavior_tests"],
@@ -621,7 +685,9 @@ class AiServiceClient:
             logger.error(f"Error generating tests: {response.status_code} - {error}")
             return None  # noqa: TRY300
         except Exception:
-            logger.error(f"Error generating tests: {response.status_code} - {response.text}")
+            logger.error(
+                f"Error generating tests: {response.status_code} - {response.text}"
+            )
             return None
 
     def get_optimization_review(
@@ -672,7 +738,9 @@ class AiServiceClient:
             "replay_tests": replay_tests,
             "speedup": f"{(100 * float(explanation.speedup)):.2f}%",
             "loop_count": explanation.winning_benchmarking_test_results.number_of_loops(),
-            "benchmark_details": explanation.benchmark_details if explanation.benchmark_details else None,
+            "benchmark_details": explanation.benchmark_details
+            if explanation.benchmark_details
+            else None,
             "optimized_runtime": humanize_runtime(explanation.best_runtime_ns),
             "original_runtime": humanize_runtime(explanation.original_runtime_ns),
             "codeflash_version": codeflash_version,
@@ -682,7 +750,9 @@ class AiServiceClient:
         }
         rule()
         try:
-            response = self.make_ai_service_request("/optimization_review", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/optimization_review", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             logger.exception(f"Error generating optimization refinements: {e}")
             return OptimizationReviewResult(review="", explanation="")
@@ -690,13 +760,16 @@ class AiServiceClient:
         if response.status_code == 200:
             data = response.json()
             return OptimizationReviewResult(
-                review=cast("str", data["review"]), explanation=cast("str", data.get("review_explanation", ""))
+                review=cast("str", data["review"]),
+                explanation=cast("str", data.get("review_explanation", "")),
             )
         try:
             error = cast("str", response.json()["error"])
         except Exception:
             error = response.text
-        logger.error(f"Error generating optimization review: {response.status_code} - {error}")
+        logger.error(
+            f"Error generating optimization review: {response.status_code} - {error}"
+        )
         rule()
         return OptimizationReviewResult(review="", explanation="")
 
@@ -725,7 +798,9 @@ class AiServiceClient:
         )
 
         try:
-            response = self.make_ai_service_request("/workflow-gen", payload=payload, timeout=self.timeout)
+            response = self.make_ai_service_request(
+                "/workflow-gen", payload=payload, timeout=self.timeout
+            )
         except requests.exceptions.RequestException as e:
             # AI service unavailable - this is expected, will fall back to static workflow
             logger.debug(
@@ -751,7 +826,9 @@ class AiServiceClient:
             error = cast("str", error_response.get("error", "Unknown error"))
             logger.debug(f"[aiservice.py:generate_workflow_steps] Error: {error}")
         except Exception:
-            logger.debug("[aiservice.py:generate_workflow_steps] Could not parse error response")
+            logger.debug(
+                "[aiservice.py:generate_workflow_steps] Could not parse error response"
+            )
         return None
 
 

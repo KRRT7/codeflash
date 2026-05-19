@@ -1,10 +1,10 @@
-from __future__ import annotations
 """PicklePatcher - A utility for safely pickling objects with unpicklable components.
 
 This module provides functions to recursively pickle objects, replacing unpicklable
 components with placeholders that provide informative errors when accessed.
 """
 
+from __future__ import annotations
 
 import contextlib
 import pickle
@@ -30,7 +30,9 @@ class PicklePatcher:
     _unpicklable_types: ClassVar[set[type]] = set()
 
     @staticmethod
-    def dumps(obj: object, protocol: int | None = None, max_depth: int = 100, **kwargs) -> bytes:  # noqa: ANN003
+    def dumps(
+        obj: object, protocol: int | None = None, max_depth: int = 100, **kwargs
+    ) -> bytes:  # noqa: ANN003
         """Safely pickle an object, replacing unpicklable parts with placeholders.
 
         Args:
@@ -45,7 +47,9 @@ class PicklePatcher:
             bytes: Pickled data with placeholders for unpicklable objects
 
         """
-        return PicklePatcher._recursive_pickle(obj, max_depth, path=[], protocol=protocol, **kwargs)
+        return PicklePatcher._recursive_pickle(
+            obj, max_depth, path=[], protocol=protocol, **kwargs
+        )
 
     @staticmethod
     def loads(pickled_data: bytes) -> object:
@@ -63,7 +67,9 @@ class PicklePatcher:
         return dill.loads(pickled_data)
 
     @staticmethod
-    def _create_placeholder(obj: object, error_msg: str, path: list[str]) -> PicklePlaceholder:
+    def _create_placeholder(
+        obj: object, error_msg: str, path: list[str]
+    ) -> PicklePlaceholder:
         """Create a placeholder for an unpicklable object.
 
         Args:
@@ -79,7 +85,11 @@ class PicklePatcher:
         """
         obj_type = type(obj)
         try:
-            obj_str = str(obj)[:100] if hasattr(obj, "__str__") else f"<unprintable object of type {obj_type.__name__}>"
+            obj_str = (
+                str(obj)[:100]
+                if hasattr(obj, "__str__")
+                else f"<unprintable object of type {obj_type.__name__}>"
+            )
         except:  # noqa: E722
             obj_str = f"<unprintable object of type {obj_type.__name__}>"
 
@@ -152,12 +162,16 @@ class PicklePatcher:
 
         # Check if this type is known to be unpicklable
         if obj_type in PicklePatcher._unpicklable_types:
-            placeholder = PicklePatcher._create_placeholder(obj, "Known unpicklable type", path)
+            placeholder = PicklePatcher._create_placeholder(
+                obj, "Known unpicklable type", path
+            )
             return dill.dumps(placeholder, protocol=protocol, **kwargs)
 
         # Check for max depth
         if max_depth <= 0:
-            placeholder = PicklePatcher._create_placeholder(obj, "Max recursion depth exceeded", path)
+            placeholder = PicklePatcher._create_placeholder(
+                obj, "Max recursion depth exceeded", path
+            )
             return dill.dumps(placeholder, protocol=protocol, **kwargs)
 
         # Try standard pickling
@@ -169,11 +183,17 @@ class PicklePatcher:
 
         # Handle different container types
         if isinstance(obj, dict):
-            return PicklePatcher._handle_dict(obj, max_depth, error_msg, path, protocol=protocol, **kwargs)
+            return PicklePatcher._handle_dict(
+                obj, max_depth, error_msg, path, protocol=protocol, **kwargs
+            )
         if isinstance(obj, (list, tuple, set)):
-            return PicklePatcher._handle_sequence(obj, max_depth, error_msg, path, protocol=protocol, **kwargs)
+            return PicklePatcher._handle_sequence(
+                obj, max_depth, error_msg, path, protocol=protocol, **kwargs
+            )
         if hasattr(obj, "__dict__"):
-            result = PicklePatcher._handle_object(obj, max_depth, error_msg, path, protocol=protocol, **kwargs)
+            result = PicklePatcher._handle_object(
+                obj, max_depth, error_msg, path, protocol=protocol, **kwargs
+            )
 
             # If this was a failure, add the type to the cache
             unpickled = dill.loads(result)
@@ -220,7 +240,9 @@ class PicklePatcher:
 
         for key, value in obj_dict.items():
             # Process the key
-            key_success, key_result = PicklePatcher._pickle(key, path, protocol, **kwargs)
+            key_success, key_result = PicklePatcher._pickle(
+                key, path, protocol, **kwargs
+            )
             if key_success:
                 key_result = key
             else:
@@ -233,7 +255,9 @@ class PicklePatcher:
 
             # Process the value
             value_path = [*path, f"[{repr(key)[:20]}]"]
-            value_success, value_bytes = PicklePatcher._pickle(value, value_path, protocol, **kwargs)
+            value_success, value_bytes = PicklePatcher._pickle(
+                value, value_path, protocol, **kwargs
+            )
 
             if value_success:
                 value_result = value
@@ -245,7 +269,9 @@ class PicklePatcher:
                     )
                     value_result = dill.loads(value_bytes)
                 except Exception as inner_e:
-                    value_result = PicklePatcher._create_placeholder(value, str(inner_e), value_path)
+                    value_result = PicklePatcher._create_placeholder(
+                        value, str(inner_e), value_path
+                    )
 
             result[key_result] = value_result
 
@@ -295,7 +321,9 @@ class PicklePatcher:
                 result.append(dill.loads(item_bytes))
             except Exception as inner_e:
                 # If recursive pickling fails, use a placeholder
-                placeholder = PicklePatcher._create_placeholder(item, str(inner_e), item_path)
+                placeholder = PicklePatcher._create_placeholder(
+                    item, str(inner_e), item_path
+                )
                 result.append(placeholder)
 
         # Convert back to the original type
@@ -345,7 +373,9 @@ class PicklePatcher:
                     attr_path = [*path, attr_name]
 
                     # Try to pickle directly first
-                    success, _ = PicklePatcher._pickle(attr_value, attr_path, protocol, **kwargs)
+                    success, _ = PicklePatcher._pickle(
+                        attr_value, attr_path, protocol, **kwargs
+                    )
                     if success:
                         setattr(new_obj, attr_name, attr_value)
                         continue
@@ -353,12 +383,18 @@ class PicklePatcher:
                     # If direct pickling fails, try recursive pickling
                     try:
                         attr_bytes = PicklePatcher._recursive_pickle(
-                            attr_value, max_depth - 1, attr_path, protocol=protocol, **kwargs
+                            attr_value,
+                            max_depth - 1,
+                            attr_path,
+                            protocol=protocol,
+                            **kwargs,
                         )
                         setattr(new_obj, attr_name, dill.loads(attr_bytes))
                     except Exception as inner_e:
                         # Use placeholder for unpicklable attribute
-                        placeholder = PicklePatcher._create_placeholder(attr_value, str(inner_e), attr_path)
+                        placeholder = PicklePatcher._create_placeholder(
+                            attr_value, str(inner_e), attr_path
+                        )
                         setattr(new_obj, attr_name, placeholder)
 
             # Try to pickle the patched object

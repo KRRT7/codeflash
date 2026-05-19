@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING, Any
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.formatter import sort_imports
-from codeflash.discovery.functions_to_optimize import inspect_top_level_functions_or_methods
+from codeflash.discovery.functions_to_optimize import (
+    inspect_top_level_functions_or_methods,
+)
 from codeflash.verification.verification_utils import get_test_file_path
 
 if TYPE_CHECKING:
@@ -34,7 +36,13 @@ def get_next_arg_and_return(
     if class_name is not None:
         cursor = cur.execute(
             "SELECT * FROM benchmark_function_timings WHERE benchmark_function_name = ? AND function_name = ? AND file_path = ? AND class_name = ? LIMIT ?",
-            (benchmark_function_name, function_name, normalized_file_path, class_name, limit),
+            (
+                benchmark_function_name,
+                function_name,
+                normalized_file_path,
+                class_name,
+                limit,
+            ),
         )
     else:
         cursor = cur.execute(
@@ -53,7 +61,9 @@ def get_function_alias(module: str, function_name: str) -> str:
     return "_".join(module.split(".")) + "_" + function_name
 
 
-def get_unique_test_name(module: str, function_name: str, benchmark_name: str, class_name: str | None = None) -> str:
+def get_unique_test_name(
+    module: str, function_name: str, benchmark_name: str, class_name: str | None = None
+) -> str:
     clean_benchmark = benchmark_context_cleaner.sub("_", benchmark_name).strip("_")
 
     base_alias = get_function_alias(module, function_name)
@@ -101,7 +111,11 @@ from codeflash.benchmarking.replay_test import get_next_arg_and_return
     imports += "\n".join(function_imports)
 
     functions_to_optimize = sorted(
-        {func.get("function_name") for func in functions_data if func.get("function_name") != "__init__"}
+        {
+            func.get("function_name")
+            for func in functions_data
+            if func.get("function_name") != "__init__"
+        }
     )
     metadata = f"""functions = {functions_to_optimize}
 trace_file_path = r"{trace_file}"
@@ -212,13 +226,17 @@ trace_file_path = r"{trace_file}"
 
         formatted_test_body = textwrap.indent(test_body, "    ")
 
-        unique_test_name = get_unique_test_name(module_name, function_name, benchmark_function_name, class_name)
+        unique_test_name = get_unique_test_name(
+            module_name, function_name, benchmark_function_name, class_name
+        )
         test_template += f"def test_{unique_test_name}():\n{formatted_test_body}\n"
 
     return imports + "\n" + metadata + "\n" + test_template
 
 
-def generate_replay_test(trace_file_path: Path, output_dir: Path, max_run_count: int = 100) -> int:
+def generate_replay_test(
+    trace_file_path: Path, output_dir: Path, max_run_count: int = 100
+) -> int:
     """Generate multiple replay tests from the traced function calls, grouped by benchmark.
 
     Args:
@@ -239,7 +257,9 @@ def generate_replay_test(trace_file_path: Path, output_dir: Path, max_run_count:
         cursor = conn.cursor()
 
         # Get distinct benchmark file paths
-        cursor.execute("SELECT DISTINCT benchmark_module_path FROM benchmark_function_timings")
+        cursor.execute(
+            "SELECT DISTINCT benchmark_module_path FROM benchmark_function_timings"
+        )
         benchmark_files = cursor.fetchall()
 
         # Generate a test for each benchmark file
@@ -254,7 +274,14 @@ def generate_replay_test(trace_file_path: Path, output_dir: Path, max_run_count:
 
             functions_data = []
             for row in cursor.fetchall():
-                benchmark_function_name, function_name, class_name, module_name, file_path, benchmark_line_number = row
+                (
+                    benchmark_function_name,
+                    function_name,
+                    class_name,
+                    module_name,
+                    file_path,
+                    benchmark_line_number,
+                ) = row
                 # Add this function to our list
                 functions_data.append(
                     {
@@ -266,21 +293,29 @@ def generate_replay_test(trace_file_path: Path, output_dir: Path, max_run_count:
                         "benchmark_module_path": benchmark_module_path,
                         "benchmark_line_number": benchmark_line_number,
                         "function_properties": inspect_top_level_functions_or_methods(
-                            file_name=Path(file_path), function_or_method_name=function_name, class_name=class_name
+                            file_name=Path(file_path),
+                            function_or_method_name=function_name,
+                            class_name=class_name,
                         ),
                     }
                 )
 
             if not functions_data:
-                logger.info(f"No benchmark test functions found in {benchmark_module_path}")
+                logger.info(
+                    f"No benchmark test functions found in {benchmark_module_path}"
+                )
                 continue
             # Generate the test code for this benchmark
             test_code = create_trace_replay_test_code(
-                trace_file=trace_file_path.as_posix(), functions_data=functions_data, max_run_count=max_run_count
+                trace_file=trace_file_path.as_posix(),
+                functions_data=functions_data,
+                max_run_count=max_run_count,
             )
             test_code = sort_imports(code=test_code)
             output_file = get_test_file_path(
-                test_dir=Path(output_dir), function_name=benchmark_module_path, test_type="replay"
+                test_dir=Path(output_dir),
+                function_name=benchmark_module_path,
+                test_type="replay",
             )
             # Write test code to file, parents = true
             output_dir.mkdir(parents=True, exist_ok=True)

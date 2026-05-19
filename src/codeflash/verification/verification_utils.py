@@ -6,7 +6,9 @@ from pathlib import Path
 from pydantic.dataclasses import dataclass
 
 
-def get_test_file_path(test_dir: Path, function_name: str, iteration: int = 0, test_type: str = "unit") -> Path:
+def get_test_file_path(
+    test_dir: Path, function_name: str, iteration: int = 0, test_type: str = "unit"
+) -> Path:
     assert test_type in {"unit", "inspired", "replay", "perf"}
     function_name = function_name.replace(".", "_")
     path = test_dir / f"test_{function_name}__{test_type}_test_{iteration}.py"
@@ -51,7 +53,11 @@ class ModifyInspiredTests(ast.NodeTransformer):
         found = False
         if node.bases:
             for base in node.bases:
-                if isinstance(base, ast.Attribute) and base.attr == "TestCase" and base.value.id == "unittest":
+                if (
+                    isinstance(base, ast.Attribute)
+                    and base.attr == "TestCase"
+                    and base.value.id == "unittest"
+                ):
                     found = True
                     break
                 # TODO: Check if this is actually a unittest.TestCase

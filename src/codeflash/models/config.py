@@ -6,8 +6,6 @@ from pathlib import Path
 
 @dataclass
 class AppConfig:
-    """Typed application configuration, replacing the argparse Namespace pass-through."""
-
     project_root: Path
     module_root: Path
     tests_root: Path
@@ -36,7 +34,10 @@ class AppConfig:
     @classmethod
     def from_namespace(cls, ns: object) -> AppConfig:
         args = ns  # keeping the name short in this conversion
-        to_path = lambda v: Path(v) if isinstance(v, str) else v
+
+        def to_path(v):
+            return Path(v) if isinstance(v, str) else v
+
         return cls(
             project_root=to_path(getattr(args, "project_root", ".")),
             module_root=to_path(getattr(args, "module_root", ".")),

@@ -11,7 +11,11 @@ from typing import TYPE_CHECKING, Union
 import jedi
 import libcst as cst
 from libcst.codemod import CodemodContext
-from libcst.codemod.visitors import AddImportsVisitor, GatherImportsVisitor, RemoveImportsVisitor
+from libcst.codemod.visitors import (
+    AddImportsVisitor,
+    GatherImportsVisitor,
+    RemoveImportsVisitor,
+)
 from libcst.helpers import calculate_module_and_package
 
 from codeflash.cli_cmds.logging_config import logger
@@ -83,7 +87,9 @@ def find_insertion_index_after_imports(node: cst.Module) -> int:
 
         is_conditional_import = isinstance(stmt, cst.If) and all(
             isinstance(inner, cst.SimpleStatementLine)
-            and all(isinstance(child, (cst.Import, cst.ImportFrom)) for child in inner.body)
+            and all(
+                isinstance(child, (cst.Import, cst.ImportFrom)) for child in inner.body
+            )
             for inner in stmt.body.body
         )
 
@@ -103,7 +109,9 @@ def find_insertion_index_after_imports(node: cst.Module) -> int:
 class GlobalAssignmentTransformer(cst.CSTTransformer):
     """Transforms global assignments in the original file with those from the new file."""
 
-    def __init__(self, new_assignments: dict[str, cst.Assign], new_assignment_order: list[str]) -> None:
+    def __init__(
+        self, new_assignments: dict[str, cst.Assign], new_assignment_order: list[str]
+    ) -> None:
         super().__init__()
         self.new_assignments = new_assignments
         self.new_assignment_order = new_assignment_order
@@ -114,14 +122,18 @@ class GlobalAssignmentTransformer(cst.CSTTransformer):
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:  # noqa: ARG002
         self.scope_depth += 1
 
-    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:  # noqa: ARG002
+    def leave_FunctionDef(
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+    ) -> cst.FunctionDef:  # noqa: ARG002
         self.scope_depth -= 1
         return updated_node
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:  # noqa: ARG002
         self.scope_depth += 1
 
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.ClassDef:  # noqa: ARG002
+    def leave_ClassDef(
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+    ) -> cst.ClassDef:  # noqa: ARG002
         self.scope_depth -= 1
         return updated_node
 
@@ -136,7 +148,9 @@ class GlobalAssignmentTransformer(cst.CSTTransformer):
         # Else blocks are already counted as part of the if statement
         pass
 
-    def leave_Assign(self, original_node: cst.Assign, updated_node: cst.Assign) -> cst.CSTNode:
+    def leave_Assign(
+        self, original_node: cst.Assign, updated_node: cst.Assign
+    ) -> cst.CSTNode:
         if self.scope_depth > 0 or self.if_else_depth > 0:
             return updated_node
 
@@ -150,7 +164,9 @@ class GlobalAssignmentTransformer(cst.CSTTransformer):
 
         return updated_node
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:  # noqa: ARG002
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:  # noqa: ARG002
         # Add any new assignments that weren't in the original file
         new_statements = list(updated_node.body)
 
@@ -170,14 +186,22 @@ class GlobalAssignmentTransformer(cst.CSTTransformer):
                 for assignment in assignments_to_append
             ]
 
-            new_statements = list(chain(new_statements[:insert_index], assignment_lines, new_statements[insert_index:]))
+            new_statements = list(
+                chain(
+                    new_statements[:insert_index],
+                    assignment_lines,
+                    new_statements[insert_index:],
+                )
+            )
 
             # Add a blank line after the last assignment if needed
             after_index = insert_index + len(assignment_lines)
             if after_index < len(new_statements):
                 next_stmt = new_statements[after_index]
                 # If there's no empty line, add one
-                has_empty = any(isinstance(line, cst.EmptyLine) for line in next_stmt.leading_lines)
+                has_empty = any(
+                    isinstance(line, cst.EmptyLine) for line in next_stmt.leading_lines
+                )
                 if not has_empty:
                     new_statements[after_index] = next_stmt.with_changes(
                         leading_lines=[cst.EmptyLine(), *next_stmt.leading_lines]
@@ -266,11 +290,17 @@ class DottedImportCollector(cst.CSTVisitor):
                     if isinstance(child, cst.Import):
                         for alias in child.names:
                             module = self.get_full_dotted_name(alias.name)
-                            asname = alias.asname.name.value if alias.asname else alias.name.value
+                            asname = (
+                                alias.asname.name.value
+                                if alias.asname
+                                else alias.name.value
+                            )
                             if isinstance(asname, cst.Attribute):
                                 self.imports.add(module)
                             else:
-                                self.imports.add(module if module == asname else f"{module}.{asname}")
+                                self.imports.add(
+                                    module if module == asname else f"{module}.{asname}"
+                                )
 
                     elif isinstance(child, cst.ImportFrom):
                         if child.module is None:
@@ -281,7 +311,9 @@ class DottedImportCollector(cst.CSTVisitor):
                         for alias in child.names:
                             if isinstance(alias, cst.ImportAlias):
                                 name = alias.name.value
-                                asname = alias.asname.name.value if alias.asname else name
+                                asname = (
+                                    alias.asname.name.value if alias.asname else name
+                                )
                                 self.imports.add(f"{module}.{asname}")
 
     def visit_Module(self, node: cst.Module) -> None:
@@ -312,7 +344,9 @@ class DottedImportCollector(cst.CSTVisitor):
 class ImportInserter(cst.CSTTransformer):
     """Transformer that inserts global statements after the last import."""
 
-    def __init__(self, global_statements: list[cst.SimpleStatementLine], last_import_line: int) -> None:
+    def __init__(
+        self, global_statements: list[cst.SimpleStatementLine], last_import_line: int
+    ) -> None:
         super().__init__()
         self.global_statements = global_statements
         self.last_import_line = last_import_line
@@ -333,7 +367,9 @@ class ImportInserter(cst.CSTTransformer):
 
         return cst.Module(body=[updated_node])
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:  # noqa: ARG002
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:  # noqa: ARG002
         # If there were no imports, add at the beginning of the module
         if self.last_import_line == 0 and not self.inserted:
             updated_body = list(updated_node.body)
@@ -343,7 +379,9 @@ class ImportInserter(cst.CSTTransformer):
         return updated_node
 
 
-def extract_global_statements(source_code: str) -> tuple[cst.Module, list[cst.SimpleStatementLine]]:
+def extract_global_statements(
+    source_code: str,
+) -> tuple[cst.Module, list[cst.SimpleStatementLine]]:
     """Extract global statements from source code."""
     module = cst.parse_module(source_code)
     collector = GlobalStatementCollector()
@@ -364,7 +402,11 @@ class FutureAliasedImportTransformer(cst.CSTTransformer):
         self,
         original_node: cst.ImportFrom,  # noqa: ARG002
         updated_node: cst.ImportFrom,
-    ) -> cst.BaseSmallStatement | cst.FlattenSentinel[cst.BaseSmallStatement] | cst.RemovalSentinel:
+    ) -> (
+        cst.BaseSmallStatement
+        | cst.FlattenSentinel[cst.BaseSmallStatement]
+        | cst.RemovalSentinel
+    ):
         import libcst.matchers as m
 
         if (
@@ -389,7 +431,8 @@ def add_global_assignments(src_module_code: str, dst_module_code: str) -> str:
     unique_global_statements = []
     for stmt in new_added_global_statements:
         if any(
-            stmt is existing_stmt or stmt.deep_equals(existing_stmt) for existing_stmt in existing_global_statements
+            stmt is existing_stmt or stmt.deep_equals(existing_stmt)
+            for existing_stmt in existing_global_statements
         ):
             continue
         unique_global_statements.append(stmt)
@@ -418,7 +461,9 @@ def add_global_assignments(src_module_code: str, dst_module_code: str) -> str:
         return mod_dst_code
 
     # Transform the original destination module
-    transformer = GlobalAssignmentTransformer(new_collector.assignments, new_collector.assignment_order)
+    transformer = GlobalAssignmentTransformer(
+        new_collector.assignments, new_collector.assignment_order
+    )
     transformed_module = original_module.visit(transformer)
 
     return transformed_module.code
@@ -427,7 +472,10 @@ def add_global_assignments(src_module_code: str, dst_module_code: str) -> str:
 def resolve_star_import(module_name: str, project_root: Path) -> set[str]:
     try:
         module_path = module_name.replace(".", "/")
-        possible_paths = [project_root / f"{module_path}.py", project_root / f"{module_path}/__init__.py"]
+        possible_paths = [
+            project_root / f"{module_path}.py",
+            project_root / f"{module_path}/__init__.py",
+        ]
 
         module_file = None
         for path in possible_paths:
@@ -436,7 +484,9 @@ def resolve_star_import(module_name: str, project_root: Path) -> set[str]:
                 break
 
         if module_file is None:
-            logger.warning(f"Could not find module file for {module_name}, skipping star import resolution")
+            logger.warning(
+                f"Could not find module file for {module_name}, skipping star import resolution"
+            )
             return set()
 
         with module_file.open(encoding="utf8") as f:
@@ -474,10 +524,13 @@ def resolve_star_import(module_name: str, project_root: Path) -> set[str]:
                     if isinstance(target, ast.Name) and not target.id.startswith("_"):
                         public_names.add(target.id)
             elif isinstance(node, ast.AnnAssign):
-                if isinstance(node.target, ast.Name) and not node.target.id.startswith("_"):
+                if isinstance(node.target, ast.Name) and not node.target.id.startswith(
+                    "_"
+                ):
                     public_names.add(node.target.id)
             elif isinstance(node, ast.Import) or (
-                isinstance(node, ast.ImportFrom) and not any(alias.name == "*" for alias in node.names)
+                isinstance(node, ast.ImportFrom)
+                and not any(alias.name == "*" for alias in node.names)
             ):
                 for alias in node.names:
                     name = alias.asname or alias.name
@@ -503,10 +556,16 @@ def add_needed_imports_from_module(
     """Add all needed and used source module code imports to the destination module code, and return it."""
     src_module_code = delete___future___aliased_imports(src_module_code)
     if not helper_functions_fqn:
-        helper_functions_fqn = {f.fully_qualified_name for f in (helper_functions or [])}
+        helper_functions_fqn = {
+            f.fully_qualified_name for f in (helper_functions or [])
+        }
 
-    src_module_and_package: ModuleNameAndPackage = calculate_module_and_package(project_root, src_path)
-    dst_module_and_package: ModuleNameAndPackage = calculate_module_and_package(project_root, dst_path)
+    src_module_and_package: ModuleNameAndPackage = calculate_module_and_package(
+        project_root, src_path
+    )
+    dst_module_and_package: ModuleNameAndPackage = calculate_module_and_package(
+        project_root, dst_path
+    )
 
     dst_context: CodemodContext = CodemodContext(
         filename=src_path.name,
@@ -552,7 +611,8 @@ def add_needed_imports_from_module(
         for mod, obj_seq in gatherer.object_mapping.items():
             for obj in obj_seq:
                 if (
-                    f"{mod}.{obj}" in helper_functions_fqn or dst_context.full_module_name == mod  # avoid circular deps
+                    f"{mod}.{obj}" in helper_functions_fqn
+                    or dst_context.full_module_name == mod  # avoid circular deps
                 ):
                     continue  # Skip adding imports for helper functions already in the context
 
@@ -569,8 +629,12 @@ def add_needed_imports_from_module(
                             f"{mod}.{symbol}" not in helper_functions_fqn
                             and f"{mod}.{symbol}" not in dotted_import_collector.imports
                         ):
-                            AddImportsVisitor.add_needed_import(dst_context, mod, symbol)
-                        RemoveImportsVisitor.remove_unused_import(dst_context, mod, symbol)
+                            AddImportsVisitor.add_needed_import(
+                                dst_context, mod, symbol
+                            )
+                        RemoveImportsVisitor.remove_unused_import(
+                            dst_context, mod, symbol
+                        )
                 else:
                     if f"{mod}.{obj}" not in dotted_import_collector.imports:
                         AddImportsVisitor.add_needed_import(dst_context, mod, obj)
@@ -595,20 +659,28 @@ def add_needed_imports_from_module(
                 continue
 
             if f"{mod}.{alias_pair[1]}" not in dotted_import_collector.imports:
-                AddImportsVisitor.add_needed_import(dst_context, mod, alias_pair[0], asname=alias_pair[1])
-            RemoveImportsVisitor.remove_unused_import(dst_context, mod, alias_pair[0], asname=alias_pair[1])
+                AddImportsVisitor.add_needed_import(
+                    dst_context, mod, alias_pair[0], asname=alias_pair[1]
+                )
+            RemoveImportsVisitor.remove_unused_import(
+                dst_context, mod, alias_pair[0], asname=alias_pair[1]
+            )
 
     try:
         add_imports_visitor = AddImportsVisitor(dst_context)
         transformed_module = add_imports_visitor.transform_module(parsed_dst_module)
-        transformed_module = RemoveImportsVisitor(dst_context).transform_module(transformed_module)
+        transformed_module = RemoveImportsVisitor(dst_context).transform_module(
+            transformed_module
+        )
         return transformed_module.code.lstrip("\n")
     except Exception as e:
         logger.exception(f"Error adding imports to destination module code: {e}")
         return dst_module_code
 
 
-def get_code(functions_to_optimize: list[FunctionToOptimize]) -> tuple[str | None, set[tuple[str, str]]]:
+def get_code(
+    functions_to_optimize: list[FunctionToOptimize],
+) -> tuple[str | None, set[tuple[str, str]]]:
     """Return the code for a function or methods in a Python module.
 
     functions_to_optimize is either a singleton FunctionToOptimize instance, which represents either a function at the
@@ -616,10 +688,16 @@ def get_code(functions_to_optimize: list[FunctionToOptimize]) -> tuple[str | Non
     """
     if (
         not functions_to_optimize
-        or (functions_to_optimize[0].parents and functions_to_optimize[0].parents[0].type != "ClassDef")
+        or (
+            functions_to_optimize[0].parents
+            and functions_to_optimize[0].parents[0].type != "ClassDef"
+        )
         or (
             len(functions_to_optimize[0].parents) > 1
-            or ((len(functions_to_optimize) > 1) and len({fn.parents[0] for fn in functions_to_optimize}) != 1)
+            or (
+                (len(functions_to_optimize) > 1)
+                and len({fn.parents[0] for fn in functions_to_optimize}) != 1
+            )
         )
     ):
         return None, set()
@@ -629,15 +707,25 @@ def get_code(functions_to_optimize: list[FunctionToOptimize]) -> tuple[str | Non
     contextual_dunder_methods: set[tuple[str, str]] = set()
     target_code: str = ""
 
-    def find_target(node_list: list[ast.stmt], name_parts: tuple[str, str] | tuple[str]) -> ast.AST | None:
-        target: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.Assign | ast.AnnAssign | None = None
+    def find_target(
+        node_list: list[ast.stmt], name_parts: tuple[str, str] | tuple[str]
+    ) -> ast.AST | None:
+        target: (
+            ast.FunctionDef
+            | ast.AsyncFunctionDef
+            | ast.ClassDef
+            | ast.Assign
+            | ast.AnnAssign
+            | None
+        ) = None
         node: ast.stmt
         for node in node_list:
             if (
                 # The many mypy issues will be fixed once this code moves to the backend,
                 # using Type Guards as we move to 3.10+.
                 # We will cover the Type Alias case on the backend since it's a 3.12 feature.
-                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name == name_parts[0]
+                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+                and node.name == name_parts[0]
             ):
                 target = node
                 break
@@ -647,7 +735,11 @@ def get_code(functions_to_optimize: list[FunctionToOptimize]) -> tuple[str | Non
                 and len(node.targets) == 1
                 and isinstance(node.targets[0], ast.Name)
                 and node.targets[0].id == name_parts[0]
-            ) or (isinstance(node, ast.AnnAssign) and hasattr(node.target, "id") and node.target.id == name_parts[0]):
+            ) or (
+                isinstance(node, ast.AnnAssign)
+                and hasattr(node.target, "id")
+                and node.target.id == name_parts[0]
+            ):
                 if class_skeleton:
                     break
                 target = node
@@ -696,11 +788,14 @@ def get_code(functions_to_optimize: list[FunctionToOptimize]) -> tuple[str | Non
             functions_to_optimize[0].parents[0].type == "ClassDef"
         ):  # All functions_to_optimize functions are methods of the same class.
             qualified_name_parts_list: list[tuple[str, str] | tuple[str]] = [
-                (fto.parents[0].name, fto.function_name) for fto in functions_to_optimize
+                (fto.parents[0].name, fto.function_name)
+                for fto in functions_to_optimize
             ]
 
         else:
-            logger.error(f"Error: get_code does not support inner functions: {functions_to_optimize[0].parents}")
+            logger.error(
+                f"Error: get_code does not support inner functions: {functions_to_optimize[0].parents}"
+            )
             return None, set()
     elif len(functions_to_optimize[0].parents) == 0:
         qualified_name_parts_list = [(functions_to_optimize[0].function_name,)]
@@ -716,37 +811,58 @@ def get_code(functions_to_optimize: list[FunctionToOptimize]) -> tuple[str | Non
             continue
         # find_target returns FunctionDef, AsyncFunctionDef, ClassDef, Assign, or AnnAssign - all have lineno/end_lineno
         if not isinstance(
-            target_node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Assign, ast.AnnAssign)
+            target_node,
+            (
+                ast.FunctionDef,
+                ast.AsyncFunctionDef,
+                ast.ClassDef,
+                ast.Assign,
+                ast.AnnAssign,
+            ),
         ):
             continue
 
         if (
-            isinstance(target_node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+            isinstance(
+                target_node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+            )
             and target_node.decorator_list
         ):
-            target_code += "".join(lines[target_node.decorator_list[0].lineno - 1 : target_node.end_lineno])
+            target_code += "".join(
+                lines[target_node.decorator_list[0].lineno - 1 : target_node.end_lineno]
+            )
         else:
-            target_code += "".join(lines[target_node.lineno - 1 : target_node.end_lineno])
+            target_code += "".join(
+                lines[target_node.lineno - 1 : target_node.end_lineno]
+            )
     if not target_code:
         return None, set()
     class_list: list[tuple[int, int | None]] = sorted(class_skeleton)
-    class_code = "".join(["".join(lines[s_lineno - 1 : e_lineno]) for (s_lineno, e_lineno) in class_list])
+    class_code = "".join(
+        ["".join(lines[s_lineno - 1 : e_lineno]) for (s_lineno, e_lineno) in class_list]
+    )
     return class_code + target_code, contextual_dunder_methods
 
 
-def extract_code(functions_to_optimize: list[FunctionToOptimize]) -> tuple[str | None, set[tuple[str, str]]]:
+def extract_code(
+    functions_to_optimize: list[FunctionToOptimize],
+) -> tuple[str | None, set[tuple[str, str]]]:
     edited_code, contextual_dunder_methods = get_code(functions_to_optimize)
     if edited_code is None:
         return None, set()
     try:
         compile(edited_code, "edited_code", "exec")
     except SyntaxError as e:
-        logger.exception(f"extract_code - Syntax error in extracted optimization candidate code: {e}")
+        logger.exception(
+            f"extract_code - Syntax error in extracted optimization candidate code: {e}"
+        )
         return None, set()
     return edited_code, contextual_dunder_methods
 
 
-def find_preexisting_objects(source_code: str) -> set[tuple[str, tuple[FunctionParent, ...]]]:
+def find_preexisting_objects(
+    source_code: str,
+) -> set[tuple[str, tuple[FunctionParent, ...]]]:
     """Find all preexisting functions, classes or class methods in the source code."""
     preexisting_objects: set[tuple[str, tuple[FunctionParent, ...]]] = set()
     try:
@@ -761,7 +877,9 @@ def find_preexisting_objects(source_code: str) -> set[tuple[str, tuple[FunctionP
             preexisting_objects.add((node.name, ()))
             for cnode in node.body:
                 if isinstance(cnode, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    preexisting_objects.add((cnode.name, (FunctionParent(node.name, "ClassDef"),)))
+                    preexisting_objects.add(
+                        (cnode.name, (FunctionParent(node.name, "ClassDef"),))
+                    )
     return preexisting_objects
 
 
@@ -796,7 +914,9 @@ class FunctionCallFinder(ast.NodeVisitor):
 
     """
 
-    def __init__(self, target_function_name: str, target_filepath: str, source_lines: list[str]) -> None:
+    def __init__(
+        self, target_function_name: str, target_filepath: str, source_lines: list[str]
+    ) -> None:
         self.target_function_name = target_function_name
         self.target_filepath = target_filepath
         self.source_lines = source_lines  # Store original source lines for extraction
@@ -866,7 +986,11 @@ class FunctionCallFinder(ast.NodeVisitor):
         func_name = node.name
 
         # Build the full qualified name including class if applicable
-        full_name = f"{'.'.join(self.current_class_stack)}.{func_name}" if self.current_class_stack else func_name
+        full_name = (
+            f"{'.'.join(self.current_class_stack)}.{func_name}"
+            if self.current_class_stack
+            else func_name
+        )
 
         self.current_function_stack.append((full_name, node))
         self.found_call_in_current_function = False
@@ -875,7 +999,10 @@ class FunctionCallFinder(ast.NodeVisitor):
         self.generic_visit(node)
 
         # Process the function after visiting its body
-        if self.found_call_in_current_function and full_name not in self.function_definitions:
+        if (
+            self.found_call_in_current_function
+            and full_name not in self.function_definitions
+        ):
             # Extract function source code
             source_code = self._extract_source_code(node)
 
@@ -884,9 +1011,13 @@ class FunctionCallFinder(ast.NodeVisitor):
                 node=node,
                 source_code=source_code,
                 start_line=node.lineno,
-                end_line=node.end_lineno if hasattr(node, "end_lineno") else node.lineno,
+                end_line=node.end_lineno
+                if hasattr(node, "end_lineno")
+                else node.lineno,
                 is_method=bool(self.current_class_stack),
-                class_name=self.current_class_stack[-1] if self.current_class_stack else None,
+                class_name=self.current_class_stack[-1]
+                if self.current_class_stack
+                else None,
             )
 
         # Handle nested functions - mark parent as containing nested calls
@@ -900,16 +1031,24 @@ class FunctionCallFinder(ast.NodeVisitor):
                 parent_source = self._extract_source_code(parent_node)
 
                 # Check if parent is a method (excluding current level)
-                parent_class_context = self.current_class_stack if len(self.current_function_stack) == 2 else []
+                parent_class_context = (
+                    self.current_class_stack
+                    if len(self.current_function_stack) == 2
+                    else []
+                )
 
                 self.function_definitions[parent_name] = FunctionDefinitionInfo(
                     name=parent_name,
                     node=parent_node,
                     source_code=parent_source,
                     start_line=parent_node.lineno,
-                    end_line=parent_node.end_lineno if hasattr(parent_node, "end_lineno") else parent_node.lineno,
+                    end_line=parent_node.end_lineno
+                    if hasattr(parent_node, "end_lineno")
+                    else parent_node.lineno,
                     is_method=bool(parent_class_context),
-                    class_name=parent_class_context[-1] if parent_class_context else None,
+                    class_name=parent_class_context[-1]
+                    if parent_class_context
+                    else None,
                 )
 
         self.current_function_stack.pop()
@@ -930,7 +1069,9 @@ class FunctionCallFinder(ast.NodeVisitor):
             current_func_name = self.current_function_stack[-1][0]
 
             call_location = FunctionCallLocation(
-                calling_function=current_func_name, line=node.lineno, column=node.col_offset
+                calling_function=current_func_name,
+                line=node.lineno,
+                column=node.col_offset,
             )
 
             self.function_calls.append(call_location)
@@ -966,9 +1107,15 @@ class FunctionCallFinder(ast.NodeVisitor):
         if call_parts[0] in self.imports:
             # Resolve the full path using imports
             base_import = self.imports[call_parts[0]]
-            full_path = f"{base_import}.{'.'.join(call_parts[1:])}" if len(call_parts) > 1 else base_import
+            full_path = (
+                f"{base_import}.{'.'.join(call_parts[1:])}"
+                if len(call_parts) > 1
+                else base_import
+            )
 
-            if full_path == self.target_function_name or full_path.endswith(f".{self.target_function_name}"):
+            if full_path == self.target_function_name or full_path.endswith(
+                f".{self.target_function_name}"
+            ):
                 return True
 
         return False
@@ -1008,7 +1155,9 @@ class FunctionCallFinder(ast.NodeVisitor):
 
         # Get the lines for this function
         start_line = node.lineno - 1  # Convert to 0-based index
-        end_line = node.end_lineno if hasattr(node, "end_lineno") else len(self.source_lines)
+        end_line = (
+            node.end_lineno if hasattr(node, "end_lineno") else len(self.source_lines)
+        )
 
         # Extract the function lines
         func_lines = self.source_lines[start_line:end_line]
@@ -1027,7 +1176,9 @@ class FunctionCallFinder(ast.NodeVisitor):
             result_lines = []
             for line in func_lines:
                 if line.strip():  # Only dedent non-empty lines
-                    result_lines.append(line[dedent_amount:] if len(line) > dedent_amount else line)
+                    result_lines.append(
+                        line[dedent_amount:] if len(line) > dedent_amount else line
+                    )
                 else:
                     result_lines.append(line)
         else:
@@ -1035,7 +1186,9 @@ class FunctionCallFinder(ast.NodeVisitor):
             result_lines = []
             for line in func_lines:
                 if line.strip():  # Only dedent non-empty lines
-                    result_lines.append(line[min_indent:] if len(line) > min_indent else line)
+                    result_lines.append(
+                        line[min_indent:] if len(line) > min_indent else line
+                    )
                 else:
                     result_lines.append(line)
 
@@ -1048,10 +1201,14 @@ class FunctionCallFinder(ast.NodeVisitor):
             A dictionary mapping qualified function names to their source code definitions.
 
         """
-        return {info.name: info.source_code for info in self.function_definitions.values()}
+        return {
+            info.name: info.source_code for info in self.function_definitions.values()
+        }
 
 
-def find_function_calls(source_code: str, target_function_name: str, target_filepath: str) -> dict[str, str]:
+def find_function_calls(
+    source_code: str, target_function_name: str, target_filepath: str
+) -> dict[str, str]:
     """Find all function definitions that call a specific target function.
 
     Args:
@@ -1078,7 +1235,11 @@ def find_function_calls(source_code: str, target_function_name: str, target_file
 
 
 def find_occurances(
-    qualified_name: str, file_path: str, fn_matches: list[Path], project_root: Path, tests_root: Path
+    qualified_name: str,
+    file_path: str,
+    fn_matches: list[Path],
+    project_root: Path,
+    tests_root: Path,
 ) -> list[str]:  # max chars for context
     context_len = 0
     fn_call_context = ""
@@ -1094,7 +1255,9 @@ def find_occurances(
             pass
         with cur_file_path.open(encoding="utf8") as f:
             file_content = f.read()
-        results = find_function_calls(file_content, target_function_name=qualified_name, target_filepath=file_path)
+        results = find_function_calls(
+            file_content, target_function_name=qualified_name, target_filepath=file_path
+        )
         if results:
             try:
                 path_relative_to_project_root = cur_file_path.relative_to(project_root)
@@ -1103,9 +1266,9 @@ def find_occurances(
                 logger.debug(f"investigate {e}")
                 continue
             fn_call_context += f"```python:{path_relative_to_project_root}\n"
-            for (
-                fn_definition
-            ) in results.values():  # multiple functions in the file might be calling the desired function
+            for fn_definition in (
+                results.values()
+            ):  # multiple functions in the file might be calling the desired function
                 fn_call_context += f"{fn_definition}\n"
                 context_len += len(fn_definition)
             fn_call_context += "```\n"
@@ -1113,7 +1276,10 @@ def find_occurances(
 
 
 def find_specific_function_in_file(
-    source_code: str, filepath: Union[str, Path], target_function: str, target_class: str | None
+    source_code: str,
+    filepath: Union[str, Path],
+    target_function: str,
+    target_class: str | None,
 ) -> tuple[int, int] | None:
     """Find a specific function definition in a Python file and return its location.
 
@@ -1146,26 +1312,38 @@ def find_specific_function_in_file(
 
 
 def get_fn_references_jedi(
-    source_code: str, file_path: Path, project_root: Path, target_function: str, target_class: str | None
+    source_code: str,
+    file_path: Path,
+    project_root: Path,
+    target_function: str,
+    target_class: str | None,
 ) -> list[Path]:
     start_time = time.perf_counter()
     function_position: CodePosition = find_specific_function_in_file(
         source_code, file_path, target_function, target_class
     )
     try:
-        script = jedi.Script(code=source_code, path=file_path, project=jedi.Project(path=project_root))
+        script = jedi.Script(
+            code=source_code, path=file_path, project=jedi.Project(path=project_root)
+        )
         # Get references to the function
-        references = script.get_references(line=function_position.line_no, column=function_position.col_no)
+        references = script.get_references(
+            line=function_position.line_no, column=function_position.col_no
+        )
         # Collect unique file paths where references are found
         end_time = time.perf_counter()
-        logger.debug(f"Jedi for function references ran in {end_time - start_time:.2f} seconds")
+        logger.debug(
+            f"Jedi for function references ran in {end_time - start_time:.2f} seconds"
+        )
         reference_files = set()
         for ref in references:
             if ref.module_path:
                 # Convert to string and normalize path
                 ref_path = str(ref.module_path)
                 # Skip the definition itself
-                if not (ref_path == file_path and ref.line == function_position.line_no):
+                if not (
+                    ref_path == file_path and ref.line == function_position.line_no
+                ):
                     reference_files.add(ref_path)
         return sorted(reference_files)
     except Exception as e:
@@ -1175,7 +1353,9 @@ def get_fn_references_jedi(
 
 has_numba = find_spec("numba") is not None
 
-NUMERICAL_MODULES = frozenset({"numpy", "torch", "numba", "jax", "tensorflow", "math", "scipy"})
+NUMERICAL_MODULES = frozenset(
+    {"numpy", "torch", "numba", "jax", "tensorflow", "math", "scipy"}
+)
 # Modules that require numba to be installed for optimization
 NUMBA_REQUIRED_MODULES = frozenset({"numpy", "math", "scipy"})
 
@@ -1261,7 +1441,9 @@ def _collect_numerical_imports(tree: ast.Module) -> tuple[set[str], set[str]]:
     return numerical_names, modules_used
 
 
-def _find_function_node(tree: ast.Module, name_parts: list[str]) -> ast.FunctionDef | None:
+def _find_function_node(
+    tree: ast.Module, name_parts: list[str]
+) -> ast.FunctionDef | None:
     """Find a function node in the AST given its qualified name parts.
 
     Note: This function only finds regular (sync) functions, not async functions.
@@ -1291,7 +1473,10 @@ def _find_function_node(tree: ast.Module, name_parts: list[str]) -> ast.Function
         for node in tree.body:
             if isinstance(node, ast.ClassDef) and node.name == class_name:
                 for class_node in node.body:
-                    if isinstance(class_node, ast.FunctionDef) and class_node.name == method_name:
+                    if (
+                        isinstance(class_node, ast.FunctionDef)
+                        and class_node.name == method_name
+                    ):
                         return class_node
         return None
 
@@ -1366,7 +1551,11 @@ def is_numerical_code(code_string: str, function_name: str) -> bool:
 
 
 def get_opt_review_metrics(
-    source_code: str, file_path: Path, qualified_name: str, project_root: Path, tests_root: Path
+    source_code: str,
+    file_path: Path,
+    qualified_name: str,
+    project_root: Path,
+    tests_root: Path,
 ) -> str:
     start_time = time.perf_counter()
     try:
@@ -1374,11 +1563,16 @@ def get_opt_review_metrics(
         if len(qualified_name_split) == 1:
             target_function, target_class = qualified_name_split[0], None
         else:
-            target_function, target_class = qualified_name_split[1], qualified_name_split[0]
+            target_function, target_class = (
+                qualified_name_split[1],
+                qualified_name_split[0],
+            )
         matches = get_fn_references_jedi(
             source_code, file_path, project_root, target_function, target_class
         )  # jedi is not perfect, it doesn't capture aliased references
-        calling_fns_details = find_occurances(qualified_name, str(file_path), matches, project_root, tests_root)
+        calling_fns_details = find_occurances(
+            qualified_name, str(file_path), matches, project_root, tests_root
+        )
     except Exception as e:
         calling_fns_details = ""
         logger.debug(f"Investigate {e}")

@@ -106,7 +106,9 @@ def _apply_deterministic_patches() -> None:
 
     # Fixed deterministic values
     fixed_timestamp = 1761717605.108106
-    fixed_datetime = datetime.datetime(2021, 1, 1, 2, 5, 10, tzinfo=datetime.timezone.utc)
+    fixed_datetime = datetime.datetime(
+        2021, 1, 1, 2, 5, 10, tzinfo=datetime.timezone.utc
+    )
     fixed_uuid = uuid.UUID("12345678-1234-5678-9abc-123456789012")
 
     # Counter for perf_counter to maintain relative timing
@@ -123,7 +125,9 @@ def _apply_deterministic_patches() -> None:
         nonlocal _perf_counter_calls
         _original_perf_counter()  # Maintain performance characteristics
         _perf_counter_calls += 1
-        return _perf_counter_start + (_perf_counter_calls * 0.001)  # Increment by 1ms each call
+        return _perf_counter_start + (
+            _perf_counter_calls * 0.001
+        )  # Increment by 1ms each call
 
     def mock_datetime_now(tz: datetime.timezone | None = None) -> datetime.datetime:
         """Return fixed datetime while preserving performance characteristics."""
@@ -211,7 +215,11 @@ def pytest_addoption(parser: Parser) -> None:
         help="The amount of time to wait between each test loop.",
     )
     pytest_loops.addoption(
-        "--codeflash_hours", action="store", default=0, type=float, help="The number of hours to loop the tests for."
+        "--codeflash_hours",
+        action="store",
+        default=0,
+        type=float,
+        help="The number of hours to loop the tests for.",
     )
     pytest_loops.addoption(
         "--codeflash_minutes",
@@ -229,7 +237,11 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
     pytest_loops.addoption(
-        "--codeflash_loops", action="store", default=1, type=int, help="The number of times to loop each test"
+        "--codeflash_loops",
+        action="store",
+        default=1,
+        type=int,
+        help="The number of times to loop each test",
     )
 
     pytest_loops.addoption(
@@ -268,7 +280,9 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config: Config) -> None:
-    config.addinivalue_line("markers", "loops(n): run the given test function `n` times.")
+    config.addinivalue_line(
+        "markers", "loops(n): run the given test function `n` times."
+    )
     config.pluginmanager.register(PytestLoops(config), PytestLoops.name)
 
     # Apply deterministic patches when the plugin is configured
@@ -321,7 +335,11 @@ def should_stop(
     # Use sorted array for faster median and min/max operations
     recent_sorted = sorted(recent)
     mid = window // 2
-    m = recent_sorted[mid] if window % 2 else (recent_sorted[mid - 1] + recent_sorted[mid]) / 2
+    m = (
+        recent_sorted[mid]
+        if window % 2
+        else (recent_sorted[mid - 1] + recent_sorted[mid]) / 2
+    )
 
     # 1) All recent points close to the median
     centered = True
@@ -349,7 +367,8 @@ class PytestLoops:
         self.logger = logging.getLogger(self.name)
         self.runtime_data_by_test_case: dict[str, list[int]] = {}
         self.enable_stability_check: bool = (
-            str(getattr(config.option, "codeflash_stability_check", "false")).lower() == "true"
+            str(getattr(config.option, "codeflash_stability_check", "false")).lower()
+            == "true"
         )
 
     @pytest.hookimpl
@@ -360,13 +379,20 @@ class PytestLoops:
             duration_ns = get_runtime_from_stdout(report.capstdout)
             if duration_ns:
                 clean_id = _NODEID_BRACKET_PATTERN.sub("", report.nodeid)
-                self.runtime_data_by_test_case.setdefault(clean_id, []).append(duration_ns)
+                self.runtime_data_by_test_case.setdefault(clean_id, []).append(
+                    duration_ns
+                )
 
     @hookspec(firstresult=True)
     def pytest_runtestloop(self, session: Session) -> bool:
         """Reimplement the test loop but loop for the user defined amount of time."""
-        if session.testsfailed and not session.config.option.continue_on_collection_errors:
-            msg = "{} error{} during collection".format(session.testsfailed, "s" if session.testsfailed != 1 else "")
+        if (
+            session.testsfailed
+            and not session.config.option.continue_on_collection_errors
+        ):
+            msg = "{} error{} during collection".format(
+                session.testsfailed, "s" if session.testsfailed != 1 else ""
+            )
             raise session.Interrupted(msg)
 
         if session.config.option.collectonly:
@@ -379,7 +405,9 @@ class PytestLoops:
         runtimes = []
         elapsed_ns = 0
 
-        while total_time >= SHORTEST_AMOUNT_OF_TIME:  # need to run at least one for normal tests
+        while (
+            total_time >= SHORTEST_AMOUNT_OF_TIME
+        ):  # need to run at least one for normal tests
             count += 1
             loop_start = _ORIGINAL_PERF_COUNTER_NS()
             for index, item in enumerate(session.items):
@@ -389,7 +417,9 @@ class PytestLoops:
                 if total_time > SHORTEST_AMOUNT_OF_TIME:
                     item._nodeid = self._set_nodeid(item._nodeid, count)  # noqa: SLF001
 
-                next_item: pytest.Item = session.items[index + 1] if index + 1 < len(session.items) else None
+                next_item: pytest.Item = (
+                    session.items[index + 1] if index + 1 < len(session.items) else None
+                )
 
                 self._clear_lru_caches(item)
 
@@ -401,7 +431,9 @@ class PytestLoops:
 
             if self.enable_stability_check:
                 elapsed_ns += _ORIGINAL_PERF_COUNTER_NS() - loop_start
-                best_runtime_until_now = sum([min(data) for data in self.runtime_data_by_test_case.values()])
+                best_runtime_until_now = sum(
+                    [min(data) for data in self.runtime_data_by_test_case.values()]
+                )
                 if best_runtime_until_now > 0:
                     runtimes.append(best_runtime_until_now)
 
@@ -412,7 +444,9 @@ class PytestLoops:
                     estimated_total_loops = int(rate * total_time_ns)
 
                 window_size = int(STABILITY_WINDOW_SIZE * estimated_total_loops + 0.5)
-                if should_stop(runtimes, window_size, session.config.option.codeflash_min_loops):
+                if should_stop(
+                    runtimes, window_size, session.config.option.codeflash_min_loops
+                ):
                     break
 
             if self._timed_out(session, start_time, count):
@@ -447,7 +481,11 @@ class PytestLoops:
             else:
                 try:
                     obj_module = inspect.getmodule(obj)
-                    module_name = obj_module.__name__.split(".")[0] if obj_module is not None else None
+                    module_name = (
+                        obj_module.__name__.split(".")[0]
+                        if obj_module is not None
+                        else None
+                    )
                 except Exception:
                     module_name = None
 
@@ -484,7 +522,11 @@ class PytestLoops:
         pattern = r"\[ \d+ \]"
         run_str = f"[ {count} ]"
         os.environ["CODEFLASH_LOOP_INDEX"] = str(count)
-        return re.sub(pattern, run_str, nodeid) if re.search(pattern, nodeid) else nodeid + run_str
+        return (
+            re.sub(pattern, run_str, nodeid)
+            if re.search(pattern, nodeid)
+            else nodeid + run_str
+        )
 
     def _get_delay_time(self, session: Session) -> float:
         """Extract delay time from session.
@@ -534,7 +576,9 @@ class PytestLoops:
                 return request.param
             except AttributeError:
                 if issubclass(request.cls, TestCase):
-                    warnings.warn("Repeating unittest class tests not supported", stacklevel=2)
+                    warnings.warn(
+                        "Repeating unittest class tests not supported", stacklevel=2
+                    )
                 else:
                     msg = "This call couldn't work with pytest-loops. Please consider raising an issue with your usage."
                     raise UnexpectedError(msg) from None
@@ -560,7 +604,11 @@ class PytestLoops:
 
             scope = metafunc.config.option.codeflash_loops_scope
             metafunc.parametrize(
-                "__pytest_loop_step_number", range(count), indirect=True, ids=make_progress_id, scope=scope
+                "__pytest_loop_step_number",
+                range(count),
+                indirect=True,
+                ids=make_progress_id,
+                scope=scope,
             )
 
     @pytest.hookimpl(tryfirst=True)
@@ -583,5 +631,9 @@ class PytestLoops:
     @pytest.hookimpl(trylast=True)
     def pytest_runtest_teardown(self, item: pytest.Item) -> None:  # noqa: ARG002
         """Clean up test context environment variables after each test."""
-        for var in ["CODEFLASH_TEST_MODULE", "CODEFLASH_TEST_CLASS", "CODEFLASH_TEST_FUNCTION"]:
+        for var in [
+            "CODEFLASH_TEST_MODULE",
+            "CODEFLASH_TEST_CLASS",
+            "CODEFLASH_TEST_FUNCTION",
+        ]:
             os.environ.pop(var, None)

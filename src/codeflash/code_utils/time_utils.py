@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import datetime as dt
-import re
-
 
 def humanize_runtime(time_in_ns: int) -> str:
     runtime_human: str = str(time_in_ns)

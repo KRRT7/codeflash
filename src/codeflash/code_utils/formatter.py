@@ -12,7 +12,7 @@ from typing import Any, Union
 
 import isort
 
-from codeflash.cli_cmds.logging_config import logger
+from codeflash.cli_cmds.logging_config import logger, rule
 
 
 def generate_unified_diff(

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from codeflash.api.aiservice import AiServiceClient, LocalAiServiceClient
 from codeflash.api.cfapi import send_completion_email
-from codeflash.cli_cmds.logging_config import logger, progress_bar
+from codeflash.cli_cmds.logging_config import logger, progress_bar, rule
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.env_utils import get_pr_number, is_pr_draft
 from codeflash.code_utils.git_utils import check_running_in_git_repo, git_root_dir
@@ -23,7 +23,6 @@ from codeflash.code_utils.git_worktree_utils import (
     remove_worktree,
 )
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.danom import Ok, Err
 from codeflash.models.config import AppConfig
 from codeflash.models.models import ValidCode
 from codeflash.verification.verification_utils import TestConfig

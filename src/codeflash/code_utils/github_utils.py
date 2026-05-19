@@ -27,8 +27,7 @@ def require_github_app_or_exit(owner: str, repo: str) -> None:
             f"{LF}https://github.com/apps/codeflash-ai/installations/select_target{LF}{LF}"
             "Tip: If you want to find optimizations without opening PRs, run Codeflash with the --no-pr flag."
         )
-        print(
-            message)
+        print(message)
         apologize_and_exit()
 
 

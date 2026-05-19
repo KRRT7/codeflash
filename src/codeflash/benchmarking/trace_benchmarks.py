@@ -11,7 +11,11 @@ from codeflash.code_utils.shell_utils import get_cross_platform_subprocess_run_a
 
 
 def trace_benchmarks_pytest(
-    benchmarks_root: Path, tests_root: Path, project_root: Path, trace_file: Path, timeout: int = 300
+    benchmarks_root: Path,
+    tests_root: Path,
+    project_root: Path,
+    trace_file: Path,
+    timeout: int = 300,
 ) -> None:
     benchmark_env = os.environ.copy()
     if "PYTHONPATH" not in benchmark_env:
@@ -19,7 +23,12 @@ def trace_benchmarks_pytest(
     else:
         benchmark_env["PYTHONPATH"] += os.pathsep + str(project_root)
     run_args = get_cross_platform_subprocess_run_args(
-        cwd=project_root, env=benchmark_env, timeout=timeout, check=False, text=True, capture_output=True
+        cwd=project_root,
+        env=benchmark_env,
+        timeout=timeout,
+        check=False,
+        text=True,
+        capture_output=True,
     )
     result = subprocess.run(  # noqa: PLW1510
         [
@@ -44,4 +53,6 @@ def trace_benchmarks_pytest(
             error_section = match.group(1) if match else result.stdout
         else:
             error_section = result.stdout
-        logger.warning(f"Error collecting benchmarks - Pytest Exit code: {result.returncode}, {error_section}")
+        logger.warning(
+            f"Error collecting benchmarks - Pytest Exit code: {result.returncode}, {error_section}"
+        )

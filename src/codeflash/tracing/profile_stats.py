@@ -9,7 +9,9 @@ from codeflash.cli_cmds.logging_config import logger
 
 class ProfileStats(pstats.Stats):
     def __init__(self, trace_file_path: str, time_unit: str = "ns") -> None:
-        assert Path(trace_file_path).is_file(), f"Trace file {trace_file_path} does not exist"
+        assert Path(trace_file_path).is_file(), (
+            f"Trace file {trace_file_path} does not exist"
+        )
         assert time_unit in {"ns", "us", "ms", "s"}, f"Invalid time unit {time_unit}"
         self.trace_file_path = trace_file_path
         self.time_unit = time_unit
@@ -21,7 +23,9 @@ class ProfileStats(pstats.Stats):
         cur = self.con.cursor()
         pdata = cur.execute("SELECT * FROM pstats").fetchall()
         self.con.close()
-        time_conversion_factor = {"ns": 1, "us": 1e3, "ms": 1e6, "s": 1e9}[self.time_unit]
+        time_conversion_factor = {"ns": 1, "us": 1e3, "ms": 1e6, "s": 1e9}[
+            self.time_unit
+        ]
         self.stats = {}
         for (
             filename,
@@ -41,7 +45,11 @@ class ProfileStats(pstats.Stats):
                 if isinstance(caller_key, list):
                     caller_key = tuple(caller_key)
                 elif not isinstance(caller_key, tuple):
-                    caller_key = (caller_key,) if not isinstance(caller_key, (list, tuple)) else tuple(caller_key)
+                    caller_key = (
+                        (caller_key,)
+                        if not isinstance(caller_key, (list, tuple))
+                        else tuple(caller_key)
+                    )
                 unmapped_callers[caller_key] = caller["value"]
 
             # Create function key with class name if present (matching tracer.py format)
@@ -50,8 +58,12 @@ class ProfileStats(pstats.Stats):
             self.stats[(filename, line_number, function_name)] = (
                 call_count_nonrecursive,
                 num_callers,
-                total_time_ns / time_conversion_factor if time_conversion_factor != 1 else total_time_ns,
-                cumulative_time_ns / time_conversion_factor if time_conversion_factor != 1 else cumulative_time_ns,
+                total_time_ns / time_conversion_factor
+                if time_conversion_factor != 1
+                else total_time_ns,
+                cumulative_time_ns / time_conversion_factor
+                if time_conversion_factor != 1
+                else cumulative_time_ns,
                 unmapped_callers,
             )
 
@@ -68,7 +80,12 @@ class ProfileStats(pstats.Stats):
         print(indent, self.total_calls, "function calls", end=" ", file=self.stream)
         if self.total_calls != self.prim_calls:
             print(f"({self.prim_calls:d} primitive calls)", end=" ", file=self.stream)
-        time_unit = {"ns": "nanoseconds", "us": "microseconds", "ms": "milliseconds", "s": "seconds"}[self.time_unit]
+        time_unit = {
+            "ns": "nanoseconds",
+            "us": "microseconds",
+            "ms": "milliseconds",
+            "s": "seconds",
+        }[self.time_unit]
         print(f"in {self.total_tt:.3f} {time_unit}", file=self.stream)
         print(file=self.stream)
         width, list_ = self.get_print_list(amount)

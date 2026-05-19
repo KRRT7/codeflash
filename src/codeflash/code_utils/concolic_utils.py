@@ -83,7 +83,9 @@ def clean_concolic_tests(test_suite_code: str) -> str:
             new_body = []
             for stmt in node.body:
                 if isinstance(stmt, ast.Assert):
-                    if isinstance(stmt.test, ast.Compare) and isinstance(stmt.test.left, ast.Call):
+                    if isinstance(stmt.test, ast.Compare) and isinstance(
+                        stmt.test.left, ast.Call
+                    ):
                         new_body.append(ast.Expr(value=stmt.test.left))
                     else:
                         new_body.append(stmt)

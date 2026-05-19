@@ -190,7 +190,11 @@ class DependencyCollector(cst.CSTVisitor):
         # Simple name reference like 'int', 'str', or custom type
         if isinstance(node, cst.Name):
             name = node.value
-            if name in self.definitions and name != self.current_top_level_name and self.current_top_level_name:
+            if (
+                name in self.definitions
+                and name != self.current_top_level_name
+                and self.current_top_level_name
+            ):
                 self.definitions[self.current_top_level_name].dependencies.add(name)
 
         # Handle compound annotations like List[int], Dict[str, CustomType], etc.
@@ -274,7 +278,9 @@ class DependencyCollector(cst.CSTVisitor):
             if isinstance(node.target, cst.Name):
                 self.current_variable_names.add(node.target.value)
             else:
-                self.current_variable_names.update(extract_names_from_targets(node.target))
+                self.current_variable_names.update(
+                    extract_names_from_targets(node.target)
+                )
 
             # Process the annotation
             self._collect_annotation_dependencies(node.annotation)
@@ -287,7 +293,10 @@ class DependencyCollector(cst.CSTVisitor):
         name = node.value
 
         # Skip if we're not inside a tracked definition
-        if not self.current_top_level_name or self.current_top_level_name not in self.definitions:
+        if (
+            not self.current_top_level_name
+            or self.current_top_level_name not in self.definitions
+        ):
             return
 
         # Skip if we're looking at the variable name itself in an assignment
@@ -306,7 +315,9 @@ class DependencyCollector(cst.CSTVisitor):
 class QualifiedFunctionUsageMarker:
     """Marks definitions that are used by specific qualified functions."""
 
-    def __init__(self, definitions: dict[str, UsageInfo], qualified_function_names: set[str]) -> None:
+    def __init__(
+        self, definitions: dict[str, UsageInfo], qualified_function_names: set[str]
+    ) -> None:
         self.definitions = definitions
         self.qualified_function_names = qualified_function_names
         self.expanded_qualified_functions = self._expand_qualified_functions()
@@ -397,7 +408,10 @@ def remove_unused_definitions_recursively(  # noqa: PLR0911
         class_has_dependencies = False
 
         # Check if class itself is marked as used
-        if class_name in definitions and definitions[class_name].used_by_qualified_function:
+        if (
+            class_name in definitions
+            and definitions[class_name].used_by_qualified_function
+        ):
             class_has_dependencies = True
 
         if hasattr(node, "body") and isinstance(node.body, cst.IndentedBlock):
@@ -408,7 +422,10 @@ def remove_unused_definitions_recursively(  # noqa: PLR0911
                 # Keep all function definitions
                 if isinstance(statement, cst.FunctionDef):
                     method_name = f"{class_name}.{statement.name.value}"
-                    if method_name in definitions and definitions[method_name].used_by_qualified_function:
+                    if (
+                        method_name in definitions
+                        and definitions[method_name].used_by_qualified_function
+                    ):
                         method_or_var_used = True
                     new_statements.append(statement)
                 # Only process variable assignments
@@ -423,7 +440,9 @@ def remove_unused_definitions_recursively(  # noqa: PLR0911
                                 class_var_name = f"{class_name}.{name}"
                                 if (
                                     class_var_name in definitions
-                                    and definitions[class_var_name].used_by_qualified_function
+                                    and definitions[
+                                        class_var_name
+                                    ].used_by_qualified_function
                                 ):
                                     var_used = True
                                     method_or_var_used = True
@@ -432,7 +451,12 @@ def remove_unused_definitions_recursively(  # noqa: PLR0911
                         names = extract_names_from_targets(statement.target)
                         for name in names:
                             class_var_name = f"{class_name}.{name}"
-                            if class_var_name in definitions and definitions[class_var_name].used_by_qualified_function:
+                            if (
+                                class_var_name in definitions
+                                and definitions[
+                                    class_var_name
+                                ].used_by_qualified_function
+                            ):
                                 var_used = True
                                 method_or_var_used = True
                                 break
@@ -482,7 +506,9 @@ def remove_unused_definitions_recursively(  # noqa: PLR0911
             section_found_used = False
 
             for child in original_content:
-                filtered, used = remove_unused_definitions_recursively(child, definitions)
+                filtered, used = remove_unused_definitions_recursively(
+                    child, definitions
+                )
                 if filtered:
                     new_children.append(filtered)
                 section_found_used |= used
@@ -491,7 +517,9 @@ def remove_unused_definitions_recursively(  # noqa: PLR0911
                 found_used |= section_found_used
                 updates[section] = new_children
         elif original_content is not None:
-            filtered, used = remove_unused_definitions_recursively(original_content, definitions)
+            filtered, used = remove_unused_definitions_recursively(
+                original_content, definitions
+            )
             found_used |= used
             if filtered:
                 updates[section] = filtered
@@ -522,7 +550,9 @@ def collect_top_level_defs_with_usages(
     return definitions
 
 
-def remove_unused_definitions_by_function_names(code: str, qualified_function_names: set[str]) -> str:
+def remove_unused_definitions_by_function_names(
+    code: str, qualified_function_names: set[str]
+) -> str:
     """Analyze a file and remove top level definitions not used by specified functions.
 
     Top level definitions, in this context, are only classes, variables or functions.
@@ -541,15 +571,21 @@ def remove_unused_definitions_by_function_names(code: str, qualified_function_na
         return code
 
     try:
-        defs_with_usages = collect_top_level_defs_with_usages(module, qualified_function_names)
+        defs_with_usages = collect_top_level_defs_with_usages(
+            module, qualified_function_names
+        )
 
         # Apply the recursive removal transformation
-        modified_module, _ = remove_unused_definitions_recursively(module, defs_with_usages)
+        modified_module, _ = remove_unused_definitions_recursively(
+            module, defs_with_usages
+        )
 
         return modified_module.code if modified_module else ""  # noqa: TRY300
     except Exception as e:
         # If any other error occurs during processing, return the original code
-        logger.debug(f"Error processing code to remove unused definitions: {type(e).__name__}: {e}")
+        logger.debug(
+            f"Error processing code to remove unused definitions: {type(e).__name__}: {e}"
+        )
         return code
 
 
@@ -559,12 +595,16 @@ def print_definitions(definitions: dict[str, UsageInfo]) -> None:
     for name, info in sorted(definitions.items()):
         print(f"  - Name: {name}")
         print(f"    Used by qualified function: {info.used_by_qualified_function}")
-        print(f"    Dependencies: {', '.join(sorted(info.dependencies)) if info.dependencies else 'None'}")
+        print(
+            f"    Dependencies: {', '.join(sorted(info.dependencies)) if info.dependencies else 'None'}"
+        )
         print()
 
 
 def revert_unused_helper_functions(
-    project_root: Path, unused_helpers: list[FunctionSource], original_helper_code: dict[Path, str]
+    project_root: Path,
+    unused_helpers: list[FunctionSource],
+    original_helper_code: dict[Path, str],
 ) -> None:
     """Revert unused helper functions back to their original definitions.
 
@@ -577,7 +617,9 @@ def revert_unused_helper_functions(
     if not unused_helpers:
         return
 
-    logger.debug(f"Reverting {len(unused_helpers)} unused helper function(s) to original definitions")
+    logger.debug(
+        f"Reverting {len(unused_helpers)} unused helper function(s) to original definitions"
+    )
 
     # Group unused helpers by file path
     unused_helpers_by_file = defaultdict(list)
@@ -597,7 +639,10 @@ def revert_unused_helper_functions(
                     function_names=helper_names,
                     optimized_code=CodeStringsMarkdown(
                         code_strings=[
-                            CodeString(code=original_code, file_path=Path(file_path).relative_to(project_root))
+                            CodeString(
+                                code=original_code,
+                                file_path=Path(file_path).relative_to(project_root),
+                            )
                         ]
                     ),  # Use original code as the "optimized" code to revert
                     module_abspath=file_path,
@@ -607,7 +652,9 @@ def revert_unused_helper_functions(
                 )
 
                 if reverted_code:
-                    logger.debug(f"Reverted unused helpers in {file_path}: {', '.join(helper_names)}")
+                    logger.debug(
+                        f"Reverted unused helpers in {file_path}: {', '.join(helper_names)}"
+                    )
 
             except Exception as e:
                 logger.error(f"Error reverting unused helpers in {file_path}: {e}")
@@ -661,8 +708,12 @@ def _analyze_imports_in_optimized_code(
                         helpers = file_entry.get(original_name, None)
                         if helpers:
                             for helper in helpers:
-                                imported_names_map[imported_name].add(helper.qualified_name)
-                                imported_names_map[imported_name].add(helper.fully_qualified_name)
+                                imported_names_map[imported_name].add(
+                                    helper.qualified_name
+                                )
+                                imported_names_map[imported_name].add(
+                                    helper.fully_qualified_name
+                                )
 
         elif isinstance(node, ast.Import):
             # Handle "import module" statements
@@ -701,7 +752,10 @@ def find_target_node(
         return None
     target_name = function_to_optimize.function_name
     for child in body:
-        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name == target_name:
+        if (
+            isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and child.name == target_name
+        ):
             return child
     return None
 
@@ -722,10 +776,15 @@ def detect_unused_helper_functions(
         List of FunctionSource objects representing unused helper functions
 
     """
-    if isinstance(optimized_code, CodeStringsMarkdown) and len(optimized_code.code_strings) > 0:
+    if (
+        isinstance(optimized_code, CodeStringsMarkdown)
+        and len(optimized_code.code_strings) > 0
+    ):
         return list(
             chain.from_iterable(
-                detect_unused_helper_functions(function_to_optimize, code_context, code.code)
+                detect_unused_helper_functions(
+                    function_to_optimize, code_context, code.code
+                )
                 for code in optimized_code.code_strings
             )
         )
@@ -738,11 +797,15 @@ def detect_unused_helper_functions(
         entrypoint_function_ast = find_target_node(optimized_ast, function_to_optimize)
 
         if not entrypoint_function_ast:
-            logger.debug(f"Could not find entrypoint function {function_to_optimize.function_name} in optimized code")
+            logger.debug(
+                f"Could not find entrypoint function {function_to_optimize.function_name} in optimized code"
+            )
             return []
 
         # First, analyze imports to build a mapping of imported names to their original qualified names
-        imported_names_map = _analyze_imports_in_optimized_code(optimized_ast, code_context)
+        imported_names_map = _analyze_imports_in_optimized_code(
+            optimized_ast, code_context
+        )
 
         # Extract all function calls in the entrypoint function
         called_function_names = {function_to_optimize.function_name}
@@ -762,23 +825,34 @@ def detect_unused_helper_functions(
                             # self.method_name() -> add both method_name and ClassName.method_name
                             called_function_names.add(node.func.attr)
                             # For class methods, also add the qualified name
-                            if hasattr(function_to_optimize, "parents") and function_to_optimize.parents:
+                            if (
+                                hasattr(function_to_optimize, "parents")
+                                and function_to_optimize.parents
+                            ):
                                 class_name = function_to_optimize.parents[0].name
-                                called_function_names.add(f"{class_name}.{node.func.attr}")
+                                called_function_names.add(
+                                    f"{class_name}.{node.func.attr}"
+                                )
                         else:
                             # obj.method() or module.function()
                             attr_name = node.func.attr
                             called_function_names.add(attr_name)
-                            called_function_names.add(f"{node.func.value.id}.{attr_name}")
+                            called_function_names.add(
+                                f"{node.func.value.id}.{attr_name}"
+                            )
                             # Check if this is a module.function call that maps to a helper
                             full_call = f"{node.func.value.id}.{attr_name}"
                             if full_call in imported_names_map:
-                                called_function_names.update(imported_names_map[full_call])
+                                called_function_names.update(
+                                    imported_names_map[full_call]
+                                )
                     # Handle nested attribute access like obj.attr.method()
                     else:
                         called_function_names.add(node.func.attr)
 
-        logger.debug(f"Functions called in optimized entrypoint: {called_function_names}")
+        logger.debug(
+            f"Functions called in optimized entrypoint: {called_function_names}"
+        )
         logger.debug(f"Imported names mapping: {imported_names_map}")
 
         # Find helper functions that are no longer called
@@ -791,7 +865,11 @@ def detect_unused_helper_functions(
                 helper_fully_qualified_name = helper_function.fully_qualified_name
 
                 # Create a set of all possible names this helper might be called by
-                possible_call_names = {helper_qualified_name, helper_simple_name, helper_fully_qualified_name}
+                possible_call_names = {
+                    helper_qualified_name,
+                    helper_simple_name,
+                    helper_fully_qualified_name,
+                }
 
                 # For cross-file helpers, also consider module-based calls
                 if helper_function.file_path != function_to_optimize.file_path:
@@ -800,15 +878,23 @@ def detect_unused_helper_functions(
                     possible_call_names.add(f"{module_name}.{helper_simple_name}")
 
                 # Check if any of the possible names are in the called functions
-                is_called = bool(possible_call_names.intersection(called_function_names))
+                is_called = bool(
+                    possible_call_names.intersection(called_function_names)
+                )
 
                 if not is_called:
                     unused_helpers.append(helper_function)
-                    logger.debug(f"Helper function {helper_qualified_name} is not called in optimized code")
+                    logger.debug(
+                        f"Helper function {helper_qualified_name} is not called in optimized code"
+                    )
                     logger.debug(f"  Checked names: {possible_call_names}")
                 else:
-                    logger.debug(f"Helper function {helper_qualified_name} is still called in optimized code")
-                    logger.debug(f"  Called via: {possible_call_names.intersection(called_function_names)}")
+                    logger.debug(
+                        f"Helper function {helper_qualified_name} is still called in optimized code"
+                    )
+                    logger.debug(
+                        f"  Called via: {possible_call_names.intersection(called_function_names)}"
+                    )
 
         ret_val = unused_helpers
 

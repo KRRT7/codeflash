@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.cli import project_root_from_module_root
+from codeflash.cli_cmds.logging_config import rule
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE
 from codeflash.code_utils.config_consts import EffortLevel
 from codeflash.code_utils.config_parser import parse_config_file
@@ -235,11 +236,10 @@ def main(args: Namespace | None = None) -> ArgumentParser:
             if not parsed_args.trace_only and replay_test_paths:
                 from codeflash.cli_cmds.cli import parse_args, process_pyproject_config
                 from codeflash.cli_cmds.cmd_init import CODEFLASH_LOGO
-                
+
                 sys.argv = ["codeflash", "--replay-test", *replay_test_paths]
                 args = parse_args()
-                print(
-                    CODEFLASH_LOGO)
+                print(CODEFLASH_LOGO)
 
                 args = process_pyproject_config(args)
 

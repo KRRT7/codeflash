@@ -66,10 +66,17 @@ def create_detached_worktree(module_root: Path) -> Path | None:
     repository.git.worktree("add", "-d", str(worktree_dir))
 
     # Get uncommitted diff from the original repo
-    repository.git.add("-N", ".")  # add the index for untracked files to be included in the diff
+    repository.git.add(
+        "-N", "."
+    )  # add the index for untracked files to be included in the diff
     exclude_binary_files = [":!*.pyc", ":!*.pyo", ":!*.pyd", ":!*.so", ":!*.dll", ":!*.whl", ":!*.egg", ":!*.egg-info", ":!*.pyz", ":!*.pkl", ":!*.pickle", ":!*.joblib", ":!*.npy", ":!*.npz", ":!*.h5", ":!*.hdf5", ":!*.pth", ":!*.pt", ":!*.pb", ":!*.onnx", ":!*.db", ":!*.sqlite", ":!*.sqlite3", ":!*.feather", ":!*.parquet", ":!*.jpg", ":!*.jpeg", ":!*.png", ":!*.gif", ":!*.bmp", ":!*.tiff", ":!*.webp", ":!*.wav", ":!*.mp3", ":!*.ogg", ":!*.flac", ":!*.mp4", ":!*.avi", ":!*.mov", ":!*.mkv", ":!*.pdf", ":!*.doc", ":!*.docx", ":!*.xls", ":!*.xlsx", ":!*.ppt", ":!*.pptx", ":!*.zip", ":!*.rar", ":!*.tar", ":!*.tar.gz", ":!*.tgz", ":!*.bz2", ":!*.xz"]  # fmt: off
     uni_diff_text = repository.git.diff(
-        None, "HEAD", "--", *exclude_binary_files, ignore_blank_lines=True, ignore_space_at_eol=True
+        None,
+        "HEAD",
+        "--",
+        *exclude_binary_files,
+        ignore_blank_lines=True,
+        ignore_space_at_eol=True,
     )
 
     if not uni_diff_text.strip():
@@ -77,8 +84,12 @@ def create_detached_worktree(module_root: Path) -> Path | None:
         return worktree_dir
 
     # Write the diff to a temporary file
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".codeflash.patch", delete=False) as tmp_patch_file:
-        tmp_patch_file.write(uni_diff_text + "\n")  # the new line here is a must otherwise the last hunk won't be valid
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".codeflash.patch", delete=False
+    ) as tmp_patch_file:
+        tmp_patch_file.write(
+            uni_diff_text + "\n"
+        )  # the new line here is a must otherwise the last hunk won't be valid
         tmp_patch_file.flush()
 
         patch_path = Path(tmp_patch_file.name).resolve()
@@ -86,7 +97,14 @@ def create_detached_worktree(module_root: Path) -> Path | None:
         # Apply the patch inside the worktree
         try:
             subprocess.run(
-                ["git", "apply", "--ignore-space-change", "--ignore-whitespace", "--whitespace=nowarn", patch_path],
+                [
+                    "git",
+                    "apply",
+                    "--ignore-space-change",
+                    "--ignore-whitespace",
+                    "--whitespace=nowarn",
+                    patch_path,
+                ],
                 cwd=worktree_dir,
                 check=True,
             )
@@ -98,7 +116,9 @@ def create_detached_worktree(module_root: Path) -> Path | None:
 
 
 def _handle_remove_readonly(
-    func: Callable[[str], None], path: str, exc_info: tuple[type[BaseException], BaseException, Any]
+    func: Callable[[str], None],
+    path: str,
+    exc_info: tuple[type[BaseException], BaseException, Any],
 ) -> None:
     """Error handler for shutil.rmtree to handle read-only files on Windows."""
     if isinstance(exc_info[1], PermissionError):
@@ -123,7 +143,9 @@ def create_diff_patch_from_worktree(
     worktree_dir: Path, files: list[Path], fto_name: str | None = None
 ) -> Path | None:
     repository = git.Repo(worktree_dir, search_parent_directories=True)
-    uni_diff_text = repository.git.diff(None, "HEAD", *files, ignore_blank_lines=True, ignore_space_at_eol=True)
+    uni_diff_text = repository.git.diff(
+        None, "HEAD", *files, ignore_blank_lines=True, ignore_space_at_eol=True
+    )
 
     if not uni_diff_text:
         logger.warning("No changes found in worktree.")

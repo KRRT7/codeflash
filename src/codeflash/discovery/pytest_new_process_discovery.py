@@ -20,7 +20,13 @@ def parse_pytest_collection_results(pytest_tests: list[Any]) -> list[dict[str, s
         test_class = None
         if test.cls:
             test_class = test.parent.name
-        test_results.append({"test_file": str(test.path), "test_class": test_class, "test_function": test.name})
+        test_results.append(
+            {
+                "test_file": str(test.path),
+                "test_class": test_class,
+                "test_function": test.name,
+            }
+        )
     return test_results
 
 
@@ -35,7 +41,9 @@ class PytestCollectionPlugin:
         tests = parse_pytest_collection_results(collected_tests)
         exit_code = getattr(session.config, "exitstatus", 0)
         with Path(pickle_path).open("wb") as f:
-            pickle.dump((exit_code, tests, pytest_rootdir), f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(
+                (exit_code, tests, pytest_rootdir), f, protocol=pickle.HIGHEST_PROTOCOL
+            )
 
     def pytest_collection_modifyitems(self, items) -> None:
         skip_benchmark = pytest.mark.skip(reason="Skipping benchmark tests")
@@ -49,7 +57,16 @@ if __name__ == "__main__":
 
     try:
         pytest.main(
-            [tests_root, "-p", "no:logging", "--collect-only", "-m", "not skip", "-p", "no:codeflash-benchmark"],
+            [
+                tests_root,
+                "-p",
+                "no:logging",
+                "--collect-only",
+                "-m",
+                "not skip",
+                "-p",
+                "no:codeflash-benchmark",
+            ],
             plugins=[PytestCollectionPlugin()],
         )
     except Exception as e:

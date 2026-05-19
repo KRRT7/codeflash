@@ -12,20 +12,28 @@ if TYPE_CHECKING:
 
 
 def instrument_codeflash_capture(
-    function_to_optimize: FunctionToOptimize, file_path_to_helper_class: dict[Path, set[str]], tests_root: Path
+    function_to_optimize: FunctionToOptimize,
+    file_path_to_helper_class: dict[Path, set[str]],
+    tests_root: Path,
 ) -> None:
     """Instrument __init__ function with codeflash_capture decorator if it's in a class."""
     # Find the class parent
-    if len(function_to_optimize.parents) == 1 and function_to_optimize.parents[0].type == "ClassDef":
+    if (
+        len(function_to_optimize.parents) == 1
+        and function_to_optimize.parents[0].type == "ClassDef"
+    ):
         class_parent = function_to_optimize.parents[0]
     else:
         return
     # Remove duplicate fto class from helper classes
     if (
         function_to_optimize.file_path in file_path_to_helper_class
-        and class_parent.name in file_path_to_helper_class[function_to_optimize.file_path]
+        and class_parent.name
+        in file_path_to_helper_class[function_to_optimize.file_path]
     ):
-        file_path_to_helper_class[function_to_optimize.file_path].remove(class_parent.name)
+        file_path_to_helper_class[function_to_optimize.file_path].remove(
+            class_parent.name
+        )
     # Instrument fto class
     original_code = function_to_optimize.file_path.read_text(encoding="utf-8")
     # Add decorator to init
@@ -63,7 +71,9 @@ def add_codeflash_capture_to_init(
 ) -> str:
     """Add codeflash_capture decorator to __init__ function in the specified class."""
     tree = ast.parse(code)
-    transformer = InitDecorator(target_classes, fto_name, tmp_dir_path, tests_root, is_fto)
+    transformer = InitDecorator(
+        target_classes, fto_name, tmp_dir_path, tests_root, is_fto
+    )
     modified_tree = transformer.visit(tree)
     if transformer.inserted_decorator:
         ast.fix_missing_locations(modified_tree)
@@ -94,17 +104,25 @@ class InitDecorator(ast.NodeTransformer):
         # Precompute decorator components to avoid reconstructing on every node visit
         # Only the `function_name` field changes per class
         self._base_decorator_keywords = [
-            ast.keyword(arg="tmp_dir_path", value=ast.Constant(value=self.tmp_dir_path)),
-            ast.keyword(arg="tests_root", value=ast.Constant(value=self.tests_root.as_posix())),
+            ast.keyword(
+                arg="tmp_dir_path", value=ast.Constant(value=self.tmp_dir_path)
+            ),
+            ast.keyword(
+                arg="tests_root", value=ast.Constant(value=self.tests_root.as_posix())
+            ),
             ast.keyword(arg="is_fto", value=ast.Constant(value=self.is_fto)),
         ]
         self._base_decorator_func = ast.Name(id="codeflash_capture", ctx=ast.Load())
 
         # Preconstruct starred/kwargs for super init injection for perf
         self._super_starred = ast.Starred(value=ast.Name(id="args", ctx=ast.Load()))
-        self._super_kwarg = ast.keyword(arg=None, value=ast.Name(id="kwargs", ctx=ast.Load()))
+        self._super_kwarg = ast.keyword(
+            arg=None, value=ast.Name(id="kwargs", ctx=ast.Load())
+        )
         self._super_func = ast.Attribute(
-            value=ast.Call(func=ast.Name(id="super", ctx=ast.Load()), args=[], keywords=[]),
+            value=ast.Call(
+                func=ast.Name(id="super", ctx=ast.Load()), args=[], keywords=[]
+            ),
             attr="__init__",
             ctx=ast.Load(),
         )
@@ -124,7 +142,9 @@ class InitDecorator(ast.NodeTransformer):
         self.generic_visit(node)
         # Add import statement
         if not self.has_import and self.inserted_decorator:
-            import_stmt = ast.parse("from codeflash.verification.codeflash_capture import codeflash_capture").body[0]
+            import_stmt = ast.parse(
+                "from codeflash.verification.codeflash_capture import codeflash_capture"
+            ).body[0]
             node.body.insert(0, import_stmt)
 
         return node
@@ -140,7 +160,10 @@ class InitDecorator(ast.NodeTransformer):
             func=self._base_decorator_func,
             args=[],
             keywords=[
-                ast.keyword(arg="function_name", value=ast.Constant(value=f"{node.name}.__init__")),
+                ast.keyword(
+                    arg="function_name",
+                    value=ast.Constant(value=f"{node.name}.__init__"),
+                ),
                 *self._base_decorator_keywords,
             ],
         )
@@ -158,7 +181,11 @@ class InitDecorator(ast.NodeTransformer):
 
                 # Check for existing decorator in-place, stop after finding one
                 for d in item.decorator_list:
-                    if isinstance(d, ast.Call) and isinstance(d.func, ast.Name) and d.func.id == "codeflash_capture":
+                    if (
+                        isinstance(d, ast.Call)
+                        and isinstance(d.func, ast.Name)
+                        and d.func.id == "codeflash_capture"
+                    ):
                         break
                 else:
                     # No decorator found
@@ -168,7 +195,11 @@ class InitDecorator(ast.NodeTransformer):
         if not has_init:
             # Create super().__init__(*args, **kwargs) call (use prebuilt AST fragments)
             super_call = ast.Expr(
-                value=ast.Call(func=self._super_func, args=[self._super_starred], keywords=[self._super_kwarg])
+                value=ast.Call(
+                    func=self._super_func,
+                    args=[self._super_starred],
+                    keywords=[self._super_kwarg],
+                )
             )
             # Create function arguments: self, *args, **kwargs (reuse arg nodes)
             arguments = ast.arguments(
@@ -183,7 +214,11 @@ class InitDecorator(ast.NodeTransformer):
 
             # Create the complete function
             init_func = ast.FunctionDef(
-                name="__init__", args=arguments, body=[super_call], decorator_list=[decorator], returns=None
+                name="__init__",
+                args=arguments,
+                body=[super_call],
+                decorator_list=[decorator],
+                returns=None,
             )
 
             node.body.insert(0, init_func)

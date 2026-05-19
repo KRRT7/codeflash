@@ -76,7 +76,9 @@ class CodeFlashBenchmarkPlugin:
             self._connection = None
 
     @staticmethod
-    def get_function_benchmark_timings(trace_path: Path) -> dict[str, dict[BenchmarkKey, int]]:
+    def get_function_benchmark_timings(
+        trace_path: Path,
+    ) -> dict[str, dict[BenchmarkKey, int]]:
         from codeflash.models.models import BenchmarkKey
 
         """Process the trace file and extract timing data for all functions.
@@ -110,7 +112,15 @@ class CodeFlashBenchmarkPlugin:
 
             # Process each row
             for row in cursor.fetchall():
-                module_name, class_name, function_name, benchmark_file, benchmark_func, benchmark_line, time_ns = row
+                (
+                    module_name,
+                    class_name,
+                    function_name,
+                    benchmark_file,
+                    benchmark_func,
+                    benchmark_line,
+                    time_ns,
+                ) = row
 
                 # Create the function key (module_name.class_name.function_name)
                 if class_name:
@@ -119,7 +129,9 @@ class CodeFlashBenchmarkPlugin:
                     qualified_name = f"{module_name}.{function_name}"
 
                 # Create the benchmark key (file::function::line)
-                benchmark_key = BenchmarkKey(module_path=benchmark_file, function_name=benchmark_func)
+                benchmark_key = BenchmarkKey(
+                    module_path=benchmark_file, function_name=benchmark_func
+                )
                 # Initialize the inner dictionary if needed
                 if qualified_name not in result:
                     result[qualified_name] = {}
@@ -173,8 +185,12 @@ class CodeFlashBenchmarkPlugin:
             # Process overhead information
             for row in cursor.fetchall():
                 benchmark_file, benchmark_func, benchmark_line, total_overhead_ns = row
-                benchmark_key = BenchmarkKey(module_path=benchmark_file, function_name=benchmark_func)
-                overhead_by_benchmark[benchmark_key] = total_overhead_ns or 0  # Handle NULL sum case
+                benchmark_key = BenchmarkKey(
+                    module_path=benchmark_file, function_name=benchmark_func
+                )
+                overhead_by_benchmark[benchmark_key] = (
+                    total_overhead_ns or 0
+                )  # Handle NULL sum case
 
             # Query the benchmark_timings table for total times
             cursor.execute(
@@ -187,7 +203,9 @@ class CodeFlashBenchmarkPlugin:
                 benchmark_file, benchmark_func, benchmark_line, time_ns = row
 
                 # Create the benchmark key (file::function::line)
-                benchmark_key = BenchmarkKey(module_path=benchmark_file, function_name=benchmark_func)
+                benchmark_key = BenchmarkKey(
+                    module_path=benchmark_file, function_name=benchmark_func
+                )
                 # Subtract overhead from total time
                 overhead = overhead_by_benchmark.get(benchmark_key, 0)
                 result[benchmark_key] = time_ns - overhead
@@ -210,7 +228,9 @@ class CodeFlashBenchmarkPlugin:
         self.close()
 
     @staticmethod
-    def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    def pytest_collection_modifyitems(
+        config: pytest.Config, items: list[pytest.Item]
+    ) -> None:
         # Skip tests that don't have the benchmark fixture
         if not config.getoption("--codeflash-trace"):
             return
@@ -218,7 +238,9 @@ class CodeFlashBenchmarkPlugin:
         skip_no_benchmark = pytest.mark.skip(reason="Test requires benchmark fixture")
         for item in items:
             # Check for direct benchmark fixture usage
-            has_fixture = hasattr(item, "fixturenames") and "benchmark" in item.fixturenames
+            has_fixture = (
+                hasattr(item, "fixturenames") and "benchmark" in item.fixturenames
+            )
 
             # Check for @pytest.mark.benchmark marker
             has_marker = False
@@ -251,16 +273,24 @@ class CodeFlashBenchmarkPlugin:
 
         def _run_benchmark(self, func, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN202
             """Actual benchmark implementation."""
-            node_path = getattr(self.request.node, "path", None) or getattr(self.request.node, "fspath", None)
+            node_path = getattr(self.request.node, "path", None) or getattr(
+                self.request.node, "fspath", None
+            )
             if node_path is None:
-                raise RuntimeError("Unable to determine test file path from pytest node")
+                raise RuntimeError(
+                    "Unable to determine test file path from pytest node"
+                )
 
             benchmark_module_path = module_name_from_file_path(
-                Path(str(node_path)), Path(codeflash_benchmark_plugin.project_root), traverse_up=True
+                Path(str(node_path)),
+                Path(codeflash_benchmark_plugin.project_root),
+                traverse_up=True,
             )
 
             benchmark_function_name = self.request.node.name
-            line_number = int(str(sys._getframe(2).f_lineno))  # 2 frames up in the call stack  # noqa: SLF001
+            line_number = int(
+                str(sys._getframe(2).f_lineno)
+            )  # 2 frames up in the call stack  # noqa: SLF001
             # Set env vars
             os.environ["CODEFLASH_BENCHMARK_FUNCTION_NAME"] = benchmark_function_name
             os.environ["CODEFLASH_BENCHMARK_MODULE_PATH"] = benchmark_module_path
@@ -279,7 +309,12 @@ class CodeFlashBenchmarkPlugin:
             codeflash_trace.function_call_count = 0
             # Add to the benchmark timings buffer
             codeflash_benchmark_plugin.benchmark_timings.append(
-                (benchmark_module_path, benchmark_function_name, line_number, end - start)
+                (
+                    benchmark_module_path,
+                    benchmark_function_name,
+                    line_number,
+                    end - start,
+                )
             )
 
             return result

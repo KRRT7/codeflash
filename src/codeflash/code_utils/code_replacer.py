@@ -351,9 +351,7 @@ class OptimFunctionCollector(cst.CSTVisitor):
 class OptimFunctionReplacer(cst.CSTTransformer):
     def __init__(
         self,
-        modified_functions: 
-            dict[tuple[str | None, str], cst.FunctionDef]
-         | None = None,
+        modified_functions: dict[tuple[str | None, str], cst.FunctionDef] | None = None,
         new_classes: list[cst.ClassDef] | None = None,
         new_functions: list[cst.FunctionDef] | None = None,
         new_class_functions: dict[str, list[cst.FunctionDef]] | None = None,

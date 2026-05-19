@@ -65,7 +65,9 @@ def download_and_extract_extension_with_progress(download_url: str) -> Path:
 def copy_extension_artifacts(src: Path, dest: Path, version: str) -> bool:
     dst_extensions_dir = dest / "extensions"
     if not dst_extensions_dir.exists():
-        logger.warning("Extensions directory does not exist: %s", str(dst_extensions_dir))
+        logger.warning(
+            "Extensions directory does not exist: %s", str(dst_extensions_dir)
+        )
         return False
 
     dest_path = dst_extensions_dir / f"codeflash.codeflash-{version}"
@@ -90,9 +92,16 @@ def get_cf_extension_metadata(editor_path: Path) -> list[dict[str, Any]]:
 
 def write_cf_extension_metadata(editor_path: Path, version: str) -> bool:
     data = {
-        "identifier": {"id": "codeflash.codeflash", "uuid": "7798581f-9eab-42be-a1b2-87f90973434d"},
+        "identifier": {
+            "id": "codeflash.codeflash",
+            "uuid": "7798581f-9eab-42be-a1b2-87f90973434d",
+        },
         "version": version,
-        "location": {"$mid": 1, "path": f"{editor_path}/extensions/codeflash.codeflash-{version}", "scheme": "file"},
+        "location": {
+            "$mid": 1,
+            "path": f"{editor_path}/extensions/codeflash.codeflash-{version}",
+            "scheme": "file",
+        },
         "relativeLocation": f"codeflash.codeflash-{version}",
         "metadata": {
             "installedTimestamp": int(time.time() * 1000),
@@ -116,7 +125,9 @@ def write_cf_extension_metadata(editor_path: Path, version: str) -> bool:
     if not installed_extensions:
         return False
     installed_extensions = [
-        ext for ext in installed_extensions if ext.get("identifier", {}).get("id") != data["identifier"]["id"]
+        ext
+        for ext in installed_extensions
+        if ext.get("identifier", {}).get("id") != data["identifier"]["id"]
     ]
     installed_extensions.append(data)
     with get_metadata_file_path(editor_path).open("w", encoding="utf-8") as f:
@@ -134,7 +145,9 @@ def is_latest_version_installed(editor_path: Path, latest_version: str) -> bool:
     return current_version == latest_version
 
 
-def manually_install_vscode_extension(downloadable_paths: list[tuple[Path, str]]) -> None:
+def manually_install_vscode_extension(
+    downloadable_paths: list[tuple[Path, str]],
+) -> None:
     with progress_bar("Fetching extension metadata..."):
         info = get_extension_info()
 
@@ -149,18 +162,27 @@ def manually_install_vscode_extension(downloadable_paths: list[tuple[Path, str]]
     with download_and_extract_extension_with_progress(download_url) as extension_path:
         for editor_path, editor in downloadable_paths:
             try:
-                did_copy = copy_extension_artifacts(extension_path, editor_path, latest_version)
+                did_copy = copy_extension_artifacts(
+                    extension_path, editor_path, latest_version
+                )
                 if not did_copy:
                     continue
-                did_write_metadata = write_cf_extension_metadata(editor_path, latest_version)
+                did_write_metadata = write_cf_extension_metadata(
+                    editor_path, latest_version
+                )
                 if not did_write_metadata:
                     continue
 
                 successful_installs.append(editor)
             except Exception as e:
-                logger.error("Failed to install CodeFlash extension for %s: %s", editor, e)
+                logger.error(
+                    "Failed to install CodeFlash extension for %s: %s", editor, e
+                )
     if successful_installs:
-        logger.info("Successfully installed CodeFlash extension for: %s", ", ".join(successful_installs))
+        logger.info(
+            "Successfully installed CodeFlash extension for: %s",
+            ", ".join(successful_installs),
+        )
 
 
 def install_vscode_extension() -> None:
@@ -176,14 +198,19 @@ def install_vscode_extension() -> None:
         info = get_extension_info()
         latest_version = info.get("version", "")
 
-        if not latest_version or is_latest_version_installed(editor_path, latest_version):
+        if not latest_version or is_latest_version_installed(
+            editor_path, latest_version
+        ):
             continue
 
         downloadable_paths.append((editor_path, editor))
 
     if not downloadable_paths:
         if editors_installed:
-            logger.info("CodeFlash extension is already installed and up-to-date for: %s", ", ".join(editors_installed))
+            logger.info(
+                "CodeFlash extension is already installed and up-to-date for: %s",
+                ", ".join(editors_installed),
+            )
             return
 
         logger.info("No supported editors found for CodeFlash extension installation")

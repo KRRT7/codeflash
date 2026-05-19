@@ -24,7 +24,10 @@ def get_latest_version_from_pypi() -> str | None:
     """
     # Check cache first
     current_time = time.time()
-    if _version_cache["version"] is not None and current_time - _version_cache["timestamp"] < _cache_duration:
+    if (
+        _version_cache["version"] is not None
+        and current_time - _version_cache["timestamp"] < _cache_duration
+    ):
         return _version_cache["version"]
 
     try:
@@ -69,8 +72,12 @@ def check_for_newer_minor_version() -> None:
 
         # Check if there's a newer minor version available
         # We only notify for minor version updates, not patch updates
-        if latest_parsed > current_parsed:  # < > == operators can be directly applied on version objects
-            logger.warning(f"A newer version({latest_version}) of Codeflash is available, please update soon!")
+        if (
+            latest_parsed > current_parsed
+        ):  # < > == operators can be directly applied on version objects
+            logger.warning(
+                f"A newer version({latest_version}) of Codeflash is available, please update soon!"
+            )
 
     except version.InvalidVersion as e:
         logger.debug(f"Invalid version format: {e}")
