@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
+from codeflash._sqlite_schema import TEST_RESULTS_TABLE_SCHEMA
 from codeflash.cli_cmds.console import logger
 from codeflash.code_utils.code_utils import get_run_tmp_file, module_name_from_file_path
 from codeflash.code_utils.formatter import sort_imports
@@ -37,7 +38,11 @@ def node_in_call_position(node: ast.AST, call_positions: list[CodePosition]) -> 
         node_col_offset = getattr(node, "col_offset", None)
         node_end_lineno = getattr(node, "end_lineno", None)
         node_end_col_offset = getattr(node, "end_col_offset", None)
-        if node_lineno is not None and node_col_offset is not None and node_end_lineno is not None:
+        if (
+            node_lineno is not None
+            and node_col_offset is not None
+            and node_end_lineno is not None
+        ):
             # Faster loop: reduce attribute lookups, use local variables for conditionals.
             for pos in call_positions:
                 pos_line = pos.line_no
@@ -83,7 +88,11 @@ class InjectPerfOnly(ast.NodeTransformer):
             self.class_name = function.top_level_parent_name
 
     def find_and_update_line_node(
-        self, test_node: ast.stmt, node_name: str, index: str, test_class_name: str | None = None
+        self,
+        test_node: ast.stmt,
+        node_name: str,
+        index: str,
+        test_class_name: str | None = None,
     ) -> Iterable[ast.stmt] | None:
         # Major optimization: since ast.walk is *very* expensive for big trees and only checks for ast.Call,
         # it's much more efficient to visit nodes manually. We'll only descend into expressions/statements.
@@ -147,7 +156,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                     value=ast.Call(
                         func=ast.Attribute(
                             value=ast.Call(
-                                func=ast.Attribute(value=inspect_name, attr="signature", ctx=ast.Load()),
+                                func=ast.Attribute(
+                                    value=inspect_name, attr="signature", ctx=ast.Load()
+                                ),
                                 args=[ast.Name(id=function_name, ctx=ast.Load())],
                                 keywords=[],
                             ),
@@ -164,7 +175,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                 apply_defaults = ast.Expr(
                     value=ast.Call(
                         func=ast.Attribute(
-                            value=ast.Name(id="_call__bound__arguments", ctx=ast.Load()),
+                            value=ast.Name(
+                                id="_call__bound__arguments", ctx=ast.Load()
+                            ),
                             attr="apply_defaults",
                             ctx=ast.Load(),
                         ),
@@ -195,7 +208,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                     base_args.append(
                         ast.Starred(
                             value=ast.Attribute(
-                                value=ast.Name(id="_call__bound__arguments", ctx=ast.Load()),
+                                value=ast.Name(
+                                    id="_call__bound__arguments", ctx=ast.Load()
+                                ),
                                 attr="args",
                                 ctx=ast.Load(),
                             ),
@@ -208,7 +223,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                     node.keywords = [
                         ast.keyword(
                             value=ast.Attribute(
-                                value=ast.Name(id="_call__bound__arguments", ctx=ast.Load()),
+                                value=ast.Name(
+                                    id="_call__bound__arguments", ctx=ast.Load()
+                                ),
                                 attr="kwargs",
                                 ctx=ast.Load(),
                             )
@@ -218,7 +235,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                     node.keywords = call_node.keywords
 
                 return_statement = (
-                    [bind_call, apply_defaults, test_node] if mode == TestingMode.BEHAVIOR else [test_node]
+                    [bind_call, apply_defaults, test_node]
+                    if mode == TestingMode.BEHAVIOR
+                    else [test_node]
                 )
                 break
             if isinstance(node_func, ast.Attribute):
@@ -230,15 +249,23 @@ class InjectPerfOnly(ast.NodeTransformer):
                     # Create the signature binding statements
 
                     # Unparse only once
-                    function_name_expr = ast.parse(ast.unparse(node_func), mode="eval").body
+                    function_name_expr = ast.parse(
+                        ast.unparse(node_func), mode="eval"
+                    ).body
 
                     inspect_name = ast.Name(id="inspect", ctx=ast.Load())
                     bind_call = ast.Assign(
-                        targets=[ast.Name(id="_call__bound__arguments", ctx=ast.Store())],
+                        targets=[
+                            ast.Name(id="_call__bound__arguments", ctx=ast.Store())
+                        ],
                         value=ast.Call(
                             func=ast.Attribute(
                                 value=ast.Call(
-                                    func=ast.Attribute(value=inspect_name, attr="signature", ctx=ast.Load()),
+                                    func=ast.Attribute(
+                                        value=inspect_name,
+                                        attr="signature",
+                                        ctx=ast.Load(),
+                                    ),
                                     args=[function_name_expr],
                                     keywords=[],
                                 ),
@@ -255,7 +282,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                     apply_defaults = ast.Expr(
                         value=ast.Call(
                             func=ast.Attribute(
-                                value=ast.Name(id="_call__bound__arguments", ctx=ast.Load()),
+                                value=ast.Name(
+                                    id="_call__bound__arguments", ctx=ast.Load()
+                                ),
                                 attr="apply_defaults",
                                 ctx=ast.Load(),
                             ),
@@ -284,7 +313,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                         base_args.append(
                             ast.Starred(
                                 value=ast.Attribute(
-                                    value=ast.Name(id="_call__bound__arguments", ctx=ast.Load()),
+                                    value=ast.Name(
+                                        id="_call__bound__arguments", ctx=ast.Load()
+                                    ),
                                     attr="args",
                                     ctx=ast.Load(),
                                 ),
@@ -296,7 +327,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                         node.keywords = [
                             ast.keyword(
                                 value=ast.Attribute(
-                                    value=ast.Name(id="_call__bound__arguments", ctx=ast.Load()),
+                                    value=ast.Name(
+                                        id="_call__bound__arguments", ctx=ast.Load()
+                                    ),
                                     attr="kwargs",
                                     ctx=ast.Load(),
                                 )
@@ -307,7 +340,9 @@ class InjectPerfOnly(ast.NodeTransformer):
 
                     # Return the signature binding statements along with the test_node
                     return_statement = (
-                        [bind_call, apply_defaults, test_node] if mode == TestingMode.BEHAVIOR else [test_node]
+                        [bind_call, apply_defaults, test_node]
+                        if mode == TestingMode.BEHAVIOR
+                        else [test_node]
                     )
                     break
 
@@ -323,7 +358,9 @@ class InjectPerfOnly(ast.NodeTransformer):
 
         return node
 
-    def visit_FunctionDef(self, node: ast.FunctionDef, test_class_name: str | None = None) -> ast.FunctionDef:
+    def visit_FunctionDef(
+        self, node: ast.FunctionDef, test_class_name: str | None = None
+    ) -> ast.FunctionDef:
         if node.name.startswith("test_"):
             did_update = False
             i = len(node.body) - 1
@@ -339,7 +376,10 @@ class InjectPerfOnly(ast.NodeTransformer):
                         for internal_node in ast.walk(compound_line_node):
                             if isinstance(internal_node, (ast.stmt, ast.Assign)):
                                 updated_node = self.find_and_update_line_node(
-                                    internal_node, node.name, str(i) + "_" + str(j), test_class_name
+                                    internal_node,
+                                    node.name,
+                                    str(i) + "_" + str(j),
+                                    test_class_name,
                                 )
                                 if updated_node is not None:
                                     line_node.body[j : j + 1] = updated_node
@@ -347,7 +387,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                                     break
                         j -= 1
                 else:
-                    updated_node = self.find_and_update_line_node(line_node, node.name, str(i), test_class_name)
+                    updated_node = self.find_and_update_line_node(
+                        line_node, node.name, str(i), test_class_name
+                    )
                     if updated_node is not None:
                         node.body[i : i + 1] = updated_node
                         did_update = True
@@ -361,7 +403,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                             args=[
                                 ast.Subscript(
                                     value=ast.Attribute(
-                                        value=ast.Name(id="os", ctx=ast.Load()), attr="environ", ctx=ast.Load()
+                                        value=ast.Name(id="os", ctx=ast.Load()),
+                                        attr="environ",
+                                        ctx=ast.Load(),
                                     ),
                                     slice=ast.Constant(value="CODEFLASH_LOOP_INDEX"),
                                     ctx=ast.Load(),
@@ -375,12 +419,18 @@ class InjectPerfOnly(ast.NodeTransformer):
                     *(
                         [
                             ast.Assign(
-                                targets=[ast.Name(id="codeflash_iteration", ctx=ast.Store())],
+                                targets=[
+                                    ast.Name(id="codeflash_iteration", ctx=ast.Store())
+                                ],
                                 value=ast.Subscript(
                                     value=ast.Attribute(
-                                        value=ast.Name(id="os", ctx=ast.Load()), attr="environ", ctx=ast.Load()
+                                        value=ast.Name(id="os", ctx=ast.Load()),
+                                        attr="environ",
+                                        ctx=ast.Load(),
                                     ),
-                                    slice=ast.Constant(value="CODEFLASH_TEST_ITERATION"),
+                                    slice=ast.Constant(
+                                        value="CODEFLASH_TEST_ITERATION"
+                                    ),
                                     ctx=ast.Load(),
                                 ),
                                 lineno=node.lineno + 1,
@@ -390,7 +440,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                                 targets=[ast.Name(id="codeflash_con", ctx=ast.Store())],
                                 value=ast.Call(
                                     func=ast.Attribute(
-                                        value=ast.Name(id="sqlite3", ctx=ast.Load()), attr="connect", ctx=ast.Load()
+                                        value=ast.Name(id="sqlite3", ctx=ast.Load()),
+                                        attr="connect",
+                                        ctx=ast.Load(),
                                     ),
                                     args=[
                                         ast.JoinedStr(
@@ -399,7 +451,10 @@ class InjectPerfOnly(ast.NodeTransformer):
                                                     value=f"{get_run_tmp_file(Path('test_return_values_')).as_posix()}"
                                                 ),
                                                 ast.FormattedValue(
-                                                    value=ast.Name(id="codeflash_iteration", ctx=ast.Load()),
+                                                    value=ast.Name(
+                                                        id="codeflash_iteration",
+                                                        ctx=ast.Load(),
+                                                    ),
                                                     conversion=-1,
                                                 ),
                                                 ast.Constant(value=".sqlite"),
@@ -415,7 +470,9 @@ class InjectPerfOnly(ast.NodeTransformer):
                                 targets=[ast.Name(id="codeflash_cur", ctx=ast.Store())],
                                 value=ast.Call(
                                     func=ast.Attribute(
-                                        value=ast.Name(id="codeflash_con", ctx=ast.Load()),
+                                        value=ast.Name(
+                                            id="codeflash_con", ctx=ast.Load()
+                                        ),
                                         attr="cursor",
                                         ctx=ast.Load(),
                                     ),
@@ -428,16 +485,14 @@ class InjectPerfOnly(ast.NodeTransformer):
                             ast.Expr(
                                 value=ast.Call(
                                     func=ast.Attribute(
-                                        value=ast.Name(id="codeflash_cur", ctx=ast.Load()),
+                                        value=ast.Name(
+                                            id="codeflash_cur", ctx=ast.Load()
+                                        ),
                                         attr="execute",
                                         ctx=ast.Load(),
                                     ),
                                     args=[
-                                        ast.Constant(
-                                            value="CREATE TABLE IF NOT EXISTS test_results (test_module_path TEXT,"
-                                            " test_class_name TEXT, test_function_name TEXT, function_getting_tested TEXT,"
-                                            " loop_index INTEGER, iteration_id TEXT, runtime INTEGER, return_value BLOB, verification_type TEXT)"
-                                        )
+                                        ast.Constant(value=TEST_RESULTS_TABLE_SCHEMA)
                                     ],
                                     keywords=[],
                                 ),
@@ -454,7 +509,11 @@ class InjectPerfOnly(ast.NodeTransformer):
                             ast.Expr(
                                 value=ast.Call(
                                     func=ast.Attribute(
-                                        value=ast.Name(id="codeflash_con", ctx=ast.Load()), attr="close", ctx=ast.Load()
+                                        value=ast.Name(
+                                            id="codeflash_con", ctx=ast.Load()
+                                        ),
+                                        attr="close",
+                                        ctx=ast.Load(),
                                     ),
                                     args=[],
                                     keywords=[],
@@ -491,7 +550,9 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         return self.generic_visit(node)
 
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AsyncFunctionDef:
+    def visit_AsyncFunctionDef(
+        self, node: ast.AsyncFunctionDef
+    ) -> ast.AsyncFunctionDef:
         if not node.name.startswith("test_"):
             return node
 
@@ -515,7 +576,9 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
 
         # Optimize ast.walk calls inside _instrument_statement, by scanning only relevant nodes
         for _i, stmt in enumerate(node.body):
-            transformed_stmt, added_env_assignment = self._optimized_instrument_statement(stmt)
+            transformed_stmt, added_env_assignment = (
+                self._optimized_instrument_statement(stmt)
+            )
 
             if added_env_assignment:
                 current_call_index = self.async_call_counter[node.name]
@@ -525,7 +588,9 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
                     targets=[
                         ast.Subscript(
                             value=ast.Attribute(
-                                value=ast.Name(id="os", ctx=ast.Load()), attr="environ", ctx=ast.Load()
+                                value=ast.Name(id="os", ctx=ast.Load()),
+                                attr="environ",
+                                ctx=ast.Load(),
                             ),
                             slice=ast.Constant(value="CODEFLASH_CURRENT_LINE_ID"),
                             ctx=ast.Store(),
@@ -542,7 +607,9 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
         node.body = new_body
         return node
 
-    def _instrument_statement(self, stmt: ast.stmt, _node_name: str) -> tuple[ast.stmt, bool]:
+    def _instrument_statement(
+        self, stmt: ast.stmt, _node_name: str
+    ) -> tuple[ast.stmt, bool]:
         for node in ast.walk(stmt):
             if (
                 isinstance(node, ast.Await)
@@ -551,7 +618,10 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
                 and self._call_in_positions(node.value)
             ):
                 # Check if this call is in one of our target positions
-                return stmt, True  # Return original statement but signal we added env var
+                return (
+                    stmt,
+                    True,
+                )  # Return original statement but signal we added env var
 
         return stmt, False
 
@@ -578,7 +648,11 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
             # Favor direct ast.Await detection
             if isinstance(node, ast.Await):
                 val = node.value
-                if isinstance(val, ast.Call) and self._is_target_call(val) and self._call_in_positions(val):
+                if (
+                    isinstance(val, ast.Call)
+                    and self._is_target_call(val)
+                    and self._call_in_positions(val)
+                ):
                     return stmt, True
             # Use _fields instead of ast.walk for less allocations
             for fname in getattr(node, "_fields", ()):
@@ -598,7 +672,9 @@ class FunctionImportedAsVisitor(ast.NodeVisitor):
     """
 
     def __init__(self, function: FunctionToOptimize) -> None:
-        assert len(function.parents) <= 1, "Only support functions with one or less parent"
+        assert len(function.parents) <= 1, (
+            "Only support functions with one or less parent"
+        )
         self.imported_as = function
         self.function = function
         if function.parents:
@@ -609,7 +685,11 @@ class FunctionImportedAsVisitor(ast.NodeVisitor):
     # TODO: Validate if the function imported is actually from the right module
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         for alias in node.names:
-            if alias.name == self.to_match and hasattr(alias, "asname") and alias.asname is not None:
+            if (
+                alias.name == self.to_match
+                and hasattr(alias, "asname")
+                and alias.asname is not None
+            ):
                 if self.function.parents:
                     self.imported_as = FunctionToOptimize(
                         function_name=self.function.function_name,
@@ -652,7 +732,9 @@ def inject_async_profiling_into_existing_test(
     import_visitor.visit(tree)
     func = import_visitor.imported_as
 
-    async_instrumenter = AsyncCallInstrumenter(func, test_module_path, call_positions, mode=mode)
+    async_instrumenter = AsyncCallInstrumenter(
+        func, test_module_path, call_positions, mode=mode
+    )
     tree = async_instrumenter.visit(tree)
 
     if not async_instrumenter.did_instrument:
@@ -687,7 +769,9 @@ def detect_frameworks_from_code(code: str) -> dict[str, str]:
                     # Use asname if available, otherwise use the module name
                     frameworks["torch"] = alias.asname if alias.asname else module_name
                 elif module_name == "tensorflow":
-                    frameworks["tensorflow"] = alias.asname if alias.asname else module_name
+                    frameworks["tensorflow"] = (
+                        alias.asname if alias.asname else module_name
+                    )
                 elif module_name == "jax":
                     frameworks["jax"] = alias.asname if alias.asname else module_name
         elif isinstance(node, ast.ImportFrom):  # noqa: SIM102
@@ -752,14 +836,20 @@ def inject_profiling_into_existing_test(
             new_imports.append(ast.Import(names=[ast.alias(name=framework_name)]))
         else:
             # If there's an alias, use it (e.g., "import torch as th")
-            new_imports.append(ast.Import(names=[ast.alias(name=framework_name, asname=framework_alias)]))
+            new_imports.append(
+                ast.Import(
+                    names=[ast.alias(name=framework_name, asname=framework_alias)]
+                )
+            )
     additional_functions = [create_wrapper_function(mode, used_frameworks)]
 
     tree.body = [*new_imports, *additional_functions, *tree.body]
     return True, sort_imports(ast.unparse(tree), float_to_top=True)
 
 
-def _create_device_sync_precompute_statements(used_frameworks: dict[str, str] | None) -> list[ast.stmt]:
+def _create_device_sync_precompute_statements(
+    used_frameworks: dict[str, str] | None,
+) -> list[ast.stmt]:
     """Create AST statements to pre-compute device sync conditions before profiling.
 
     This moves the conditional checks (like is_available(), hasattr(), etc.) outside
@@ -790,7 +880,9 @@ def _create_device_sync_precompute_statements(used_frameworks: dict[str, str] | 
                         ast.Call(
                             func=ast.Attribute(
                                 value=ast.Attribute(
-                                    value=ast.Name(id=torch_alias, ctx=ast.Load()), attr="cuda", ctx=ast.Load()
+                                    value=ast.Name(id=torch_alias, ctx=ast.Load()),
+                                    attr="cuda",
+                                    ctx=ast.Load(),
                                 ),
                                 attr="is_available",
                                 ctx=ast.Load(),
@@ -801,7 +893,9 @@ def _create_device_sync_precompute_statements(used_frameworks: dict[str, str] | 
                         ast.Call(
                             func=ast.Attribute(
                                 value=ast.Attribute(
-                                    value=ast.Name(id=torch_alias, ctx=ast.Load()), attr="cuda", ctx=ast.Load()
+                                    value=ast.Name(id=torch_alias, ctx=ast.Load()),
+                                    attr="cuda",
+                                    ctx=ast.Load(),
                                 ),
                                 attr="is_initialized",
                                 ctx=ast.Load(),
@@ -823,12 +917,19 @@ def _create_device_sync_precompute_statements(used_frameworks: dict[str, str] | 
                 value=ast.BoolOp(
                     op=ast.And(),
                     values=[
-                        ast.UnaryOp(op=ast.Not(), operand=ast.Name(id="_codeflash_should_sync_cuda", ctx=ast.Load())),
+                        ast.UnaryOp(
+                            op=ast.Not(),
+                            operand=ast.Name(
+                                id="_codeflash_should_sync_cuda", ctx=ast.Load()
+                            ),
+                        ),
                         ast.Call(
                             func=ast.Name(id="hasattr", ctx=ast.Load()),
                             args=[
                                 ast.Attribute(
-                                    value=ast.Name(id=torch_alias, ctx=ast.Load()), attr="backends", ctx=ast.Load()
+                                    value=ast.Name(id=torch_alias, ctx=ast.Load()),
+                                    attr="backends",
+                                    ctx=ast.Load(),
                                 ),
                                 ast.Constant(value="mps"),
                             ],
@@ -838,7 +939,9 @@ def _create_device_sync_precompute_statements(used_frameworks: dict[str, str] | 
                             func=ast.Attribute(
                                 value=ast.Attribute(
                                     value=ast.Attribute(
-                                        value=ast.Name(id=torch_alias, ctx=ast.Load()), attr="backends", ctx=ast.Load()
+                                        value=ast.Name(id=torch_alias, ctx=ast.Load()),
+                                        attr="backends",
+                                        ctx=ast.Load(),
                                     ),
                                     attr="mps",
                                     ctx=ast.Load(),
@@ -853,7 +956,9 @@ def _create_device_sync_precompute_statements(used_frameworks: dict[str, str] | 
                             func=ast.Name(id="hasattr", ctx=ast.Load()),
                             args=[
                                 ast.Attribute(
-                                    value=ast.Name(id=torch_alias, ctx=ast.Load()), attr="mps", ctx=ast.Load()
+                                    value=ast.Name(id=torch_alias, ctx=ast.Load()),
+                                    attr="mps",
+                                    ctx=ast.Load(),
                                 ),
                                 ast.Constant(value="synchronize"),
                             ],
@@ -874,7 +979,10 @@ def _create_device_sync_precompute_statements(used_frameworks: dict[str, str] | 
                 targets=[ast.Name(id="_codeflash_should_sync_jax", ctx=ast.Store())],
                 value=ast.Call(
                     func=ast.Name(id="hasattr", ctx=ast.Load()),
-                    args=[ast.Name(id=jax_alias, ctx=ast.Load()), ast.Constant(value="block_until_ready")],
+                    args=[
+                        ast.Name(id=jax_alias, ctx=ast.Load()),
+                        ast.Constant(value="block_until_ready"),
+                    ],
                     keywords=[],
                 ),
                 lineno=1,
@@ -893,7 +1001,9 @@ def _create_device_sync_precompute_statements(used_frameworks: dict[str, str] | 
                     args=[
                         ast.Attribute(
                             value=ast.Attribute(
-                                value=ast.Name(id=tf_alias, ctx=ast.Load()), attr="test", ctx=ast.Load()
+                                value=ast.Name(id=tf_alias, ctx=ast.Load()),
+                                attr="test",
+                                ctx=ast.Load(),
                             ),
                             attr="experimental",
                             ctx=ast.Load(),
@@ -943,7 +1053,9 @@ def _create_device_sync_statements(
                     value=ast.Call(
                         func=ast.Attribute(
                             value=ast.Attribute(
-                                value=ast.Name(id=torch_alias, ctx=ast.Load()), attr="cuda", ctx=ast.Load()
+                                value=ast.Name(id=torch_alias, ctx=ast.Load()),
+                                attr="cuda",
+                                ctx=ast.Load(),
                             ),
                             attr="synchronize",
                             ctx=ast.Load(),
@@ -961,7 +1073,9 @@ def _create_device_sync_statements(
                             value=ast.Call(
                                 func=ast.Attribute(
                                     value=ast.Attribute(
-                                        value=ast.Name(id=torch_alias, ctx=ast.Load()), attr="mps", ctx=ast.Load()
+                                        value=ast.Name(id=torch_alias, ctx=ast.Load()),
+                                        attr="mps",
+                                        ctx=ast.Load(),
                                     ),
                                     attr="synchronize",
                                     ctx=ast.Load(),
@@ -988,7 +1102,9 @@ def _create_device_sync_statements(
                 ast.Expr(
                     value=ast.Call(
                         func=ast.Attribute(
-                            value=ast.Name(id=jax_alias, ctx=ast.Load()), attr="block_until_ready", ctx=ast.Load()
+                            value=ast.Name(id=jax_alias, ctx=ast.Load()),
+                            attr="block_until_ready",
+                            ctx=ast.Load(),
                         ),
                         args=[ast.Name(id="return_value", ctx=ast.Load())],
                         keywords=[],
@@ -1012,7 +1128,9 @@ def _create_device_sync_statements(
                         func=ast.Attribute(
                             value=ast.Attribute(
                                 value=ast.Attribute(
-                                    value=ast.Name(id=tf_alias, ctx=ast.Load()), attr="test", ctx=ast.Load()
+                                    value=ast.Name(id=tf_alias, ctx=ast.Load()),
+                                    attr="test",
+                                    ctx=ast.Load(),
                                 ),
                                 attr="experimental",
                                 ctx=ast.Load(),
@@ -1033,7 +1151,8 @@ def _create_device_sync_statements(
 
 
 def create_wrapper_function(
-    mode: TestingMode = TestingMode.BEHAVIOR, used_frameworks: dict[str, str] | None = None
+    mode: TestingMode = TestingMode.BEHAVIOR,
+    used_frameworks: dict[str, str] | None = None,
 ) -> ast.FunctionDef:
     lineno = 1
     wrapper_body: list[ast.stmt] = [
@@ -1041,15 +1160,30 @@ def create_wrapper_function(
             targets=[ast.Name(id="test_id", ctx=ast.Store())],
             value=ast.JoinedStr(
                 values=[
-                    ast.FormattedValue(value=ast.Name(id="codeflash_test_module_name", ctx=ast.Load()), conversion=-1),
+                    ast.FormattedValue(
+                        value=ast.Name(id="codeflash_test_module_name", ctx=ast.Load()),
+                        conversion=-1,
+                    ),
                     ast.Constant(value=":"),
-                    ast.FormattedValue(value=ast.Name(id="codeflash_test_class_name", ctx=ast.Load()), conversion=-1),
+                    ast.FormattedValue(
+                        value=ast.Name(id="codeflash_test_class_name", ctx=ast.Load()),
+                        conversion=-1,
+                    ),
                     ast.Constant(value=":"),
-                    ast.FormattedValue(value=ast.Name(id="codeflash_test_name", ctx=ast.Load()), conversion=-1),
+                    ast.FormattedValue(
+                        value=ast.Name(id="codeflash_test_name", ctx=ast.Load()),
+                        conversion=-1,
+                    ),
                     ast.Constant(value=":"),
-                    ast.FormattedValue(value=ast.Name(id="codeflash_line_id", ctx=ast.Load()), conversion=-1),
+                    ast.FormattedValue(
+                        value=ast.Name(id="codeflash_line_id", ctx=ast.Load()),
+                        conversion=-1,
+                    ),
                     ast.Constant(value=":"),
-                    ast.FormattedValue(value=ast.Name(id="codeflash_loop_index", ctx=ast.Load()), conversion=-1),
+                    ast.FormattedValue(
+                        value=ast.Name(id="codeflash_loop_index", ctx=ast.Load()),
+                        conversion=-1,
+                    ),
                 ]
             ),
             lineno=lineno + 1,
@@ -1059,7 +1193,10 @@ def create_wrapper_function(
                 op=ast.Not(),
                 operand=ast.Call(
                     func=ast.Name(id="hasattr", ctx=ast.Load()),
-                    args=[ast.Name(id="codeflash_wrap", ctx=ast.Load()), ast.Constant(value="index")],
+                    args=[
+                        ast.Name(id="codeflash_wrap", ctx=ast.Load()),
+                        ast.Constant(value="index"),
+                    ],
                     keywords=[],
                 ),
             ),
@@ -1067,7 +1204,9 @@ def create_wrapper_function(
                 ast.Assign(
                     targets=[
                         ast.Attribute(
-                            value=ast.Name(id="codeflash_wrap", ctx=ast.Load()), attr="index", ctx=ast.Store()
+                            value=ast.Name(id="codeflash_wrap", ctx=ast.Load()),
+                            attr="index",
+                            ctx=ast.Store(),
                         )
                     ],
                     value=ast.Dict(keys=[], values=[]),
@@ -1082,14 +1221,20 @@ def create_wrapper_function(
                 left=ast.Name(id="test_id", ctx=ast.Load()),
                 ops=[ast.In()],
                 comparators=[
-                    ast.Attribute(value=ast.Name(id="codeflash_wrap", ctx=ast.Load()), attr="index", ctx=ast.Load())
+                    ast.Attribute(
+                        value=ast.Name(id="codeflash_wrap", ctx=ast.Load()),
+                        attr="index",
+                        ctx=ast.Load(),
+                    )
                 ],
             ),
             body=[
                 ast.AugAssign(
                     target=ast.Subscript(
                         value=ast.Attribute(
-                            value=ast.Name(id="codeflash_wrap", ctx=ast.Load()), attr="index", ctx=ast.Load()
+                            value=ast.Name(id="codeflash_wrap", ctx=ast.Load()),
+                            attr="index",
+                            ctx=ast.Load(),
                         ),
                         slice=ast.Name(id="test_id", ctx=ast.Load()),
                         ctx=ast.Store(),
@@ -1104,7 +1249,9 @@ def create_wrapper_function(
                     targets=[
                         ast.Subscript(
                             value=ast.Attribute(
-                                value=ast.Name(id="codeflash_wrap", ctx=ast.Load()), attr="index", ctx=ast.Load()
+                                value=ast.Name(id="codeflash_wrap", ctx=ast.Load()),
+                                attr="index",
+                                ctx=ast.Load(),
                             ),
                             slice=ast.Name(id="test_id", ctx=ast.Load()),
                             ctx=ast.Store(),
@@ -1119,7 +1266,11 @@ def create_wrapper_function(
         ast.Assign(
             targets=[ast.Name(id="codeflash_test_index", ctx=ast.Store())],
             value=ast.Subscript(
-                value=ast.Attribute(value=ast.Name(id="codeflash_wrap", ctx=ast.Load()), attr="index", ctx=ast.Load()),
+                value=ast.Attribute(
+                    value=ast.Name(id="codeflash_wrap", ctx=ast.Load()),
+                    attr="index",
+                    ctx=ast.Load(),
+                ),
                 slice=ast.Name(id="test_id", ctx=ast.Load()),
                 ctx=ast.Load(),
             ),
@@ -1129,9 +1280,15 @@ def create_wrapper_function(
             targets=[ast.Name(id="invocation_id", ctx=ast.Store())],
             value=ast.JoinedStr(
                 values=[
-                    ast.FormattedValue(value=ast.Name(id="codeflash_line_id", ctx=ast.Load()), conversion=-1),
+                    ast.FormattedValue(
+                        value=ast.Name(id="codeflash_line_id", ctx=ast.Load()),
+                        conversion=-1,
+                    ),
                     ast.Constant(value="_"),
-                    ast.FormattedValue(value=ast.Name(id="codeflash_test_index", ctx=ast.Load()), conversion=-1),
+                    ast.FormattedValue(
+                        value=ast.Name(id="codeflash_test_index", ctx=ast.Load()),
+                        conversion=-1,
+                    ),
                 ]
             ),
             lineno=lineno + 8,
@@ -1143,14 +1300,22 @@ def create_wrapper_function(
                     value=ast.JoinedStr(
                         values=[
                             ast.FormattedValue(
-                                value=ast.Name(id="codeflash_test_module_name", ctx=ast.Load()), conversion=-1
+                                value=ast.Name(
+                                    id="codeflash_test_module_name", ctx=ast.Load()
+                                ),
+                                conversion=-1,
                             ),
                             ast.Constant(value=":"),
                             ast.FormattedValue(
                                 value=ast.IfExp(
-                                    test=ast.Name(id="codeflash_test_class_name", ctx=ast.Load()),
+                                    test=ast.Name(
+                                        id="codeflash_test_class_name", ctx=ast.Load()
+                                    ),
                                     body=ast.BinOp(
-                                        left=ast.Name(id="codeflash_test_class_name", ctx=ast.Load()),
+                                        left=ast.Name(
+                                            id="codeflash_test_class_name",
+                                            ctx=ast.Load(),
+                                        ),
                                         op=ast.Add(),
                                         right=ast.Constant(value="."),
                                     ),
@@ -1158,17 +1323,31 @@ def create_wrapper_function(
                                 ),
                                 conversion=-1,
                             ),
-                            ast.FormattedValue(value=ast.Name(id="codeflash_test_name", ctx=ast.Load()), conversion=-1),
-                            ast.Constant(value=":"),
                             ast.FormattedValue(
-                                value=ast.Name(id="codeflash_function_name", ctx=ast.Load()), conversion=-1
+                                value=ast.Name(
+                                    id="codeflash_test_name", ctx=ast.Load()
+                                ),
+                                conversion=-1,
                             ),
                             ast.Constant(value=":"),
                             ast.FormattedValue(
-                                value=ast.Name(id="codeflash_loop_index", ctx=ast.Load()), conversion=-1
+                                value=ast.Name(
+                                    id="codeflash_function_name", ctx=ast.Load()
+                                ),
+                                conversion=-1,
                             ),
                             ast.Constant(value=":"),
-                            ast.FormattedValue(value=ast.Name(id="invocation_id", ctx=ast.Load()), conversion=-1),
+                            ast.FormattedValue(
+                                value=ast.Name(
+                                    id="codeflash_loop_index", ctx=ast.Load()
+                                ),
+                                conversion=-1,
+                            ),
+                            ast.Constant(value=":"),
+                            ast.FormattedValue(
+                                value=ast.Name(id="invocation_id", ctx=ast.Load()),
+                                conversion=-1,
+                            ),
                         ]
                     ),
                     lineno=lineno + 9,
@@ -1181,7 +1360,10 @@ def create_wrapper_function(
                                 values=[
                                     ast.Constant(value="!$######"),
                                     ast.FormattedValue(
-                                        value=ast.Name(id="test_stdout_tag", ctx=ast.Load()), conversion=-1
+                                        value=ast.Name(
+                                            id="test_stdout_tag", ctx=ast.Load()
+                                        ),
+                                        conversion=-1,
                                     ),
                                     ast.Constant(value="######$!"),
                                 ]
@@ -1193,13 +1375,19 @@ def create_wrapper_function(
             ]
         ),
         ast.Assign(
-            targets=[ast.Name(id="exception", ctx=ast.Store())], value=ast.Constant(value=None), lineno=lineno + 10
+            targets=[ast.Name(id="exception", ctx=ast.Store())],
+            value=ast.Constant(value=None),
+            lineno=lineno + 10,
         ),
         # Pre-compute device sync conditions before profiling to avoid overhead during timing
         *_create_device_sync_precompute_statements(used_frameworks),
         ast.Expr(
             value=ast.Call(
-                func=ast.Attribute(value=ast.Name(id="gc", ctx=ast.Load()), attr="disable", ctx=ast.Load()),
+                func=ast.Attribute(
+                    value=ast.Name(id="gc", ctx=ast.Load()),
+                    attr="disable",
+                    ctx=ast.Load(),
+                ),
                 args=[],
                 keywords=[],
             ),
@@ -1208,12 +1396,16 @@ def create_wrapper_function(
         ast.Try(
             body=[
                 # Pre-sync: synchronize device before starting timer
-                *_create_device_sync_statements(used_frameworks, for_return_value=False),
+                *_create_device_sync_statements(
+                    used_frameworks, for_return_value=False
+                ),
                 ast.Assign(
                     targets=[ast.Name(id="counter", ctx=ast.Store())],
                     value=ast.Call(
                         func=ast.Attribute(
-                            value=ast.Name(id="time", ctx=ast.Load()), attr="perf_counter_ns", ctx=ast.Load()
+                            value=ast.Name(id="time", ctx=ast.Load()),
+                            attr="perf_counter_ns",
+                            ctx=ast.Load(),
                         ),
                         args=[],
                         keywords=[],
@@ -1224,8 +1416,17 @@ def create_wrapper_function(
                     targets=[ast.Name(id="return_value", ctx=ast.Store())],
                     value=ast.Call(
                         func=ast.Name(id="codeflash_wrapped", ctx=ast.Load()),
-                        args=[ast.Starred(value=ast.Name(id="args", ctx=ast.Load()), ctx=ast.Load())],
-                        keywords=[ast.keyword(arg=None, value=ast.Name(id="kwargs", ctx=ast.Load()))],
+                        args=[
+                            ast.Starred(
+                                value=ast.Name(id="args", ctx=ast.Load()),
+                                ctx=ast.Load(),
+                            )
+                        ],
+                        keywords=[
+                            ast.keyword(
+                                arg=None, value=ast.Name(id="kwargs", ctx=ast.Load())
+                            )
+                        ],
                     ),
                     lineno=lineno + 12,
                 ),
@@ -1236,7 +1437,9 @@ def create_wrapper_function(
                     value=ast.BinOp(
                         left=ast.Call(
                             func=ast.Attribute(
-                                value=ast.Name(id="time", ctx=ast.Load()), attr="perf_counter_ns", ctx=ast.Load()
+                                value=ast.Name(id="time", ctx=ast.Load()),
+                                attr="perf_counter_ns",
+                                ctx=ast.Load(),
                             ),
                             args=[],
                             keywords=[],
@@ -1253,7 +1456,9 @@ def create_wrapper_function(
                     name="e",
                     body=[
                         ast.Assign(
-                            targets=[ast.Name(id="codeflash_duration", ctx=ast.Store())],
+                            targets=[
+                                ast.Name(id="codeflash_duration", ctx=ast.Store())
+                            ],
                             value=ast.BinOp(
                                 left=ast.Call(
                                     func=ast.Attribute(
@@ -1284,7 +1489,11 @@ def create_wrapper_function(
         ),
         ast.Expr(
             value=ast.Call(
-                func=ast.Attribute(value=ast.Name(id="gc", ctx=ast.Load()), attr="enable", ctx=ast.Load()),
+                func=ast.Attribute(
+                    value=ast.Name(id="gc", ctx=ast.Load()),
+                    attr="enable",
+                    ctx=ast.Load(),
+                ),
                 args=[],
                 keywords=[],
             )
@@ -1296,12 +1505,18 @@ def create_wrapper_function(
                     ast.JoinedStr(
                         values=[
                             ast.Constant(value="!######"),
-                            ast.FormattedValue(value=ast.Name(id="test_stdout_tag", ctx=ast.Load()), conversion=-1),
+                            ast.FormattedValue(
+                                value=ast.Name(id="test_stdout_tag", ctx=ast.Load()),
+                                conversion=-1,
+                            ),
                             *(
                                 [
                                     ast.Constant(value=":"),
                                     ast.FormattedValue(
-                                        value=ast.Name(id="codeflash_duration", ctx=ast.Load()), conversion=-1
+                                        value=ast.Name(
+                                            id="codeflash_duration", ctx=ast.Load()
+                                        ),
+                                        conversion=-1,
                                     ),
                                 ]
                                 if mode == TestingMode.PERFORMANCE
@@ -1322,14 +1537,18 @@ def create_wrapper_function(
                         test=ast.Name(id="exception", ctx=ast.Load()),
                         body=ast.Call(
                             func=ast.Attribute(
-                                value=ast.Name(id="pickle", ctx=ast.Load()), attr="dumps", ctx=ast.Load()
+                                value=ast.Name(id="pickle", ctx=ast.Load()),
+                                attr="dumps",
+                                ctx=ast.Load(),
                             ),
                             args=[ast.Name(id="exception", ctx=ast.Load())],
                             keywords=[],
                         ),
                         orelse=ast.Call(
                             func=ast.Attribute(
-                                value=ast.Name(id="pickle", ctx=ast.Load()), attr="dumps", ctx=ast.Load()
+                                value=ast.Name(id="pickle", ctx=ast.Load()),
+                                attr="dumps",
+                                ctx=ast.Load(),
                             ),
                             args=[ast.Name(id="return_value", ctx=ast.Load())],
                             keywords=[],
@@ -1346,21 +1565,33 @@ def create_wrapper_function(
                 ast.Expr(
                     value=ast.Call(
                         func=ast.Attribute(
-                            value=ast.Name(id="codeflash_cur", ctx=ast.Load()), attr="execute", ctx=ast.Load()
+                            value=ast.Name(id="codeflash_cur", ctx=ast.Load()),
+                            attr="execute",
+                            ctx=ast.Load(),
                         ),
                         args=[
-                            ast.Constant(value="INSERT INTO test_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"),
+                            ast.Constant(
+                                value="INSERT INTO test_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                            ),
                             ast.Tuple(
                                 elts=[
-                                    ast.Name(id="codeflash_test_module_name", ctx=ast.Load()),
-                                    ast.Name(id="codeflash_test_class_name", ctx=ast.Load()),
+                                    ast.Name(
+                                        id="codeflash_test_module_name", ctx=ast.Load()
+                                    ),
+                                    ast.Name(
+                                        id="codeflash_test_class_name", ctx=ast.Load()
+                                    ),
                                     ast.Name(id="codeflash_test_name", ctx=ast.Load()),
-                                    ast.Name(id="codeflash_function_name", ctx=ast.Load()),
+                                    ast.Name(
+                                        id="codeflash_function_name", ctx=ast.Load()
+                                    ),
                                     ast.Name(id="codeflash_loop_index", ctx=ast.Load()),
                                     ast.Name(id="invocation_id", ctx=ast.Load()),
                                     ast.Name(id="codeflash_duration", ctx=ast.Load()),
                                     ast.Name(id="pickled_return_value", ctx=ast.Load()),
-                                    ast.Constant(value=VerificationType.FUNCTION_CALL.value),
+                                    ast.Constant(
+                                        value=VerificationType.FUNCTION_CALL.value
+                                    ),
                                 ],
                                 ctx=ast.Load(),
                             ),
@@ -1372,7 +1603,9 @@ def create_wrapper_function(
                 ast.Expr(
                     value=ast.Call(
                         func=ast.Attribute(
-                            value=ast.Name(id="codeflash_con", ctx=ast.Load()), attr="commit", ctx=ast.Load()
+                            value=ast.Name(id="codeflash_con", ctx=ast.Load()),
+                            attr="commit",
+                            ctx=ast.Load(),
                         ),
                         args=[],
                         keywords=[],
@@ -1385,11 +1618,19 @@ def create_wrapper_function(
         ),
         ast.If(
             test=ast.Name(id="exception", ctx=ast.Load()),
-            body=[ast.Raise(exc=ast.Name(id="exception", ctx=ast.Load()), cause=None, lineno=lineno + 22)],
+            body=[
+                ast.Raise(
+                    exc=ast.Name(id="exception", ctx=ast.Load()),
+                    cause=None,
+                    lineno=lineno + 22,
+                )
+            ],
             orelse=[],
             lineno=lineno + 22,
         ),
-        ast.Return(value=ast.Name(id="return_value", ctx=ast.Load()), lineno=lineno + 19),
+        ast.Return(
+            value=ast.Name(id="return_value", ctx=ast.Load()), lineno=lineno + 19
+        ),
     ]
     return ast.FunctionDef(
         name="codeflash_wrap",
@@ -1402,8 +1643,16 @@ def create_wrapper_function(
                 ast.arg(arg="codeflash_function_name", annotation=None),
                 ast.arg(arg="codeflash_line_id", annotation=None),
                 ast.arg(arg="codeflash_loop_index", annotation=None),
-                *([ast.arg(arg="codeflash_cur", annotation=None)] if mode == TestingMode.BEHAVIOR else []),
-                *([ast.arg(arg="codeflash_con", annotation=None)] if mode == TestingMode.BEHAVIOR else []),
+                *(
+                    [ast.arg(arg="codeflash_cur", annotation=None)]
+                    if mode == TestingMode.BEHAVIOR
+                    else []
+                ),
+                *(
+                    [ast.arg(arg="codeflash_con", annotation=None)]
+                    if mode == TestingMode.BEHAVIOR
+                    else []
+                ),
             ],
             vararg=ast.arg(arg="args"),
             kwarg=ast.arg(arg="kwargs"),
@@ -1422,7 +1671,9 @@ def create_wrapper_function(
 class AsyncDecoratorAdder(cst.CSTTransformer):
     """Transformer that adds async decorator to async function definitions."""
 
-    def __init__(self, function: FunctionToOptimize, mode: TestingMode = TestingMode.BEHAVIOR) -> None:
+    def __init__(
+        self, function: FunctionToOptimize, mode: TestingMode = TestingMode.BEHAVIOR
+    ) -> None:
         """Initialize the transformer.
 
         Args:
@@ -1440,14 +1691,18 @@ class AsyncDecoratorAdder(cst.CSTTransformer):
 
         # Choose decorator based on mode
         self.decorator_name = (
-            "codeflash_behavior_async" if mode == TestingMode.BEHAVIOR else "codeflash_performance_async"
+            "codeflash_behavior_async"
+            if mode == TestingMode.BEHAVIOR
+            else "codeflash_performance_async"
         )
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         # Track when we enter a class
         self.context_stack.append(node.name.value)
 
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.ClassDef:  # noqa: ARG002
+    def leave_ClassDef(
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+    ) -> cst.ClassDef:  # noqa: ARG002
         # Pop the context when we leave a class
         self.context_stack.pop()
         return updated_node
@@ -1456,28 +1711,40 @@ class AsyncDecoratorAdder(cst.CSTTransformer):
         # Track when we enter a function
         self.context_stack.append(node.name.value)
 
-    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:
+    def leave_FunctionDef(
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+    ) -> cst.FunctionDef:
         # Check if this is an async function and matches our target
-        if original_node.asynchronous is not None and self.context_stack == self.qualified_name_parts:
+        if (
+            original_node.asynchronous is not None
+            and self.context_stack == self.qualified_name_parts
+        ):
             # Check if the decorator is already present
             has_decorator = any(
-                self._is_target_decorator(decorator.decorator) for decorator in original_node.decorators
+                self._is_target_decorator(decorator.decorator)
+                for decorator in original_node.decorators
             )
 
             # Only add the decorator if it's not already there
             if not has_decorator:
-                new_decorator = cst.Decorator(decorator=cst.Name(value=self.decorator_name))
+                new_decorator = cst.Decorator(
+                    decorator=cst.Name(value=self.decorator_name)
+                )
 
                 # Add our new decorator to the existing decorators
                 updated_decorators = [new_decorator, *list(updated_node.decorators)]
-                updated_node = updated_node.with_changes(decorators=tuple(updated_decorators))
+                updated_node = updated_node.with_changes(
+                    decorators=tuple(updated_decorators)
+                )
                 self.added_decorator = True
 
         # Pop the context when we leave a function
         self.context_stack.pop()
         return updated_node
 
-    def _is_target_decorator(self, decorator_node: cst.Name | cst.Attribute | cst.Call) -> bool:
+    def _is_target_decorator(
+        self, decorator_node: cst.Name | cst.Attribute | cst.Call
+    ) -> bool:
         """Check if a decorator matches our target decorator name."""
         if isinstance(decorator_node, cst.Name):
             return decorator_node.value in {
@@ -1485,7 +1752,9 @@ class AsyncDecoratorAdder(cst.CSTTransformer):
                 "codeflash_behavior_async",
                 "codeflash_performance_async",
             }
-        if isinstance(decorator_node, cst.Call) and isinstance(decorator_node.func, cst.Name):
+        if isinstance(decorator_node, cst.Call) and isinstance(
+            decorator_node.func, cst.Name
+        ):
             return decorator_node.func.value in {
                 "codeflash_trace_async",
                 "codeflash_behavior_async",
@@ -1513,31 +1782,41 @@ class AsyncDecoratorImportAdder(cst.CSTTransformer):
             and not isinstance(node.names, cst.ImportStar)
         ):
             decorator_name = (
-                "codeflash_behavior_async" if self.mode == TestingMode.BEHAVIOR else "codeflash_performance_async"
+                "codeflash_behavior_async"
+                if self.mode == TestingMode.BEHAVIOR
+                else "codeflash_performance_async"
             )
             for import_alias in node.names:
                 if import_alias.name.value == decorator_name:
                     self.has_import = True
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:  # noqa: ARG002
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:  # noqa: ARG002
         # If the import is already there, don't add it again
         if self.has_import:
             return updated_node
 
         # Choose import based on mode
         decorator_name = (
-            "codeflash_behavior_async" if self.mode == TestingMode.BEHAVIOR else "codeflash_performance_async"
+            "codeflash_behavior_async"
+            if self.mode == TestingMode.BEHAVIOR
+            else "codeflash_performance_async"
         )
 
         # Parse the import statement into a CST node
-        import_node = cst.parse_statement(f"from codeflash.code_utils.codeflash_wrap_decorator import {decorator_name}")
+        import_node = cst.parse_statement(
+            f"from codeflash.code_utils.codeflash_wrap_decorator import {decorator_name}"
+        )
 
         # Add the import to the module's body
         return updated_node.with_changes(body=[import_node, *list(updated_node.body)])
 
 
 def add_async_decorator_to_function(
-    source_path: Path, function: FunctionToOptimize, mode: TestingMode = TestingMode.BEHAVIOR
+    source_path: Path,
+    function: FunctionToOptimize,
+    mode: TestingMode = TestingMode.BEHAVIOR,
 ) -> bool:
     """Add async decorator to an async function definition and write back to file.
 
@@ -1573,7 +1852,9 @@ def add_async_decorator_to_function(
 
         modified_code = sort_imports(code=module.code, float_to_top=True)
     except Exception as e:
-        logger.exception(f"Error adding async decorator to function {function.qualified_name}: {e}")
+        logger.exception(
+            f"Error adding async decorator to function {function.qualified_name}: {e}"
+        )
         return False
     else:
         if decorator_transformer.added_decorator:

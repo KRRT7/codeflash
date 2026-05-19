@@ -12,11 +12,13 @@ from typing import Any, Callable, TypeVar
 
 import dill as pickle
 
+from codeflash._sqlite_schema import TEST_RESULTS_TABLE_SCHEMA
 
-class VerificationType(str, Enum):  # moved from codeflash/verification/codeflash_capture.py
-    FUNCTION_CALL = (
-        "function_call"  # Correctness verification for a test function, checks input values and output values)
-    )
+
+class VerificationType(
+    str, Enum
+):  # moved from codeflash/verification/codeflash_capture.py
+    FUNCTION_CALL = "function_call"  # Correctness verification for a test function, checks input values and output values)
     INIT_STATE_FTO = "init_state_fto"  # Correctness verification for fto class instance attributes after init
     INIT_STATE_HELPER = "init_state_helper"  # Correctness verification for helper class instance attributes after init
 
@@ -24,7 +26,9 @@ class VerificationType(str, Enum):  # moved from codeflash/verification/codeflas
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-def get_run_tmp_file(file_path: Path) -> Path:  # moved from codeflash/code_utils/code_utils.py
+def get_run_tmp_file(
+    file_path: Path,
+) -> Path:  # moved from codeflash/code_utils/code_utils.py
     if not hasattr(get_run_tmp_file, "tmpdir"):
         get_run_tmp_file.tmpdir = TemporaryDirectory(prefix="codeflash_")
     return Path(get_run_tmp_file.tmpdir.name) / file_path
@@ -52,7 +56,9 @@ def codeflash_behavior_async(func: F) -> F:
         loop_index = int(os.environ["CODEFLASH_LOOP_INDEX"])
         test_module_name, test_class_name, test_name = extract_test_context_from_env()
 
-        test_id = f"{test_module_name}:{test_class_name}:{test_name}:{line_id}:{loop_index}"
+        test_id = (
+            f"{test_module_name}:{test_class_name}:{test_name}:{line_id}:{loop_index}"
+        )
 
         if not hasattr(async_wrapper, "index"):
             async_wrapper.index = {}
@@ -72,19 +78,19 @@ def codeflash_behavior_async(func: F) -> F:
         codeflash_con = sqlite3.connect(db_path)
         codeflash_cur = codeflash_con.cursor()
 
-        codeflash_cur.execute(
-            "CREATE TABLE IF NOT EXISTS test_results (test_module_path TEXT, test_class_name TEXT, "
-            "test_function_name TEXT, function_getting_tested TEXT, loop_index INTEGER, iteration_id TEXT, "
-            "runtime INTEGER, return_value BLOB, verification_type TEXT)"
-        )
+        codeflash_cur.execute(TEST_RESULTS_TABLE_SCHEMA)
 
         exception = None
         counter = loop.time()
         gc.disable()
         try:
-            ret = func(*args, **kwargs)  # coroutine creation has some overhead, though it is very small
+            ret = func(
+                *args, **kwargs
+            )  # coroutine creation has some overhead, though it is very small
             counter = loop.time()
-            return_value = await ret  # let's measure the actual execution time of the code
+            return_value = (
+                await ret
+            )  # let's measure the actual execution time of the code
             codeflash_duration = int((loop.time() - counter) * 1_000_000_000)
         except Exception as e:
             codeflash_duration = int((loop.time() - counter) * 1_000_000_000)
@@ -94,7 +100,11 @@ def codeflash_behavior_async(func: F) -> F:
 
         print(f"!######{test_stdout_tag}######!")
 
-        pickled_return_value = pickle.dumps(exception) if exception else pickle.dumps((args, kwargs, return_value))
+        pickled_return_value = (
+            pickle.dumps(exception)
+            if exception
+            else pickle.dumps((args, kwargs, return_value))
+        )
         codeflash_cur.execute(
             "INSERT INTO test_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -129,7 +139,9 @@ def codeflash_performance_async(func: F) -> F:
 
         test_module_name, test_class_name, test_name = extract_test_context_from_env()
 
-        test_id = f"{test_module_name}:{test_class_name}:{test_name}:{line_id}:{loop_index}"
+        test_id = (
+            f"{test_module_name}:{test_class_name}:{test_name}:{line_id}:{loop_index}"
+        )
 
         if not hasattr(async_wrapper, "index"):
             async_wrapper.index = {}

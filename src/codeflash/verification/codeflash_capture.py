@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-# This file should not have any dependencies on codeflash
+# This file should not have any dependencies on codeflash (except _sqlite_schema)
 import functools
 import gc
 import inspect
@@ -12,6 +12,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable
 
+from codeflash._sqlite_schema import TEST_RESULTS_TABLE_SCHEMA
+
 import dill as pickle
 from dill import PicklingWarning
 
@@ -19,9 +21,7 @@ warnings.filterwarnings("ignore", category=PicklingWarning)
 
 
 class VerificationType(str, Enum):
-    FUNCTION_CALL = (
-        "function_call"  # Correctness verification for a test function, checks input values and output values)
-    )
+    FUNCTION_CALL = "function_call"  # Correctness verification for a test function, checks input values and output values)
     INIT_STATE_FTO = "init_state_fto"  # Correctness verification for fto class instance attributes after init
     INIT_STATE_HELPER = "init_state_helper"  # Correctness verification for helper class instance attributes after init
 
@@ -97,14 +97,18 @@ def get_test_info_from_stack(tests_root: str) -> tuple[str, str | None, str, str
     return test_module_name, test_class_name, test_name, line_id
 
 
-def codeflash_capture(function_name: str, tmp_dir_path: str, tests_root: str, is_fto: bool = False) -> Callable:  # noqa: FBT001, FBT002
+def codeflash_capture(
+    function_name: str, tmp_dir_path: str, tests_root: str, is_fto: bool = False
+) -> Callable:  # noqa: FBT001, FBT002
     """Define a decorator to instrument the init function, collect test info, and capture the instance state."""
 
     def decorator(wrapped: Callable) -> Callable:
         @functools.wraps(wrapped)
         def wrapper(*args, **kwargs) -> None:  # noqa: ANN002, ANN003
             # Dynamic information retrieved from stack
-            test_module_name, test_class_name, test_name, line_id = get_test_info_from_stack(tests_root)
+            test_module_name, test_class_name, test_name, line_id = (
+                get_test_info_from_stack(tests_root)
+            )
 
             # Get env variables
             loop_index = int(os.environ["CODEFLASH_LOOP_INDEX"])
@@ -130,7 +134,9 @@ def codeflash_capture(function_name: str, tmp_dir_path: str, tests_root: str, is
             test_stdout_tag = f"{test_module_name}:{(test_class_name + '.' if test_class_name else '')}{test_name}:{function_name}:{loop_index}:{invocation_id}"
             print(f"!$######{test_stdout_tag}######$!")
             # Connect to sqlite
-            codeflash_con = sqlite3.connect(f"{tmp_dir_path}_{codeflash_iteration}.sqlite")
+            codeflash_con = sqlite3.connect(
+                f"{tmp_dir_path}_{codeflash_iteration}.sqlite"
+            )
             codeflash_cur = codeflash_con.cursor()
 
             # Record timing information
@@ -154,12 +160,12 @@ def codeflash_capture(function_name: str, tmp_dir_path: str, tests_root: str, is
                 ].__dict__  # self is always the first argument, this is ensured during instrumentation
             else:
                 raise ValueError("Instance state could not be captured.")
-            codeflash_cur.execute(
-                "CREATE TABLE IF NOT EXISTS test_results (test_module_path TEXT, test_class_name TEXT, test_function_name TEXT, function_getting_tested TEXT, loop_index INTEGER, iteration_id TEXT, runtime INTEGER, return_value BLOB, verification_type TEXT)"
-            )
+            codeflash_cur.execute(TEST_RESULTS_TABLE_SCHEMA)
 
             # Write to sqlite
-            pickled_return_value = pickle.dumps(exception) if exception else pickle.dumps(instance_state)
+            pickled_return_value = (
+                pickle.dumps(exception) if exception else pickle.dumps(instance_state)
+            )
             codeflash_cur.execute(
                 "INSERT INTO test_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
@@ -171,7 +177,9 @@ def codeflash_capture(function_name: str, tmp_dir_path: str, tests_root: str, is
                     invocation_id,
                     codeflash_duration,
                     pickled_return_value,
-                    VerificationType.INIT_STATE_FTO if is_fto else VerificationType.INIT_STATE_HELPER,
+                    VerificationType.INIT_STATE_FTO
+                    if is_fto
+                    else VerificationType.INIT_STATE_HELPER,
                 ),
             )
             codeflash_con.commit()
