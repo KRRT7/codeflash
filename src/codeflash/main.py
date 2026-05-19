@@ -9,6 +9,7 @@ from codeflash.cli_cmds.cmd_init import CODEFLASH_LOGO, ask_run_end_to_end_test
 from codeflash.cli_cmds.console import paneled_text
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.version_check import check_for_newer_minor_version
+from codeflash.models.config import AppConfig
 
 
 def main() -> None:
@@ -29,9 +30,10 @@ def main() -> None:
         if not env_utils.check_formatter_installed(args.formatter_cmds):
             return
 
+        config = AppConfig.from_namespace(args)
         from codeflash.optimization import optimizer
 
-        optimizer.run_with_args(args)
+        optimizer.run_with_args(config)
 
 
 def print_codeflash_banner() -> None:

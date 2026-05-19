@@ -5,7 +5,7 @@ from pathlib import Path
 from codeflash.code_utils.code_utils import ImportErrorPattern
 from codeflash.models.models import TestFile, TestFiles, TestType
 from codeflash.verification.parse_test_output import parse_test_xml
-from codeflash.verification.test_runner import run_behavioral_tests
+from codeflash.verification.test_runner import run_pytest_tests
 from codeflash.verification.verification_utils import TestConfig
 
 
@@ -45,15 +45,22 @@ class TestUnittestRunnerSorter(unittest.TestCase):
     with tempfile.TemporaryDirectory(dir=cur_dir_path) as temp_dir:
         test_file_path = Path(temp_dir) / "test_xx.py"
         test_files = TestFiles(
-            test_files=[TestFile(instrumented_behavior_file_path=test_file_path, test_type=TestType.EXISTING_UNIT_TEST)]
+            test_files=[
+                TestFile(
+                    instrumented_behavior_file_path=test_file_path,
+                    test_type=TestType.EXISTING_UNIT_TEST,
+                )
+            ]
         )
         test_file_path.write_text(code, encoding="utf-8")
-        result_file, process, _, _ = run_behavioral_tests(
+        result = run_pytest_tests(
             test_files,
             test_framework=config.test_framework,
-            cwd=Path(config.project_root_path),
             test_env=test_env,
+            cwd=Path(config.project_root_path),
         )
+        result_file = result.result_file_path
+        process = result.run_result
         results = parse_test_xml(result_file, test_files, config, process)
     assert results[0].did_pass, "Test did not pass as expected"
     result_file.unlink(missing_ok=True)
@@ -89,21 +96,32 @@ def test_sort():
     with tempfile.TemporaryDirectory(dir=cur_dir_path) as temp_dir:
         test_file_path = Path(temp_dir) / "test_xx.py"
         test_files = TestFiles(
-            test_files=[TestFile(instrumented_behavior_file_path=test_file_path, test_type=TestType.EXISTING_UNIT_TEST)]
+            test_files=[
+                TestFile(
+                    instrumented_behavior_file_path=test_file_path,
+                    test_type=TestType.EXISTING_UNIT_TEST,
+                )
+            ]
         )
         test_file_path.write_text(code, encoding="utf-8")
-        result_file, process, _, _ = run_behavioral_tests(
+        result = run_pytest_tests(
             test_files,
             test_framework=config.test_framework,
-            cwd=Path(config.project_root_path),
             test_env=test_env,
+            cwd=Path(config.project_root_path),
             pytest_timeout=1,
             pytest_target_runtime_seconds=1,
         )
+        result_file = result.result_file_path
+        process = result.run_result
         results = parse_test_xml(
-            test_xml_file_path=result_file, test_files=test_files, test_config=config, run_result=process
+            test_xml_file_path=result_file,
+            test_files=test_files,
+            test_config=config,
+            run_result=process,
         )
-    assert results[0].did_pass, "Test did not pass as expected"
+    match = ImportErrorPattern.search(process.stdout).group()
+    assert match == "ModuleNotFoundError: No module named 'torch_does_not_exist'"
     result_file.unlink(missing_ok=True)
 
     code = """import torch_does_not_exist
@@ -136,19 +154,29 @@ def test_sort():
     with tempfile.TemporaryDirectory(dir=cur_dir_path) as temp_dir:
         test_file_path = Path(temp_dir) / "test_xx.py"
         test_files = TestFiles(
-            test_files=[TestFile(instrumented_behavior_file_path=test_file_path, test_type=TestType.EXISTING_UNIT_TEST)]
+            test_files=[
+                TestFile(
+                    instrumented_behavior_file_path=test_file_path,
+                    test_type=TestType.EXISTING_UNIT_TEST,
+                )
+            ]
         )
         test_file_path.write_text(code, encoding="utf-8")
-        result_file, process, _, _ = run_behavioral_tests(
+        result = run_pytest_tests(
             test_files,
             test_framework=config.test_framework,
-            cwd=Path(config.project_root_path),
             test_env=test_env,
+            cwd=Path(config.project_root_path),
             pytest_timeout=1,
             pytest_target_runtime_seconds=1,
         )
+        result_file = result.result_file_path
+        process = result.run_result
         results = parse_test_xml(
-            test_xml_file_path=result_file, test_files=test_files, test_config=config, run_result=process
+            test_xml_file_path=result_file,
+            test_files=test_files,
+            test_config=config,
+            run_result=process,
         )
     match = ImportErrorPattern.search(process.stdout).group()
     assert match == "ModuleNotFoundError: No module named 'torch_does_not_exist'"

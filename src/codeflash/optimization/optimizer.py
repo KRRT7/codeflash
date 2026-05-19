@@ -24,12 +24,11 @@ from codeflash.code_utils.git_worktree_utils import (
 )
 from codeflash.code_utils.time_utils import humanize_runtime
 from codeflash.either import is_successful
+from codeflash.models.config import AppConfig
 from codeflash.models.models import ValidCode
 from codeflash.verification.verification_utils import TestConfig
 
 if TYPE_CHECKING:
-    from argparse import Namespace
-
     from codeflash.benchmarking.function_ranker import FunctionRanker
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
     from codeflash.models.models import BenchmarkKey, FunctionCalledInTest
@@ -37,19 +36,15 @@ if TYPE_CHECKING:
 
 
 class Optimizer:
-    def __init__(self, args: Namespace) -> None:
-        self.args = args
+    def __init__(self, config: AppConfig) -> None:
+        self.config = config
 
         self.test_cfg = TestConfig(
-            tests_root=args.tests_root,
-            tests_project_rootdir=args.test_project_root,
-            project_root_path=args.project_root,
-            pytest_cmd=args.pytest_cmd
-            if hasattr(args, "pytest_cmd") and args.pytest_cmd
-            else "pytest",
-            benchmark_tests_root=args.benchmarks_root
-            if "benchmark" in args and "benchmarks_root" in args
-            else None,
+            tests_root=config.tests_root,
+            tests_project_rootdir=config.test_project_root,
+            project_root_path=config.project_root,
+            pytest_cmd=config.pytest_cmd or "pytest",
+            benchmark_tests_root=config.benchmarks_root if config.benchmark else None,
         )
 
         self.aiservice_client = AiServiceClient()
@@ -62,7 +57,7 @@ class Optimizer:
         self.current_function_being_optimized: FunctionToOptimize | None = None
         self.current_function_optimizer: FunctionOptimizer | None = None
         self.current_worktree: Path | None = None
-        self.original_args_and_test_cfg: tuple[Namespace, TestConfig] | None = None
+        self.original_args_and_test_cfg: tuple[AppConfig, TestConfig] | None = None
         self.patch_files: list[Path] = []
 
     def run_benchmarks(
@@ -75,8 +70,8 @@ class Optimizer:
         total_benchmark_timings: dict[BenchmarkKey, float] = {}
 
         if not (
-            hasattr(self.args, "benchmark")
-            and self.args.benchmark
+            hasattr(self.config, "benchmark")
+            and self.config.benchmark
             and num_optimizable_functions > 0
         ):
             return function_benchmark_timings, total_benchmark_timings
@@ -94,7 +89,7 @@ class Optimizer:
 
         console.rule()
         with progress_bar(
-            f"Running benchmarks in {self.args.benchmarks_root}",
+            f"Running benchmarks in {self.config.benchmarks_root}",
             transient=True,
             revert_to_print=bool(get_pr_number()),
         ):
@@ -105,19 +100,20 @@ class Optimizer:
                     file_path_to_source_code[file] = f.read()
             try:
                 instrument_codeflash_trace_decorator(file_to_funcs_to_optimize)
-                self.trace_file = Path(self.args.benchmarks_root) / "benchmarks.trace"
+                self.trace_file = Path(self.config.benchmarks_root) / "benchmarks.trace"
                 if self.trace_file.exists():
                     self.trace_file.unlink()
 
                 self.replay_tests_dir = Path(
                     tempfile.mkdtemp(
-                        prefix="codeflash_replay_tests_", dir=self.args.benchmarks_root
+                        prefix="codeflash_replay_tests_",
+                        dir=self.config.benchmarks_root,
                     )
                 )
                 trace_benchmarks_pytest(
-                    self.args.benchmarks_root,
-                    self.args.tests_root,
-                    self.args.project_root,
+                    self.config.benchmarks_root,
+                    self.config.tests_root,
+                    self.config.project_root,
                     self.trace_file,
                 )  # Run all tests that use pytest-benchmark
                 replay_count = generate_replay_test(
@@ -125,7 +121,7 @@ class Optimizer:
                 )
                 if replay_count == 0:
                     logger.info(
-                        f"No valid benchmarks found in {self.args.benchmarks_root} for functions to optimize, continuing optimization"
+                        f"No valid benchmarks found in {self.config.benchmarks_root} for functions to optimize, continuing optimization"
                     )
                 else:
                     function_benchmark_timings = (
@@ -160,14 +156,14 @@ class Optimizer:
         from codeflash.discovery.functions_to_optimize import get_functions_to_optimize
 
         return get_functions_to_optimize(
-            optimize_all=self.args.all,
-            replay_test=self.args.replay_test,
-            file=self.args.file,
-            only_get_this_function=self.args.function,
+            optimize_all=self.config.all,
+            replay_test=self.config.replay_test,
+            file=self.config.file,
+            only_get_this_function=self.config.function,
             test_cfg=self.test_cfg,
-            ignore_paths=self.args.ignore_paths,
-            project_root=self.args.project_root,
-            module_root=self.args.module_root,
+            ignore_paths=self.config.ignore_paths,
+            project_root=self.config.project_root,
+            module_root=self.config.module_root,
         )
 
     def create_function_optimizer(
@@ -201,14 +197,14 @@ class Optimizer:
 
         qualified_name_w_module = (
             function_to_optimize.qualified_name_with_modules_from_root(
-                self.args.project_root
+                self.config.project_root
             )
         )
 
         function_specific_timings = None
         if (
-            hasattr(self.args, "benchmark")
-            and self.args.benchmark
+            hasattr(self.config, "benchmark")
+            and self.config.benchmark
             and function_benchmark_timings
             and qualified_name_w_module in function_benchmark_timings
             and total_benchmark_timings
@@ -224,7 +220,7 @@ class Optimizer:
             function_to_tests=function_to_tests,
             function_to_optimize_ast=function_to_optimize_ast,
             aiservice_client=self.aiservice_client,
-            args=self.args,
+            config=self.config,
             function_benchmark_timings=function_specific_timings,
             total_benchmark_timings=total_benchmark_timings
             if function_specific_timings
@@ -259,7 +255,7 @@ class Optimizer:
         }
 
         imported_module_analyses = analyze_imported_modules(
-            original_module_code, original_module_path, self.args.project_root
+            original_module_code, original_module_path, self.config.project_root
         )
 
         has_syntax_error = False
@@ -440,14 +436,14 @@ class Optimizer:
         console.rule()
         if not env_utils.ensure_codeflash_api_key():
             return
-        if self.args.no_draft and is_pr_draft():
+        if self.config.no_draft and is_pr_draft():
             logger.warning("PR is in draft mode, skipping optimization")
             return
 
-        if self.args.worktree:
+        if self.config.worktree:
             self.worktree_mode()
 
-        if not self.args.replay_test and self.test_cfg.tests_root.exists():
+        if not self.config.replay_test and self.test_cfg.tests_root.exists():
             leftover_trace_files = list(self.test_cfg.tests_root.glob("*.trace"))
             if leftover_trace_files:
                 logger.debug(
@@ -463,12 +459,12 @@ class Optimizer:
         file_to_funcs_to_optimize, num_optimizable_functions, trace_file_path = (
             self.get_optimizable_functions()
         )
-        if self.args.all:
+        if self.config.all:
             three_min_in_ns = int(1.8e11)
             console.rule()
             pr_message = (
                 "\nCodeflash will keep opening pull requests as it finds optimizations."
-                if not self.args.no_pr
+                if not self.config.no_pr
                 else ""
             )
             logger.info(
@@ -480,7 +476,7 @@ class Optimizer:
         )
         optimizations_found: int = 0
         self.test_cfg.concolic_test_root_dir = Path(
-            tempfile.mkdtemp(dir=self.args.tests_root, prefix="codeflash_concolic_")
+            tempfile.mkdtemp(dir=self.config.tests_root, prefix="codeflash_concolic_")
         )
         try:
             if num_optimizable_functions == 0:
@@ -577,11 +573,11 @@ class Optimizer:
                 logger.info(
                     f"Created {len(self.patch_files)} patch(es) ({[str(patch_path) for patch_path in self.patch_files]})"
                 )
-            if hasattr(self.args, "command") and self.args.command == "optimize":
+            if self.config.command == "optimize":
                 self.cleanup_replay_tests()
             if optimizations_found == 0:
                 logger.info("❌ No optimizations found.")
-            elif self.args.all:
+            elif self.config.all:
                 logger.info("✨ All functions have been optimized! ✨")
                 response = (
                     send_completion_email()
@@ -656,66 +652,68 @@ class Optimizer:
         if self.current_worktree:
             return
 
-        if check_running_in_git_repo(self.args.module_root):
-            worktree_dir = create_detached_worktree(self.args.module_root)
+        if check_running_in_git_repo(self.config.module_root):
+            worktree_dir = create_detached_worktree(self.config.module_root)
             if worktree_dir is None:
                 logger.warning("Failed to create worktree. Skipping optimization.")
                 return
             self.current_worktree = worktree_dir
             self.mirror_paths_for_worktree_mode(worktree_dir)
             # make sure the tests dir is created in the worktree, this can happen if the original tests dir is empty
-            Path(self.args.tests_root).mkdir(parents=True, exist_ok=True)
+            Path(self.config.tests_root).mkdir(parents=True, exist_ok=True)
 
     def mirror_paths_for_worktree_mode(self, worktree_dir: Path) -> None:
-        original_args = copy.deepcopy(self.args)
+        original_args = copy.deepcopy(self.config)
         original_test_cfg = copy.deepcopy(self.test_cfg)
         self.original_args_and_test_cfg = (original_args, original_test_cfg)
 
         original_git_root = git_root_dir()
 
         # mirror project_root
-        self.args.project_root = mirror_path(
-            self.args.project_root, original_git_root, worktree_dir
+        self.config.project_root = mirror_path(
+            self.config.project_root, original_git_root, worktree_dir
         )
         self.test_cfg.project_root_path = mirror_path(
             self.test_cfg.project_root_path, original_git_root, worktree_dir
         )
 
         # mirror module_root
-        self.args.module_root = mirror_path(
-            self.args.module_root, original_git_root, worktree_dir
+        self.config.module_root = mirror_path(
+            self.config.module_root, original_git_root, worktree_dir
         )
 
         # mirror target file
-        if self.args.file:
-            self.args.file = mirror_path(
-                self.args.file, original_git_root, worktree_dir
+        if self.config.file:
+            self.config.file = mirror_path(
+                self.config.file, original_git_root, worktree_dir
             )
 
-        if self.args.all:
+        if self.config.all:
             # the args.all path is the same as module_root.
-            self.args.all = mirror_path(self.args.all, original_git_root, worktree_dir)
+            self.config.all = mirror_path(
+                self.config.all, original_git_root, worktree_dir
+            )
 
         # mirror tests root
-        self.args.tests_root = mirror_path(
-            self.args.tests_root, original_git_root, worktree_dir
+        self.config.tests_root = mirror_path(
+            self.config.tests_root, original_git_root, worktree_dir
         )
         self.test_cfg.tests_root = mirror_path(
             self.test_cfg.tests_root, original_git_root, worktree_dir
         )
 
         # mirror tests project root
-        self.args.test_project_root = mirror_path(
-            self.args.test_project_root, original_git_root, worktree_dir
+        self.config.test_project_root = mirror_path(
+            self.config.test_project_root, original_git_root, worktree_dir
         )
         self.test_cfg.tests_project_rootdir = mirror_path(
             self.test_cfg.tests_project_rootdir, original_git_root, worktree_dir
         )
 
         # mirror benchmarks root paths
-        if self.args.benchmarks_root:
-            self.args.benchmarks_root = mirror_path(
-                self.args.benchmarks_root, original_git_root, worktree_dir
+        if self.config.benchmarks_root:
+            self.config.benchmarks_root = mirror_path(
+                self.config.benchmarks_root, original_git_root, worktree_dir
             )
         if self.test_cfg.benchmark_tests_root:
             self.test_cfg.benchmark_tests_root = mirror_path(
@@ -728,10 +726,10 @@ def mirror_path(path: Path, src_root: Path, dest_root: Path) -> Path:
     return Path(dest_root / relative_path)
 
 
-def run_with_args(args: Namespace) -> None:
+def run_with_args(config: AppConfig) -> None:
     optimizer = None
     try:
-        optimizer = Optimizer(args)
+        optimizer = Optimizer(config)
         optimizer.run()
     except KeyboardInterrupt:
         logger.warning(

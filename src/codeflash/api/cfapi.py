@@ -19,7 +19,7 @@ from codeflash.code_utils.env_utils import (
     get_pr_number,
 )
 from codeflash.code_utils.git_utils import get_current_branch, get_repo_owner_and_name
-from codeflash.github.PrComment import FileDiffContent, PrComment
+from codeflash.github.pr_comment import FileDiffContent, PrComment
 from codeflash.version import __version__
 
 if TYPE_CHECKING:

@@ -31,8 +31,6 @@ from codeflash.discovery.discover_unit_tests import discover_unit_tests
 from codeflash.models.models import FunctionParent
 
 if TYPE_CHECKING:
-    from argparse import Namespace
-
     from libcst import CSTNode
     from libcst.metadata import CodeRange
 
@@ -644,7 +642,7 @@ def inspect_top_level_functions_or_methods(
 def was_function_previously_optimized(
     function_to_optimize: FunctionToOptimize,
     code_context: CodeOptimizationContext,
-    args: Namespace,
+    config: AppConfig,
 ) -> bool:
     """Check which functions have already been optimized and filter them out.
 
@@ -666,7 +664,7 @@ def was_function_previously_optimized(
         owner, repo = None, None
     pr_number = get_pr_number()
 
-    if not owner or not repo or pr_number is None or getattr(args, "no_pr", False):
+    if not owner or not repo or pr_number is None or config.no_pr:
         return False
 
     code_contexts = []

@@ -18,7 +18,7 @@ from codeflash.code_utils.git_utils import (
 from codeflash.code_utils.github_utils import github_pr_url
 from tabulate import tabulate
 from codeflash.code_utils.time_utils import format_perf, format_time
-from codeflash.github.PrComment import FileDiffContent, PrComment
+from codeflash.github.pr_comment import FileDiffContent, PrComment
 from codeflash.result.critic import performance_gain
 
 if TYPE_CHECKING:

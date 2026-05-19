@@ -14,7 +14,7 @@ from codeflash.cli_cmds.console import console, logger
 from codeflash.code_utils.env_utils import get_codeflash_api_key
 from codeflash.code_utils.git_utils import get_last_commit_author_if_pr_exists, get_repo_owner_and_name
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.models.ExperimentMetadata import ExperimentMetadata
+from codeflash.models.models import ExperimentMetadata
 from codeflash.models.models import (
     AIServiceRefinerRequest,
     CodeStringsMarkdown,
@@ -28,13 +28,13 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.models.ExperimentMetadata import ExperimentMetadata
-    from codeflash.models.models import (
+from codeflash.models.models import ExperimentMetadata
+from codeflash.models.models import (
         AIServiceAdaptiveOptimizeRequest,
         AIServiceCodeRepairRequest,
         AIServiceRefinerRequest,
     )
-    from codeflash.result.explanation import Explanation
+from codeflash.result.explanation import Explanation
 
 
 class AiServiceClient:

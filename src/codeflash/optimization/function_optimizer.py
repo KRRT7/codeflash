@@ -91,7 +91,7 @@ from codeflash.context.unused_definition_remover import (
 )
 from codeflash.discovery.functions_to_optimize import was_function_previously_optimized
 from codeflash.either import Failure, Success, is_successful
-from codeflash.models.ExperimentMetadata import ExperimentMetadata
+from codeflash.models.models import ExperimentMetadata
 from codeflash.models.models import (
     AdaptiveOptimizedCandidate,
     AIServiceAdaptiveOptimizeRequest,
@@ -134,19 +134,14 @@ from codeflash.verification.parse_test_output import (
     calculate_function_throughput_from_test_results,
     parse_test_results,
 )
-from codeflash.verification.test_runner import (
-    run_behavioral_tests,
-    run_benchmarking_tests,
-    run_line_profile_tests,
-)
+from codeflash.verification.test_runner import PytestRunResult, run_pytest_tests
 from codeflash.verification.verification_utils import get_test_file_path
 from codeflash.verification.verifier import generate_tests
 
 if TYPE_CHECKING:
-    from argparse import Namespace
-
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
     from codeflash.either import Result
+    from codeflash.models.config import AppConfig
     from codeflash.models.models import (
         BenchmarkKey,
         CodeStringsMarkdown,
@@ -458,7 +453,7 @@ class FunctionOptimizer:
         aiservice_client: AiServiceClient | None = None,
         function_benchmark_timings: dict[BenchmarkKey, int] | None = None,
         total_benchmark_timings: dict[BenchmarkKey, int] | None = None,
-        args: Namespace | None = None,
+        config: AppConfig | None = None,
         replay_tests_dir: Path | None = None,
     ) -> None:
         self.project_root = test_cfg.project_root_path
@@ -489,13 +484,9 @@ class FunctionOptimizer:
         )
         self.test_files = TestFiles(test_files=[])
 
-        self.effort = (
-            getattr(args, "effort", EffortLevel.MEDIUM.value)
-            if args
-            else EffortLevel.MEDIUM.value
-        )
+        self.effort = config.effort if config else EffortLevel.MEDIUM.value
 
-        self.args = args  # Check defaults for these
+        self.config = config
         self.function_trace_id: str = str(uuid.uuid4())
         self.original_module_path = module_name_from_file_path(
             self.function_to_optimize.file_path, self.project_root
@@ -546,7 +537,7 @@ class FunctionOptimizer:
         if (
             random.random() > REPEAT_OPTIMIZATION_PROBABILITY
             and was_function_previously_optimized(  # noqa: S311
-                self.function_to_optimize, code_context, self.args
+                self.function_to_optimize, code_context, self.config
             )
         ):
             return Failure("Function optimization previously attempted, skipping.")
@@ -636,7 +627,7 @@ class FunctionOptimizer:
         )
 
         original_conftest_content = None
-        if self.args.override_fixtures:
+        if self.config.override_fixtures:
             logger.info(
                 "Disabling all autouse fixtures associated with the generated test files"
             )
@@ -755,7 +746,7 @@ class FunctionOptimizer:
 
         add_code_context_hash(code_context.hashing_code_context_hash)
 
-        if self.args.override_fixtures:
+        if self.config.override_fixtures:
             restore_conftest(original_conftest_content)
         if not best_optimization:
             return Failure(
@@ -870,7 +861,7 @@ class FunctionOptimizer:
         replay_perf_gain = {}
         benchmark_tree = None
 
-        if self.args.benchmark:
+        if self.config.benchmark:
             test_results_by_benchmark = (
                 candidate_result.benchmarking_test_results.group_by_benchmarks(
                     self.total_benchmark_timings.keys(),
@@ -907,7 +898,7 @@ class FunctionOptimizer:
             runtime=candidate_result.best_test_runtime,
             line_profiler_test_results=line_profile_test_results,
             winning_behavior_test_results=candidate_result.behavior_test_results,
-            replay_performance_gain=replay_perf_gain if self.args.benchmark else None,
+            replay_performance_gain=replay_perf_gain if self.config.benchmark else None,
             winning_benchmarking_test_results=candidate_result.benchmarking_test_results,
             winning_replay_benchmarking_test_results=candidate_result.benchmarking_test_results,
             async_throughput=candidate_result.async_throughput,
@@ -1211,7 +1202,7 @@ class FunctionOptimizer:
 
         # Display runtime information
         print(tree)
-        if self.args.benchmark and benchmark_tree:
+        if self.config.benchmark and benchmark_tree:
             print(benchmark_tree)
         console.rule()
 
@@ -1414,7 +1405,7 @@ class FunctionOptimizer:
         print(f"📈 {explanation.perf_improvement_line}")
         print(f"Explanation: \n{explanation.__str__()}")
 
-        if self.args.no_pr:
+        if self.config.no_pr:
             tests_source = "\n".join(
                 [
                     test.generated_original_test_source
@@ -1440,7 +1431,7 @@ class FunctionOptimizer:
         original_code: str,
         optimized_context: CodeStringsMarkdown,
     ) -> tuple[str, dict[Path, str]]:
-        should_sort_imports = not self.args.disable_imports_sorting
+        should_sort_imports = not self.config.disable_imports_sorting
         if should_sort_imports and sort_imports(code=original_code) != original_code:
             should_sort_imports = False
 
@@ -1452,7 +1443,7 @@ class FunctionOptimizer:
             )
 
         new_code = format_code(
-            self.args.formatter_cmds,
+            self.config.formatter_cmds,
             path,
             optimized_code=optimized_code,
             check_diff=True,
@@ -1466,7 +1457,7 @@ class FunctionOptimizer:
             module_abspath = hp.file_path
             hp_source_code = hp.source_code
             formatted_helper_code = format_code(
-                self.args.formatter_cmds,
+                self.config.formatter_cmds,
                 module_abspath,
                 optimized_code=hp_source_code,
                 check_diff=True,
@@ -1654,7 +1645,7 @@ class FunctionOptimizer:
         n_tests = get_effort_value(EffortKeys.N_GENERATED_TESTS, self.effort)
         assert len(generated_test_paths) == n_tests
 
-        if not self.args.no_gen_tests:
+        if not self.config.no_gen_tests:
             # Submit test generation tasks
             future_tests = self.submit_test_generation_tasks(
                 self.executor,
@@ -1667,19 +1658,19 @@ class FunctionOptimizer:
         future_concolic_tests = self.executor.submit(
             generate_concolic_tests,
             self.test_cfg,
-            self.args,
+            self.config,  # noqa: T253
             self.function_to_optimize,
             self.function_to_optimize_ast,
         )
 
-        if not self.args.no_gen_tests:
+        if not self.config.no_gen_tests:
             # Wait for test futures to complete
             concurrent.futures.wait([*future_tests, future_concolic_tests])
         else:
             concurrent.futures.wait([future_concolic_tests])
         # Process test generation results
         tests: list[GeneratedTests] = []
-        if not self.args.no_gen_tests:
+        if not self.config.no_gen_tests:
             for future in future_tests:
                 res = future.result()
                 if res:
@@ -1851,7 +1842,7 @@ class FunctionOptimizer:
         )
 
         if not is_successful(baseline_result):
-            if self.args.override_fixtures:
+            if self.config.override_fixtures:
                 restore_conftest(original_conftest_content)
             cleanup_paths(paths_to_cleanup)
             return Failure(baseline_result.failure())
@@ -1861,7 +1852,7 @@ class FunctionOptimizer:
             not coverage_critic(original_code_baseline.coverage_results)
             or not quantity_of_tests_critic(original_code_baseline)
         ):
-            if self.args.override_fixtures:
+            if self.config.override_fixtures:
                 restore_conftest(original_conftest_content)
             cleanup_paths(paths_to_cleanup)
             return Failure("The threshold for test confidence was not met.")
@@ -1919,7 +1910,7 @@ class FunctionOptimizer:
                     function_name=self.function_to_optimize.function_name,
                 )
                 processed_benchmark_info = None
-                if self.args.benchmark:
+                if self.config.benchmark:
                     processed_benchmark_info = process_benchmark_data(
                         replay_performance_gain=best_optimization.replay_performance_gain,
                         fto_benchmark_timings=self.function_benchmark_timings,
@@ -2022,14 +2013,14 @@ class FunctionOptimizer:
         for test in generated_tests.generated_tests:
             if map_gen_test_file_to_no_of_tests[test.behavior_file_path] > 0:
                 formatted_generated_test = format_generated_code(
-                    test.generated_original_test_source, self.args.formatter_cmds
+                    test.generated_original_test_source, self.config.formatter_cmds
                 )
                 generated_tests_str += f"```python\n{formatted_generated_test}\n```"
                 generated_tests_str += "\n\n"
 
         if concolic_test_str:
             formatted_generated_test = format_generated_code(
-                concolic_test_str, self.args.formatter_cmds
+                concolic_test_str, self.config.formatter_cmds
             )
             generated_tests_str += f"```python\n{formatted_generated_test}\n```\n\n"
 
@@ -2118,8 +2109,8 @@ class FunctionOptimizer:
             "concolic_tests": concolic_tests,
         }
 
-        raise_pr = not self.args.no_pr
-        staging_review = self.args.staging_review
+        raise_pr = not self.config.no_pr
+        staging_review = self.config.staging_review
         opt_review_result = OptimizationReviewResult(review="", explanation="")
         # this will now run regardless of pr, staging review flags
         try:
@@ -2163,7 +2154,7 @@ class FunctionOptimizer:
             # Ensure root_dir is set for PR creation (needed for async functions that skip opt_review)
             if "root_dir" not in data:
                 data["root_dir"] = git_root_dir()
-            data["git_remote"] = self.args.git_remote
+            data["git_remote"] = self.config.git_remote
             check_create_pr(**data)
         elif staging_review:
             response = create_staging(**data)
@@ -2186,14 +2177,14 @@ class FunctionOptimizer:
             )
 
         # If worktree mode, do not revert code and helpers, otherwise we would have an empty diff when writing the patch in the lsp
-        if self.args.worktree:
+        if self.config.worktree:
             return
 
         if raise_pr and (
-            self.args.all
+            self.config.all
             or env_utils.get_pr_number()
-            or self.args.replay_test
-            or (self.args.file and not self.args.function)
+            or self.config.replay_test
+            or (self.config.file and not self.config.function)
         ):
             self.revert_code_and_helpers(original_helper_code)
             return
@@ -2372,7 +2363,7 @@ class FunctionOptimizer:
                 f"Original async function throughput: {async_throughput} calls/second"
             )
 
-        if self.args.benchmark:
+        if self.config.benchmark:
             replay_benchmarking_test_results = benchmarking_results.group_by_benchmarks(
                 self.total_benchmark_timings.keys(),
                 self.replay_tests_dir,
@@ -2384,7 +2375,7 @@ class FunctionOptimizer:
                     behavior_test_results=behavioral_results,
                     benchmarking_test_results=benchmarking_results,
                     replay_benchmarking_test_results=replay_benchmarking_test_results
-                    if self.args.benchmark
+                    if self.config.benchmark
                     else None,
                     runtime=total_timing,
                     coverage_results=coverage_results,
@@ -2631,7 +2622,7 @@ class FunctionOptimizer:
                     f"Candidate async function throughput: {candidate_async_throughput} calls/second"
                 )
 
-            if self.args.benchmark:
+            if self.config.benchmark:
                 candidate_replay_benchmarking_results = (
                     candidate_benchmarking_results.group_by_benchmarks(
                         self.total_benchmark_timings.keys(),
@@ -2653,7 +2644,7 @@ class FunctionOptimizer:
                     behavior_test_results=candidate_behavior_results,
                     benchmarking_test_results=candidate_benchmarking_results,
                     replay_benchmarking_test_results=candidate_replay_benchmarking_results
-                    if self.args.benchmark
+                    if self.config.benchmark
                     else None,
                     optimization_candidate_index=optimization_candidate_index,
                     total_candidate_timing=total_candidate_timing,
@@ -2679,46 +2670,47 @@ class FunctionOptimizer:
         coverage_config_file = None
         try:
             if testing_type == TestingMode.BEHAVIOR:
-                (
-                    result_file_path,
-                    run_result,
-                    coverage_database_file,
-                    coverage_config_file,
-                ) = run_behavioral_tests(
+                result = run_pytest_tests(
                     test_files,
                     test_framework=self.test_cfg.test_framework,
-                    cwd=self.project_root,
                     test_env=test_env,
+                    cwd=self.project_root,
                     pytest_timeout=INDIVIDUAL_TESTCASE_TIMEOUT,
                     enable_coverage=enable_coverage,
                 )
             elif testing_type == TestingMode.LINE_PROFILE:
-                result_file_path, run_result = run_line_profile_tests(
+                result = run_pytest_tests(
                     test_files,
-                    cwd=self.project_root,
+                    test_framework=self.test_cfg.test_framework,
                     test_env=test_env,
-                    pytest_cmd=self.test_cfg.pytest_cmd,
+                    cwd=self.project_root,
                     pytest_timeout=INDIVIDUAL_TESTCASE_TIMEOUT,
                     pytest_target_runtime_seconds=testing_time,
                     pytest_min_loops=1,
                     pytest_max_loops=1,
-                    test_framework=self.test_cfg.test_framework,
+                    enable_line_profile=True,
+                    use_benchmarking_files=True,
                 )
             elif testing_type == TestingMode.PERFORMANCE:
-                result_file_path, run_result = run_benchmarking_tests(
+                result = run_pytest_tests(
                     test_files,
-                    cwd=self.project_root,
+                    test_framework=self.test_cfg.test_framework,
                     test_env=test_env,
-                    pytest_cmd=self.test_cfg.pytest_cmd,
+                    cwd=self.project_root,
                     pytest_timeout=INDIVIDUAL_TESTCASE_TIMEOUT,
                     pytest_target_runtime_seconds=testing_time,
                     pytest_min_loops=pytest_min_loops,
                     pytest_max_loops=pytest_max_loops,
-                    test_framework=self.test_cfg.test_framework,
+                    enable_stability_check=True,
+                    use_benchmarking_files=True,
                 )
             else:
                 msg = f"Unexpected testing type: {testing_type}"
                 raise ValueError(msg)
+            result_file_path = result.result_file_path
+            run_result = result.run_result
+            coverage_database_file = result.coverage_database_file
+            coverage_config_file = result.coverage_config_file
         except subprocess.TimeoutExpired:
             logger.exception(
                 f"Error running tests in {', '.join(str(f) for f in test_files.test_files)}.\nTimeout Error"
@@ -2806,9 +2798,9 @@ class FunctionOptimizer:
         test_env["CODEFLASH_TRACER_DISABLE"] = str(codeflash_tracer_disable)
         test_env["CODEFLASH_LOOP_INDEX"] = str(codeflash_loop_index)
         if "PYTHONPATH" not in test_env:
-            test_env["PYTHONPATH"] = str(self.args.project_root)
+            test_env["PYTHONPATH"] = str(self.config.project_root)
         else:
-            test_env["PYTHONPATH"] += os.pathsep + str(self.args.project_root)
+            test_env["PYTHONPATH"] += os.pathsep + str(self.config.project_root)
         return test_env
 
     def line_profiler_step(

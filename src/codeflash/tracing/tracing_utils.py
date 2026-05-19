@@ -21,8 +21,12 @@ class FunctionModules:
 
 
 def path_belongs_to_site_packages(file_path: Path) -> bool:
-    site_packages = [Path(p) for p in site.getsitepackages()]
-    return any(file_path.resolve().is_relative_to(site_package_path) for site_package_path in site_packages)
+    file_path_resolved = file_path.resolve()
+    site_packages = [Path(p).resolve() for p in site.getsitepackages()]
+    return any(
+        file_path_resolved.is_relative_to(site_package_path)
+        for site_package_path in site_packages
+    )
 
 
 def is_git_repo(file_path: str) -> bool:
@@ -39,18 +43,39 @@ def ignored_submodule_paths(module_root: str) -> list[Path]:
         git_repo = git.Repo(module_root, search_parent_directories=True)
         working_tree_dir = cast("Path", git_repo.working_tree_dir)
         try:
-            return [Path(working_tree_dir, submodule.path).resolve() for submodule in git_repo.submodules]
+            return [
+                Path(working_tree_dir, submodule.path).resolve()
+                for submodule in git_repo.submodules
+            ]
         except Exception as e:
-            print(f"Failed to get submodule paths {e!s}")  # no logger since used in the tracer
+            print(
+                f"Failed to get submodule paths {e!s}"
+            )  # no logger since used in the tracer
     return []
 
 
-def module_name_from_file_path(file_path: Path, project_root_path: Path) -> str:
-    relative_path = file_path.relative_to(project_root_path)
-    return relative_path.with_suffix("").as_posix().replace("/", ".")
+def module_name_from_file_path(
+    file_path: Path, project_root_path: Path, *, traverse_up: bool = False
+) -> str:
+    try:
+        relative_path = file_path.resolve().relative_to(project_root_path.resolve())
+        return relative_path.with_suffix("").as_posix().replace("/", ".")
+    except ValueError:
+        if traverse_up:
+            parent = file_path.parent
+            while parent not in (project_root_path, parent.parent):
+                try:
+                    relative_path = file_path.resolve().relative_to(parent.resolve())
+                    return relative_path.with_suffix("").as_posix().replace("/", ".")
+                except ValueError:
+                    parent = parent.parent
+        msg = f"File {file_path} is not within the project root {project_root_path}."
+        raise ValueError(msg)
 
 
-def filter_files_optimized(file_path: Path, tests_root: Path, ignore_paths: list[Path], module_root: Path) -> bool:
+def filter_files_optimized(
+    file_path: Path, tests_root: Path, ignore_paths: list[Path], module_root: Path
+) -> bool:
     """Optimized version of the filter_functions function above.
 
     Takes in file paths and returns the count of files that are to be optimized.
@@ -58,7 +83,9 @@ def filter_files_optimized(file_path: Path, tests_root: Path, ignore_paths: list
     submodule_paths = None
     if file_path.is_relative_to(tests_root):
         return False
-    if file_path in ignore_paths or any(file_path.is_relative_to(ignore_path) for ignore_path in ignore_paths):
+    if file_path in ignore_paths or any(
+        file_path.is_relative_to(ignore_path) for ignore_path in ignore_paths
+    ):
         return False
     if path_belongs_to_site_packages(file_path):
         return False
@@ -68,5 +95,8 @@ def filter_files_optimized(file_path: Path, tests_root: Path, ignore_paths: list
         submodule_paths = ignored_submodule_paths(module_root)
     return not (
         file_path in submodule_paths
-        or any(file_path.is_relative_to(submodule_path) for submodule_path in submodule_paths)
+        or any(
+            file_path.is_relative_to(submodule_path)
+            for submodule_path in submodule_paths
+        )
     )

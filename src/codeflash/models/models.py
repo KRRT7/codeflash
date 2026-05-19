@@ -40,6 +40,11 @@ from codeflash.code_utils.env_utils import is_end_to_end
 from codeflash.verification.comparator import comparator
 
 
+class ExperimentMetadata(BaseModel):
+    id: str | None = None
+    group: str
+
+
 @dataclass(frozen=True)
 class AIServiceRefinerRequest:
     optimization_id: str
