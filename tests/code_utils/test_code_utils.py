@@ -1,4 +1,5 @@
 from __future__ import annotations
+from codeflash.code_utils.config_utils import custom_addopts
 
 import configparser
 import os
@@ -9,7 +10,6 @@ from unittest.mock import patch
 import pytest
 import tomlkit
 
-from codeflash.code_utils.code_utils import custom_addopts
 
 def test_custom_addopts_modifies_and_restores_dotini_file(tmp_path: Path) -> None:
     """Verify that custom_addopts correctly modifies and then restores a pytest.ini file."""

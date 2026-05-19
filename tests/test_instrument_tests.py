@@ -1,4 +1,5 @@
 from __future__ import annotations
+from codeflash.code_utils.cleanup import get_run_tmp_file
 
 import ast
 import math
@@ -7,7 +8,6 @@ import sys
 import tempfile
 from pathlib import Path
 import pytest
-from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.code_utils.instrument_existing_tests import (
     FunctionImportedAsVisitor,
     inject_profiling_into_existing_test,

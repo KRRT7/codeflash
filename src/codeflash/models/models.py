@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from codeflash.code_utils.diff_utils import diff_length
+from codeflash.code_utils.path_utils import module_name_from_file_path
+from codeflash.code_utils.validation import validate_python_code
+
 from collections import Counter, defaultdict
 from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from codeflash.cli_cmds.logging_config import DEBUG_MODE, logger
+from codeflash.cli_cmds.logging_config import DEBUG_MODE, logger, rule
 from codeflash.models.test_type import TestType
 
 if TYPE_CHECKING:
@@ -31,11 +35,6 @@ from pydantic import (
 from pydantic.dataclasses import dataclass
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.code_utils.code_utils import (
-    diff_length,
-    module_name_from_file_path,
-    validate_python_code,
-)
 from codeflash._constants import VerificationType
 from codeflash.code_utils.env_utils import is_end_to_end
 from codeflash.verification.comparator import comparator

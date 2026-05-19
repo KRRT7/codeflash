@@ -1,10 +1,10 @@
 from __future__ import annotations
+from codeflash.code_utils.cleanup import get_run_tmp_file
 
 import os
 import re
 from pathlib import Path
 
-from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.models import FunctionParent, TestFile, TestFiles, TestingMode, TestType, VerificationType

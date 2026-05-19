@@ -1,3 +1,4 @@
+from codeflash.code_utils.path_utils import path_belongs_to_site_packages
 from pathlib import Path
 
 from codeflash.code_utils.code_extractor import add_needed_imports_from_module, find_preexisting_objects
@@ -18,7 +19,6 @@ import tiktoken
 from jedi.api.classes import Name
 from pydantic.dataclasses import dataclass
 from codeflash.code_utils.code_extractor import get_code, get_code_no_skeleton
-from codeflash.code_utils.code_utils import path_belongs_to_site_packages
 from codeflash.discovery.functions_to_optimize import FunctionParent, FunctionToOptimize
 
 def belongs_to_class(name: Name, class_name: str) -> bool:
@@ -72,7 +72,6 @@ from jedi.api.classes import Name
 from pydantic.dataclasses import dataclass
 
 from codeflash.code_utils.code_extractor import get_code, get_code_no_skeleton
-from codeflash.code_utils.code_utils import path_belongs_to_site_packages
 from codeflash.discovery.functions_to_optimize import FunctionParent, FunctionToOptimize
 
 

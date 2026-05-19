@@ -1,8 +1,8 @@
 from __future__ import annotations
+from codeflash.code_utils.config_utils import get_qualified_name
 
 from typing import TYPE_CHECKING
 
-from codeflash.code_utils.code_utils import get_qualified_name
 
 if TYPE_CHECKING:
     from jedi.api.classes import Name

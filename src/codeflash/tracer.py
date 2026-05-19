@@ -10,6 +10,7 @@
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 from __future__ import annotations
+from codeflash.code_utils.cleanup import get_run_tmp_file
 
 import json
 import os
@@ -21,7 +22,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.cli import project_root_from_module_root
-from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE
 from codeflash.code_utils.config_consts import EffortLevel
 from codeflash.code_utils.config_parser import parse_config_file

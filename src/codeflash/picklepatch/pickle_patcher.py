@@ -1,10 +1,10 @@
+from __future__ import annotations
 """PicklePatcher - A utility for safely pickling objects with unpicklable components.
 
 This module provides functions to recursively pickle objects, replacing unpicklable
 components with placeholders that provide informative errors when accessed.
 """
 
-from __future__ import annotations
 
 import contextlib
 import pickle

@@ -1,4 +1,8 @@
 from __future__ import annotations
+from codeflash.code_utils.cleanup import cleanup_paths, get_run_tmp_file, restore_conftest
+from codeflash.code_utils.diff_utils import choose_weights, create_rank_dictionary_compact, create_score_dictionary_from_metrics, diff_length, encoded_tokens_len, normalize_by_max, unified_diff_strings
+from codeflash.code_utils.pytest_utils import extract_unique_errors
+from codeflash.code_utils.path_utils import file_name_from_test_module_name, module_name_from_file_path
 
 import ast
 import concurrent.futures
@@ -33,21 +37,6 @@ from codeflash.code_utils.code_replacer import (
     add_custom_marker_to_all_tests,
     modify_autouse_fixture,
     replace_function_definitions_in_module,
-)
-from codeflash.code_utils.code_utils import (
-    choose_weights,
-    cleanup_paths,
-    create_rank_dictionary_compact,
-    create_score_dictionary_from_metrics,
-    diff_length,
-    encoded_tokens_len,
-    extract_unique_errors,
-    file_name_from_test_module_name,
-    get_run_tmp_file,
-    module_name_from_file_path,
-    normalize_by_max,
-    restore_conftest,
-    unified_diff_strings,
 )
 from codeflash.code_utils.config_consts import (
     COVERAGE_THRESHOLD,

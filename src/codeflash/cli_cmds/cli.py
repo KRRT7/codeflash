@@ -1,3 +1,4 @@
+from codeflash.code_utils.code_utils import exit_with_message
 import logging
 import sys
 from argparse import SUPPRESS, ArgumentParser, Namespace
@@ -9,7 +10,6 @@ from codeflash.cli_cmds.cmd_init import init_codeflash, install_github_actions
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.cli_cmds.extension import install_vscode_extension
 from codeflash.code_utils import env_utils
-from codeflash.code_utils.code_utils import exit_with_message
 from codeflash.code_utils.config_parser import parse_config_file
 from codeflash.version import __version__ as version
 

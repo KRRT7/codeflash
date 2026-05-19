@@ -1,6 +1,6 @@
+from codeflash.code_utils.cleanup import get_run_tmp_file
 from pathlib import Path
 
-from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.models import FunctionParent
 from codeflash.verification.instrument_codeflash_capture import instrument_codeflash_capture

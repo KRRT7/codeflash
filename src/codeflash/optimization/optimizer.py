@@ -1,4 +1,5 @@
 from __future__ import annotations
+from codeflash.code_utils.cleanup import cleanup_paths, get_run_tmp_file
 
 import ast
 import copy
@@ -13,7 +14,6 @@ from codeflash.api.aiservice import AiServiceClient, LocalAiServiceClient
 from codeflash.api.cfapi import send_completion_email
 from codeflash.cli_cmds.logging_config import logger, progress_bar
 from codeflash.code_utils import env_utils
-from codeflash.code_utils.code_utils import cleanup_paths, get_run_tmp_file
 from codeflash.code_utils.env_utils import get_pr_number, is_pr_draft
 from codeflash.code_utils.git_utils import check_running_in_git_repo, git_root_dir
 from codeflash.code_utils.git_worktree_utils import (

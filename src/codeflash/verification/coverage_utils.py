@@ -1,4 +1,5 @@
 from __future__ import annotations
+from codeflash.code_utils.cleanup import get_run_tmp_file
 
 import ast
 import json
@@ -8,7 +9,6 @@ from typing import TYPE_CHECKING, Any, Literal, Union
 from coverage.exceptions import NoDataError
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.models.models import CoverageData, CoverageStatus, FunctionCoverage
 
 if TYPE_CHECKING:

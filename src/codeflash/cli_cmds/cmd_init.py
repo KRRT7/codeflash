@@ -1,4 +1,5 @@
 from __future__ import annotations
+from codeflash.code_utils.path_utils import validate_relative_directory_path
 
 import os
 import re
@@ -30,7 +31,6 @@ from codeflash.cli_cmds.cli_common import (
 )
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.cli_cmds.extension import install_vscode_extension
-from codeflash.code_utils.code_utils import validate_relative_directory_path
 from codeflash.code_utils.compat import LF
 from codeflash.code_utils.config_parser import parse_config_file
 from codeflash.code_utils.env_utils import (

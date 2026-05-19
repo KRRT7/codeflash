@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
@@ -835,7 +836,6 @@ def test_unittest_discovery_with_pytest_class_fixture():
         # Create a simple code file
         code_file_path = path_obj_tmpdirname / "router_file.py"
         code_file_content = """
-from __future__ import annotations
 
 import hashlib
 import json

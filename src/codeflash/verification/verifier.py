@@ -1,4 +1,6 @@
 from __future__ import annotations
+from codeflash.code_utils.cleanup import get_run_tmp_file
+from codeflash.code_utils.path_utils import module_name_from_file_path
 
 import ast
 import time
@@ -6,7 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.code_utils.code_utils import get_run_tmp_file, module_name_from_file_path
 from codeflash.verification.verification_utils import ModifyInspiredTests, delete_multiple_if_name_main
 
 if TYPE_CHECKING:

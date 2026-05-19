@@ -1,4 +1,7 @@
 from __future__ import annotations
+from codeflash.code_utils.diff_utils import encoded_tokens_len
+from codeflash.code_utils.config_utils import get_qualified_name
+from codeflash.code_utils.path_utils import path_belongs_to_site_packages
 
 import ast
 import hashlib
@@ -13,11 +16,6 @@ from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_extractor import (
     add_needed_imports_from_module,
     find_preexisting_objects,
-)
-from codeflash.code_utils.code_utils import (
-    encoded_tokens_len,
-    get_qualified_name,
-    path_belongs_to_site_packages,
 )
 from codeflash.code_utils.config_consts import (
     OPTIMIZATION_CONTEXT_TOKEN_LIMIT,

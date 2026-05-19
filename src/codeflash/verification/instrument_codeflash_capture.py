@@ -1,10 +1,10 @@
 from __future__ import annotations
+from codeflash.code_utils.cleanup import get_run_tmp_file
 
 import ast
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.code_utils.formatter import sort_imports
 
 if TYPE_CHECKING:

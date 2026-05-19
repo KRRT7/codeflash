@@ -1,4 +1,5 @@
 from __future__ import annotations
+from codeflash.code_utils.path_utils import module_name_from_file_path
 
 import importlib.util
 import os
@@ -11,7 +12,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from codeflash.benchmarking.codeflash_trace import codeflash_trace
-from codeflash.code_utils.code_utils import module_name_from_file_path
 
 if TYPE_CHECKING:
     from codeflash.models.models import BenchmarkKey
