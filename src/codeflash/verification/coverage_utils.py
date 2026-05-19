@@ -1,23 +1,74 @@
 from __future__ import annotations
 
+import ast
 import json
-from typing import TYPE_CHECKING, Any, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 from coverage.exceptions import NoDataError
 
 from codeflash.cli_cmds.console import logger
-from codeflash.code_utils.coverage_utils import (
-    build_fully_qualified_name,
-    extract_dependent_function,
-    generate_candidates,
-)
+from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.models.models import CoverageData, CoverageStatus, FunctionCoverage
 
 if TYPE_CHECKING:
     from collections.abc import Collection
-    from pathlib import Path
 
     from codeflash.models.models import CodeOptimizationContext
+
+
+def extract_dependent_function(
+    main_function: str, code_context: CodeOptimizationContext
+) -> str | Literal[False]:
+    dependent_functions = set()
+    for code_string in code_context.testgen_context.code_strings:
+        ast_tree = ast.parse(code_string.code)
+        dependent_functions.update(
+            {
+                node.name
+                for node in ast_tree.body
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            }
+        )
+    if main_function in dependent_functions:
+        dependent_functions.discard(main_function)
+    if not dependent_functions or len(dependent_functions) != 1:
+        return False
+    return build_fully_qualified_name(dependent_functions.pop(), code_context)
+
+
+def build_fully_qualified_name(
+    function_name: str, code_context: CodeOptimizationContext
+) -> str:
+    full_name = function_name
+    for obj_name, parents in code_context.preexisting_objects:
+        if obj_name == function_name:
+            for parent in parents:
+                if parent.type == "ClassDef":
+                    full_name = f"{parent.name}.{full_name}"
+            break
+    return full_name
+
+
+def generate_candidates(source_code_path: Path) -> set[str]:
+    candidates = {source_code_path.name}
+    parts = source_code_path.parts
+    n = len(parts)
+    last_added = source_code_path.name
+    for i in range(n - 2, 0, -1):
+        candidate_path = f"{parts[i]}/{last_added}"
+        candidates.add(candidate_path)
+        last_added = candidate_path
+    candidates.add(source_code_path.as_posix())
+    return candidates
+
+
+def prepare_coverage_files() -> tuple[Path, Path]:
+    coverage_database_file = get_run_tmp_file(Path(".coverage"))
+    coveragercfile = get_run_tmp_file(Path(".coveragerc"))
+    coveragerc_content = f"[run]\n branch = True\ndata_file={coverage_database_file}\n"
+    coveragercfile.write_text(coveragerc_content)
+    return coverage_database_file, coveragercfile
 
 
 class CoverageUtils:
@@ -35,11 +86,21 @@ class CoverageUtils:
         from coverage import Coverage
         from coverage.jsonreport import JsonReporter
 
-        cov = Coverage(data_file=database_path, config_file=config_path, data_suffix=True, auto_data=True, branch=True)
+        cov = Coverage(
+            data_file=database_path,
+            config_file=config_path,
+            data_suffix=True,
+            auto_data=True,
+            branch=True,
+        )
 
         if not database_path.exists() or not database_path.stat().st_size:
-            logger.debug(f"Coverage database {database_path} is empty or does not exist")
-            return CoverageData.create_empty(source_code_path, function_name, code_context)
+            logger.debug(
+                f"Coverage database {database_path} is empty or does not exist"
+            )
+            return CoverageData.create_empty(
+                source_code_path, function_name, code_context
+            )
         cov.load()
 
         reporter = JsonReporter(cov)
@@ -48,23 +109,38 @@ class CoverageUtils:
             try:
                 reporter.report(morfs=[source_code_path.as_posix()], outfile=f)
             except NoDataError:
-                logger.debug(f"No coverage data found for {function_name} in {source_code_path}")
-                return CoverageData.create_empty(source_code_path, function_name, code_context)
+                logger.debug(
+                    f"No coverage data found for {function_name} in {source_code_path}"
+                )
+                return CoverageData.create_empty(
+                    source_code_path, function_name, code_context
+                )
         with temp_json_file.open() as f:
             original_coverage_data = json.load(f)
 
-        coverage_data, status = CoverageUtils._parse_coverage_file(temp_json_file, source_code_path)
-
-        main_func_coverage, dependent_func_coverage = CoverageUtils._fetch_function_coverages(
-            function_name, code_context, coverage_data, original_cov_data=original_coverage_data
+        coverage_data, status = CoverageUtils._parse_coverage_file(
+            temp_json_file, source_code_path
         )
 
-        total_executed_lines, total_unexecuted_lines = CoverageUtils._aggregate_coverage(
-            main_func_coverage, dependent_func_coverage
+        main_func_coverage, dependent_func_coverage = (
+            CoverageUtils._fetch_function_coverages(
+                function_name,
+                code_context,
+                coverage_data,
+                original_cov_data=original_coverage_data,
+            )
+        )
+
+        total_executed_lines, total_unexecuted_lines = (
+            CoverageUtils._aggregate_coverage(
+                main_func_coverage, dependent_func_coverage
+            )
         )
 
         total_lines = total_executed_lines | total_unexecuted_lines
-        coverage = len(total_executed_lines) / len(total_lines) * 100 if total_lines else 0.0
+        coverage = (
+            len(total_executed_lines) / len(total_lines) * 100 if total_lines else 0.0
+        )
         # coverage = (lines covered of the original function + its 1 level deep helpers) / (lines spanned by original function + its 1 level deep helpers), if no helpers then just the original function coverage
 
         functions_being_tested = [main_func_coverage.name]
@@ -98,14 +174,20 @@ class CoverageUtils:
         logger.debug(f"Looking for coverage data in {' -> '.join(candidates)}")
         for candidate in candidates:
             try:
-                cov: dict[str, dict[str, Any]] = coverage_data["files"][candidate]["functions"]
-                logger.debug(f"Coverage data found for {source_code_path} in {candidate}")
+                cov: dict[str, dict[str, Any]] = coverage_data["files"][candidate][
+                    "functions"
+                ]
+                logger.debug(
+                    f"Coverage data found for {source_code_path} in {candidate}"
+                )
                 status = CoverageStatus.PARSED_SUCCESSFULLY
                 break
             except KeyError:
                 continue
         else:
-            logger.debug(f"No coverage data found for {source_code_path} in {candidates}")
+            logger.debug(
+                f"No coverage data found for {source_code_path} in {candidates}"
+            )
             cov = {}
             status = CoverageStatus.NOT_FOUND
         return cov, status
@@ -150,7 +232,8 @@ class CoverageUtils:
 
     @staticmethod
     def _aggregate_coverage(
-        main_func_coverage: FunctionCoverage, dependent_func_coverage: Union[FunctionCoverage, None]
+        main_func_coverage: FunctionCoverage,
+        dependent_func_coverage: Union[FunctionCoverage, None],
     ) -> tuple[set[int], set[int]]:
         total_executed_lines = set(main_func_coverage.executed_lines)
         total_unexecuted_lines = set(main_func_coverage.unexecuted_lines)
@@ -163,7 +246,8 @@ class CoverageUtils:
 
     @staticmethod
     def _build_graph(
-        main_func_coverage: FunctionCoverage, dependent_func_coverage: Union[FunctionCoverage, None]
+        main_func_coverage: FunctionCoverage,
+        dependent_func_coverage: Union[FunctionCoverage, None],
     ) -> dict[str, dict[str, Collection[object]]]:
         graph = {
             main_func_coverage.name: {
@@ -194,11 +278,19 @@ class CoverageUtils:
         try:
             return FunctionCoverage(
                 name=dependent_function_name,
-                coverage=coverage_data[dependent_function_name]["summary"]["percent_covered"],
+                coverage=coverage_data[dependent_function_name]["summary"][
+                    "percent_covered"
+                ],
                 executed_lines=coverage_data[dependent_function_name]["executed_lines"],
-                unexecuted_lines=coverage_data[dependent_function_name]["missing_lines"],
-                executed_branches=coverage_data[dependent_function_name]["executed_branches"],
-                unexecuted_branches=coverage_data[dependent_function_name]["missing_branches"],
+                unexecuted_lines=coverage_data[dependent_function_name][
+                    "missing_lines"
+                ],
+                executed_branches=coverage_data[dependent_function_name][
+                    "executed_branches"
+                ],
+                unexecuted_branches=coverage_data[dependent_function_name][
+                    "missing_branches"
+                ],
             )
         except KeyError:
             msg = f"Coverage data not found for dependent function {dependent_function_name} in the coverage data"
@@ -210,11 +302,17 @@ class CoverageUtils:
                         if dependent_function_name in function:
                             return FunctionCoverage(
                                 name=dependent_function_name,
-                                coverage=functions[function]["summary"]["percent_covered"],
+                                coverage=functions[function]["summary"][
+                                    "percent_covered"
+                                ],
                                 executed_lines=functions[function]["executed_lines"],
                                 unexecuted_lines=functions[function]["missing_lines"],
-                                executed_branches=functions[function]["executed_branches"],
-                                unexecuted_branches=functions[function]["missing_branches"],
+                                executed_branches=functions[function][
+                                    "executed_branches"
+                                ],
+                                unexecuted_branches=functions[function][
+                                    "missing_branches"
+                                ],
                             )
                 msg = f"Coverage data not found for dependent function {dependent_function_name} in the original coverage data"
             except KeyError:
