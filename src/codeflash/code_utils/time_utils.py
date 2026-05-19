@@ -3,45 +3,41 @@ from __future__ import annotations
 import datetime as dt
 import re
 
-import humanize
-
 
 def humanize_runtime(time_in_ns: int) -> str:
     runtime_human: str = str(time_in_ns)
-    units = "nanoseconds"
-    if 1 <= time_in_ns < 2:
-        units = "nanosecond"
+    units = "nanosecond"
 
     if time_in_ns / 1000 >= 1:
         time_micro = float(time_in_ns) / 1000
-        runtime_human = humanize.precisedelta(dt.timedelta(microseconds=time_micro), minimum_unit="microseconds")
 
-        units = re.split(r",|\s", runtime_human)[1]
-
-        if units in {"microseconds", "microsecond"}:
+        if time_micro < 1000:
+            units = "microsecond"
             runtime_human = f"{time_micro:.3g}"
-        elif units in {"milliseconds", "millisecond"}:
+        elif time_micro < 1_000_000:
+            units = "millisecond"
             runtime_human = "%.3g" % (time_micro / 1000)
-        elif units in {"seconds", "second"}:
+        elif time_micro < 60_000_000:
+            units = "second"
             runtime_human = "%.3g" % (time_micro / (1000**2))
-        elif units in {"minutes", "minute"}:
+        elif time_micro < 3_600_000_000:
+            units = "minute"
             runtime_human = "%.3g" % (time_micro / (60 * 1000**2))
-        elif units in {"hour", "hours"}:  # hours
+        elif time_micro < 86_400_000_000:
+            units = "hour"
             runtime_human = "%.3g" % (time_micro / (3600 * 1000**2))
-        else:  # days
+        else:
+            units = "day"
             runtime_human = "%.3g" % (time_micro / (24 * 3600 * 1000**2))
+
     runtime_human_parts = str(runtime_human).split(".")
     if len(runtime_human_parts[0]) == 1:
-        if runtime_human_parts[0] == "1" and len(runtime_human_parts) > 1:
-            units = units + "s"
         if len(runtime_human_parts) == 1:
             runtime_human = f"{runtime_human_parts[0]}.00"
         elif len(runtime_human_parts[1]) >= 2:
             runtime_human = f"{runtime_human_parts[0]}.{runtime_human_parts[1][0:2]}"
         else:
-            runtime_human = (
-                f"{runtime_human_parts[0]}.{runtime_human_parts[1]}{'0' * (2 - len(runtime_human_parts[1]))}"
-            )
+            runtime_human = f"{runtime_human_parts[0]}.{runtime_human_parts[1]}{'0' * (2 - len(runtime_human_parts[1]))}"
     elif len(runtime_human_parts[0]) == 2:
         if len(runtime_human_parts) > 1:
             runtime_human = f"{runtime_human_parts[0]}.{runtime_human_parts[1][0]}"
@@ -50,6 +46,8 @@ def humanize_runtime(time_in_ns: int) -> str:
     else:
         runtime_human = runtime_human_parts[0]
 
+    if float(runtime_human) != 1:
+        units = units + "s"
     return f"{runtime_human} {units}"
 
 
@@ -65,12 +63,24 @@ def format_time(nanoseconds: int) -> str:
         return f"{nanoseconds}ns"
     if nanoseconds < 1_000_000:
         value = nanoseconds / 1_000
-        return f"{value:.2f}μs" if value < 10 else (f"{value:.1f}μs" if value < 100 else f"{int(value)}μs")
+        return (
+            f"{value:.2f}μs"
+            if value < 10
+            else (f"{value:.1f}μs" if value < 100 else f"{int(value)}μs")
+        )
     if nanoseconds < 1_000_000_000:
         value = nanoseconds / 1_000_000
-        return f"{value:.2f}ms" if value < 10 else (f"{value:.1f}ms" if value < 100 else f"{int(value)}ms")
+        return (
+            f"{value:.2f}ms"
+            if value < 10
+            else (f"{value:.1f}ms" if value < 100 else f"{int(value)}ms")
+        )
     value = nanoseconds / 1_000_000_000
-    return f"{value:.2f}s" if value < 10 else (f"{value:.1f}s" if value < 100 else f"{int(value)}s")
+    return (
+        f"{value:.2f}s"
+        if value < 10
+        else (f"{value:.1f}s" if value < 100 else f"{int(value)}s")
+    )
 
 
 def format_perf(percentage: float) -> str:
