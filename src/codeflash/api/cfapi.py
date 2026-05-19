@@ -133,7 +133,7 @@ def get_user_id(api_key: Optional[str] = None) -> Optional[str]:  # noqa: PLR091
         if userid:
             if min_version and version.parse(min_version) > version.parse(__version__):
                 msg = "Your Codeflash CLI version is outdated. Please update to the latest version using `pip install --upgrade codeflash`."
-                console.print(f"[bold red]{msg}[/bold red]")
+                print(msg)
                 exit_with_message(msg, error_on_exit=True)
             return userid
 

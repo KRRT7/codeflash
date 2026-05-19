@@ -313,42 +313,29 @@ class Optimizer:
         ranker: FunctionRanker,
         show_top_n: int = 15,
     ) -> None:
-        from rich.table import Table
-
         if not globally_ranked:
             return
 
-        # Show top N functions
         display_count = min(show_top_n, len(globally_ranked))
 
-        table = Table(
-            title=f"Function Ranking (Top {display_count} of {len(globally_ranked)})",
-            title_style="bold cyan",
-            border_style="cyan",
-            show_lines=False,
+        print()
+        print(f"Function Ranking (Top {display_count} of {len(globally_ranked)})")
+        print(
+            f"{'Priority':>8} {'Function':<40} {'File':<25} {'Addressable Time':>12} {'Impact':>8}"
         )
+        print("-" * 100)
 
-        table.add_column("Priority", style="bold yellow", justify="center", width=8)
-        table.add_column("Function", style="cyan", width=40)
-        table.add_column("File", style="dim", width=25)
-        table.add_column("Addressable Time", justify="right", style="green", width=12)
-        table.add_column("Impact", justify="center", style="bold", width=8)
-
-        # Get addressable time for display
         for i, (file_path, func) in enumerate(globally_ranked[:display_count], 1):
             addressable_time = ranker.get_function_addressable_time(func)
 
-            # Format function name
             func_name = func.qualified_name
             if len(func_name) > 38:
                 func_name = func_name[:35] + "..."
 
-            # Format file name
             file_name = file_path.name
             if len(file_name) > 23:
                 file_name = "..." + file_name[-20:]
 
-            # Format addressable time
             if addressable_time >= 1e9:
                 time_display = f"{addressable_time / 1e9:.2f}s"
             elif addressable_time >= 1e6:
@@ -358,32 +345,19 @@ class Optimizer:
             else:
                 time_display = f"{addressable_time:.0f}ns"
 
-            # Impact indicator
             if i <= 5:
                 impact = "🔥"
-                impact_style = "bold red"
             elif i <= 10:
                 impact = "⚡"
-                impact_style = "bold yellow"
             else:
                 impact = "💡"
-                impact_style = "bold blue"
 
-            table.add_row(
-                f"#{i}",
-                func_name,
-                file_name,
-                time_display,
-                impact,
-                style=impact_style if i <= 5 else None,
+            print(
+                f"{f'#{i}':>8} {func_name:<40} {file_name:<25} {time_display:>12} {impact:>8}"
             )
-
-        console.print(table)
 
         if len(globally_ranked) > display_count:
-            console.print(
-                f"[dim]... and {len(globally_ranked) - display_count} more functions[/dim]"
-            )
+            print(f"... and {len(globally_ranked) - display_count} more functions")
 
     def rank_all_functions_globally(
         self,

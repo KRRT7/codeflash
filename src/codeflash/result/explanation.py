@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import shutil
 from io import StringIO
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional
 
 from pydantic.dataclasses import dataclass
-from rich.console import Console
-from rich.table import Table
 
 from codeflash.code_utils.time_utils import humanize_runtime
 from codeflash.models.models import BenchmarkDetail, TestResults
@@ -71,53 +68,18 @@ class Explanation:
         benchmark_info = ""
 
         if self.benchmark_details:
-            # Get terminal width (or use a reasonable default if detection fails)
-            try:
-                terminal_width = int(shutil.get_terminal_size().columns * 0.9)
-            except Exception:
-                terminal_width = 200  # Fallback width
-
-            # Create a rich table for better formatting
-            table = Table(
-                title="Benchmark Performance Details",
-                width=terminal_width,
-                show_lines=True,
-            )
-
-            # Add columns - split Benchmark File and Function into separate columns
-            # Using proportional width for benchmark file column (40% of terminal width)
-            benchmark_col_width = max(int(terminal_width * 0.4), 40)
-            table.add_column(
-                "Benchmark Module Path",
-                style="cyan",
-                width=benchmark_col_width,
-                overflow="fold",
-            )
-            table.add_column("Test Function", style="cyan", overflow="fold")
-            table.add_column("Original Runtime", style="magenta", justify="right")
-            table.add_column("Expected New Runtime", style="green", justify="right")
-            table.add_column("Speedup", style="red", justify="right")
-
-            # Add rows with split data
-            for detail in self.benchmark_details:
-                # Split the benchmark name and test function
-                benchmark_name = detail.benchmark_name
-                test_function = detail.test_function
-
-                table.add_row(
-                    benchmark_name,
-                    test_function,
-                    f"{detail.original_timing}",
-                    f"{detail.expected_new_timing}",
-                    f"{detail.speedup_percent:.2f}%",
-                )
-            # Convert table to string
             string_buffer = StringIO()
-            console = Console(file=string_buffer, width=terminal_width)
-            console.print(table)
-            benchmark_info = (
-                cast("StringIO", console.file).getvalue() + "\n"
-            )  # Cast for mypy
+            print("Benchmark Performance Details", file=string_buffer)
+            header = f"{'Benchmark Module Path':<40} {'Test Function':<30} {'Original Runtime':<20} {'Expected New Runtime':<25} {'Speedup':<10}"
+            print(header, file=string_buffer)
+            print("-" * len(header), file=string_buffer)
+            for detail in self.benchmark_details:
+                print(
+                    f"{detail.benchmark_name:<40} {detail.test_function:<30} {detail.original_timing:<20} "
+                    f"{detail.expected_new_timing:<25} {detail.speedup_percent:.2f}%",
+                    file=string_buffer,
+                )
+            benchmark_info = string_buffer.getvalue() + "\n"
 
         if (
             self.original_async_throughput is not None

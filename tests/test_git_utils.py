@@ -3,7 +3,11 @@ from unittest.mock import patch
 
 import git
 
-from codeflash.code_utils.git_utils import check_and_push_branch, check_running_in_git_repo, get_repo_owner_and_name
+from codeflash.code_utils.git_utils import (
+    check_and_push_branch,
+    check_running_in_git_repo,
+    get_repo_owner_and_name,
+)
 
 
 class TestGitUtils(unittest.TestCase):
@@ -24,7 +28,9 @@ class TestGitUtils(unittest.TestCase):
         assert repo_name == "repo"
 
         # Test with another GitHub SSH URL
-        mock_get_remote_url.return_value = "git@github.com:example-owner/example-repo.git"
+        mock_get_remote_url.return_value = (
+            "git@github.com:example-owner/example-repo.git"
+        )
         get_repo_owner_and_name.cache_clear()
         owner, repo_name = get_repo_owner_and_name()
         assert owner == "example-owner"
@@ -51,21 +57,28 @@ class TestGitUtils(unittest.TestCase):
 
     @patch("codeflash.code_utils.git_utils.git.Repo")
     @patch("codeflash.code_utils.git_utils.sys.__stdin__.isatty", return_value=True)
-    @patch("codeflash.code_utils.git_utils.confirm_proceeding_with_no_git_repo", return_value=True)
-    def test_check_running_in_git_repo_not_in_git_repo_interactive(self, mock_confirm, mock_isatty, mock_repo):
+    @patch(
+        "codeflash.code_utils.git_utils.confirm_proceeding_with_no_git_repo",
+        return_value=True,
+    )
+    def test_check_running_in_git_repo_not_in_git_repo_interactive(
+        self, mock_confirm, mock_isatty, mock_repo
+    ):
         mock_repo.side_effect = git.InvalidGitRepositoryError  # type: ignore
         assert check_running_in_git_repo("/path/to/non-repo") == False
 
     @patch("codeflash.code_utils.git_utils.git.Repo")
     @patch("codeflash.code_utils.git_utils.sys.__stdin__.isatty", return_value=False)
-    def test_check_running_in_git_repo_not_in_git_repo_non_interactive(self, mock_isatty, mock_repo):
+    def test_check_running_in_git_repo_not_in_git_repo_non_interactive(
+        self, mock_isatty, mock_repo
+    ):
         mock_repo.side_effect = git.exc.InvalidGitRepositoryError  # type: ignore
         assert check_running_in_git_repo("/path/to/non-repo") is False
 
+    @patch("builtins.input", return_value="y")
     @patch("codeflash.code_utils.git_utils.git.Repo")
     @patch("codeflash.code_utils.git_utils.sys.__stdin__.isatty", return_value=True)
-    @patch("codeflash.code_utils.git_utils.Confirm.ask", return_value=True)
-    def test_check_and_push_branch(self, mock_confirm, mock_isatty, mock_repo):
+    def test_check_and_push_branch(self, mock_isatty, mock_repo, mock_input):
         mock_repo_instance = mock_repo.return_value
         # Mock HEAD not being detached
         mock_repo_instance.head.is_detached = False

@@ -7,8 +7,6 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-from rich.prompt import Confirm
-
 from codeflash.cli_cmds.console import console
 from codeflash.code_utils.compat import codeflash_temp_dir
 
@@ -100,13 +98,17 @@ class CodeflashRunCheckpoint:
                 # Skip the first line (metadata)
                 first_line = next(f)
                 metadata = json.loads(first_line)
-                if metadata.get("module_root", str(self.module_root)) == str(self.module_root):
+                if metadata.get("module_root", str(self.module_root)) == str(
+                    self.module_root
+                ):
                     to_delete.append(file)
         for file in to_delete:
             file.unlink(missing_ok=True)
 
 
-def get_all_historical_functions(module_root: Path, checkpoint_dir: Path) -> dict[str, dict[str, str]]:
+def get_all_historical_functions(
+    module_root: Path, checkpoint_dir: Path
+) -> dict[str, dict[str, str]]:
     """Get information about all processed functions, regardless of status.
 
     Returns
@@ -139,15 +141,17 @@ def get_all_historical_functions(module_root: Path, checkpoint_dir: Path) -> dic
     return processed_functions
 
 
-def ask_should_use_checkpoint_get_functions(args: argparse.Namespace) -> Optional[dict[str, dict[str, str]]]:
+def ask_should_use_checkpoint_get_functions(
+    args: argparse.Namespace,
+) -> Optional[dict[str, dict[str, str]]]:
     previous_checkpoint_functions = None
     if args.all and codeflash_temp_dir.is_dir():
-        previous_checkpoint_functions = get_all_historical_functions(args.module_root, codeflash_temp_dir)
-        if previous_checkpoint_functions and Confirm.ask(
-            "Previous Checkpoint detected from an incomplete optimization run, shall I continue the optimization from that point?",
-            default=True,
-            console=console,
-        ):
+        previous_checkpoint_functions = get_all_historical_functions(
+            args.module_root, codeflash_temp_dir
+        )
+        if previous_checkpoint_functions and input(
+            "Previous Checkpoint detected from an incomplete optimization run, shall I continue the optimization from that point? (Y/n): "
+        ).lower() in ("", "y", "yes"):
             console.rule()
         else:
             previous_checkpoint_functions = None

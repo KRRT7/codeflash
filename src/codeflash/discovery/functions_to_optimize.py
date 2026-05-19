@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Any, Optional
 import git
 import libcst as cst
 from pydantic.dataclasses import dataclass
-from rich.tree import Tree
 
 from codeflash.api.cfapi import (
     get_blocklisted_functions,
@@ -39,7 +38,6 @@ if TYPE_CHECKING:
 
     from codeflash.models.models import CodeOptimizationContext
     from codeflash.verification.verification_utils import TestConfig
-from rich.text import Text
 
 _property_id = "property"
 
@@ -822,12 +820,13 @@ def filter_functions(
                 "green",
             ),
         }
-        tree = Tree(Text("Ignored functions and files", style="bold"))
-        for label, (count, color) in log_info.items():
-            if count > 0:
-                tree.add(Text(f"{label}: {count}", style=color))
-        if len(tree.children) > 0:
-            console.print(tree)
+        ignored_items = [
+            (label, count) for label, (count, _) in log_info.items() if count > 0
+        ]
+        if ignored_items:
+            print("Ignored functions and files:")
+            for label, count in ignored_items:
+                print(f"  {label}: {count}")
             console.rule()
     return {
         Path(k): v for k, v in filtered_modified_functions.items() if v

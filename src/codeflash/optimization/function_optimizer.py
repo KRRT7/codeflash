@@ -13,11 +13,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
 import libcst as cst
-from rich.console import Group
-from rich.panel import Panel
-from rich.syntax import Syntax
-from rich.text import Text
-from rich.tree import Tree
 
 from codeflash.api.aiservice import (
     AiServiceClient,
@@ -180,68 +175,36 @@ def log_optimization_context(
     total_tokens = read_writable_tokens + read_only_tokens
     token_pct = min(total_tokens / OPTIMIZATION_CONTEXT_TOKEN_LIMIT, 1.0)
 
-    # Token bar color based on usage
-    bar_color = "green" if token_pct < 0.7 else "yellow" if token_pct < 0.9 else "red"
-
     # Build compact info line
     helper_names = [hf.qualified_name for hf in code_context.helper_functions]
-    helpers_str = (
-        f"[magenta]{', '.join(helper_names)}[/]" if helper_names else "[dim]none[/]"
-    )
+    helpers_str = f"{', '.join(helper_names)}" if helper_names else "none"
     read_writable_files = [
         str(cs.file_path) for cs in code_context.read_writable_code.code_strings
     ]
 
-    # Create a tree view for the context
-    tree = Tree(f"[bold cyan]Context for {function_name}[/]")
-    tree.add(
-        Text.assemble(
-            ("Tokens: ", "dim"),
-            (f"{total_tokens:,}", "bold " + bar_color),
-            (f"/{OPTIMIZATION_CONTEXT_TOKEN_LIMIT:,} ", "dim"),
-            (f"({token_pct:.0%})", bar_color),
-            ("  [", "dim"),
-            (f"{read_writable_tokens:,}", "green"),
-            (" rw", "dim green"),
-            (" + ", "dim"),
-            (f"{read_only_tokens:,}", "yellow"),
-            (" ro", "dim yellow"),
-            ("]", "dim"),
-        )
+    print(f"Context for {function_name}")
+    tokens_str = (
+        f"Tokens: {total_tokens:,}"
+        f"/{OPTIMIZATION_CONTEXT_TOKEN_LIMIT:,} "
+        f"({token_pct:.0%})"
+        f"  [{read_writable_tokens:,} rw"
+        f" + {read_only_tokens:,} ro"
+        f"]"
     )
-    tree.add(f"[dim]Helpers:[/] {helpers_str}")
-    files_branch = tree.add("[dim]Files:[/]")
+    print(f"  {tokens_str}")
+    print(f"  Helpers: {helpers_str}")
+    print("  Files:")
     for f in read_writable_files:
-        files_branch.add(f"[blue]{f}[/]")
+        print(f"    {f}")
 
-    console.print(tree)
-
-    console.print(
-        Panel(
-            Syntax(
-                code_context.read_writable_code.markdown,
-                "markdown",
-                theme="monokai",
-                word_wrap=True,
-            ),
-            title="[green]Read-Writable Code[/]",
-            border_style="green",
-        )
-    )
+    print("Read-Writable Code")
+    print(code_context.read_writable_code.markdown)
+    console.rule()
 
     if code_context.read_only_context_code:
-        console.print(
-            Panel(
-                Syntax(
-                    code_context.read_only_context_code,
-                    "markdown",
-                    theme="monokai",
-                    word_wrap=True,
-                ),
-                title="[yellow]Read-Only Dependencies[/]",
-                border_style="yellow",
-            )
-        )
+        print("Read-Only Dependencies")
+        print(code_context.read_only_context_code)
+        console.rule()
 
 
 class CandidateNode:
@@ -814,9 +777,9 @@ class FunctionOptimizer:
         perf_gain: float,
         *,
         is_successful_candidate: bool,
-    ) -> Tree:
-        """Build a Tree display for runtime information of a candidate."""
-        tree = Tree(f"Candidate #{candidate_index} - Runtime Information ⌛")
+    ) -> str:
+        """Build a string representation of runtime information for a candidate."""
+        lines = [f"Candidate #{candidate_index} - Runtime Information ⌛"]
 
         is_async = (
             original_code_baseline.async_throughput is not None
@@ -829,53 +792,55 @@ class FunctionOptimizer:
                     original_throughput=original_code_baseline.async_throughput,
                     optimized_throughput=candidate_result.async_throughput,
                 )
-                tree.add(
-                    "This candidate has better async throughput than the original code. 🚀"
+                lines.append(
+                    "  This candidate has better async throughput than the original code. 🚀"
                 )
-                tree.add(
-                    f"Original async throughput: {original_code_baseline.async_throughput} executions"
+                lines.append(
+                    f"  Original async throughput: {original_code_baseline.async_throughput} executions"
                 )
-                tree.add(
-                    f"Optimized async throughput: {candidate_result.async_throughput} executions"
+                lines.append(
+                    f"  Optimized async throughput: {candidate_result.async_throughput} executions"
                 )
-                tree.add(f"Throughput improvement: {throughput_gain_value * 100:.1f}%")
-                tree.add(f"Throughput ratio: {throughput_gain_value + 1:.3f}X")
+                lines.append(
+                    f"  Throughput improvement: {throughput_gain_value * 100:.1f}%"
+                )
+                lines.append(f"  Throughput ratio: {throughput_gain_value + 1:.3f}X")
             else:
-                tree.add("This candidate is faster than the original code. 🚀")
-                tree.add(
-                    f"Original summed runtime: {humanize_runtime(original_code_baseline.runtime)}"
+                lines.append("  This candidate is faster than the original code. 🚀")
+                lines.append(
+                    f"  Original summed runtime: {humanize_runtime(original_code_baseline.runtime)}"
                 )
-                tree.add(
-                    f"Best summed runtime: {humanize_runtime(candidate_result.best_test_runtime)} "
+                lines.append(
+                    f"  Best summed runtime: {humanize_runtime(candidate_result.best_test_runtime)} "
                     f"(measured over {candidate_result.max_loop_count} "
                     f"loop{'s' if candidate_result.max_loop_count > 1 else ''})"
                 )
-                tree.add(f"Speedup percentage: {perf_gain * 100:.1f}%")
-                tree.add(f"Speedup ratio: {perf_gain + 1:.3f}X")
+                lines.append(f"  Speedup percentage: {perf_gain * 100:.1f}%")
+                lines.append(f"  Speedup ratio: {perf_gain + 1:.3f}X")
         # Not a successful optimization candidate
         elif is_async:
             throughput_gain_value = throughput_gain(
                 original_throughput=original_code_baseline.async_throughput,
                 optimized_throughput=candidate_result.async_throughput,
             )
-            tree.add(
-                f"Async throughput: {candidate_result.async_throughput} executions"
+            lines.append(
+                f"  Async throughput: {candidate_result.async_throughput} executions"
             )
-            tree.add(f"Throughput change: {throughput_gain_value * 100:.1f}%")
-            tree.add(
-                f"(Runtime for reference: {humanize_runtime(candidate_result.best_test_runtime)} over "
+            lines.append(f"  Throughput change: {throughput_gain_value * 100:.1f}%")
+            lines.append(
+                f"  (Runtime for reference: {humanize_runtime(candidate_result.best_test_runtime)} over "
                 f"{candidate_result.max_loop_count} loop{'s' if candidate_result.max_loop_count > 1 else ''})"
             )
         else:
-            tree.add(
-                f"Summed runtime: {humanize_runtime(candidate_result.best_test_runtime)} "
+            lines.append(
+                f"  Summed runtime: {humanize_runtime(candidate_result.best_test_runtime)} "
                 f"(measured over {candidate_result.max_loop_count} "
                 f"loop{'s' if candidate_result.max_loop_count > 1 else ''})"
             )
-            tree.add(f"Speedup percentage: {perf_gain * 100:.1f}%")
-            tree.add(f"Speedup ratio: {perf_gain + 1:.3f}X")
+            lines.append(f"  Speedup percentage: {perf_gain * 100:.1f}%")
+            lines.append(f"  Speedup ratio: {perf_gain + 1:.3f}X")
 
-        return tree
+        return "\n".join(lines)
 
     def handle_successful_candidate(
         self,
@@ -886,10 +851,10 @@ class FunctionOptimizer:
         original_helper_code: dict[Path, str],
         candidate_index: int,
         eval_ctx: CandidateEvaluationContext,
-    ) -> tuple[BestOptimization, Tree | None]:
+    ) -> tuple[BestOptimization, str | None]:
         """Handle a successful optimization candidate.
 
-        Returns the BestOptimization and optional benchmark tree.
+        Returns the BestOptimization and optional benchmark tree string.
         """
         with progress_bar("Running line-by-line profiling"):
             line_profile_test_results = self.line_profiler_step(
@@ -914,7 +879,7 @@ class FunctionOptimizer:
                 )
             )
             if len(test_results_by_benchmark) > 0:
-                benchmark_tree = Tree("Speedup percentage on benchmarks:")
+                benchmark_lines = ["Speedup percentage on benchmarks:"]
             for (
                 benchmark_key,
                 candidate_test_results,
@@ -929,9 +894,11 @@ class FunctionOptimizer:
                     original_runtime_ns=original_code_replay_runtime,
                     optimized_runtime_ns=candidate_replay_runtime,
                 )
-                benchmark_tree.add(
-                    f"{benchmark_key}: {replay_perf_gain[benchmark_key] * 100:.1f}%"
+                benchmark_lines.append(
+                    f"  {benchmark_key}: {replay_perf_gain[benchmark_key] * 100:.1f}%"
                 )
+            if len(test_results_by_benchmark) > 0:
+                benchmark_tree = "\n".join(benchmark_lines)
 
         best_optimization = BestOptimization(
             candidate=candidate,
@@ -1243,9 +1210,9 @@ class FunctionOptimizer:
                 self.future_all_refinements.append(future_refinement)
 
         # Display runtime information
-        console.print(tree)
+        print(tree)
         if self.args.benchmark and benchmark_tree:
-            console.print(benchmark_tree)
+            print(benchmark_tree)
         console.rule()
 
         return best_optimization
@@ -1441,33 +1408,20 @@ class FunctionOptimizer:
     def log_successful_optimization(
         self, explanation: Explanation, generated_tests: GeneratedTestsList
     ) -> None:
-        explanation_panel = Panel(
-            f"⚡️ Optimization successful! 📄 {self.function_to_optimize.qualified_name} in {explanation.file_path}\n"
-            f"📈 {explanation.perf_improvement_line}\n"
-            f"Explanation: \n{explanation.__str__()}",
-            title="Optimization Summary",
-            border_style="green",
+        print(
+            f"⚡️ Optimization successful! 📄 {self.function_to_optimize.qualified_name} in {explanation.file_path}"
         )
+        print(f"📈 {explanation.perf_improvement_line}")
+        print(f"Explanation: \n{explanation.__str__()}")
 
         if self.args.no_pr:
-            tests_panel = Panel(
-                Syntax(
-                    "\n".join(
-                        [
-                            test.generated_original_test_source
-                            for test in generated_tests.generated_tests
-                        ]
-                    ),
-                    "python",
-                    line_numbers=True,
-                ),
-                title="Validated Tests",
-                border_style="blue",
+            tests_source = "\n".join(
+                [
+                    test.generated_original_test_source
+                    for test in generated_tests.generated_tests
+                ]
             )
-
-            console.print(Group(explanation_panel, tests_panel))
-        else:
-            console.print(explanation_panel)
+            print(tests_source)
 
     @staticmethod
     def write_code_and_helpers(
@@ -2181,35 +2135,27 @@ class FunctionOptimizer:
         if opt_review_result.review:
             review_display = {
                 "high": (
-                    "[bold green]High[/bold green]",
-                    "green",
+                    "High",
                     "Recommended to merge",
                 ),
                 "medium": (
-                    "[bold yellow]Medium[/bold yellow]",
-                    "yellow",
+                    "Medium",
                     "Review recommended before merging",
                 ),
-                "low": ("[bold red]Low[/bold red]", "red", "Not recommended to merge"),
+                "low": ("Low", "Not recommended to merge"),
             }
             display_info = review_display.get(
-                opt_review_result.review.lower(), ("[bold]Unknown[/bold]", "white", "")
+                opt_review_result.review.lower(), ("Unknown", "")
             )
             explanation_text = (
                 opt_review_result.explanation.strip()
                 if opt_review_result.explanation
                 else ""
             )
-            panel_content = f"Reviewer Assessment: {display_info[0]}\n{display_info[2]}"
+            print(f"Optimization Review: Reviewer Assessment: {display_info[0]}")
+            print(display_info[1])
             if explanation_text:
-                panel_content += f"\n\n[dim]{explanation_text}[/dim]"
-            console.print(
-                Panel(
-                    panel_content,
-                    title="Optimization Review",
-                    border_style=display_info[1],
-                )
-            )
+                print(explanation_text)
 
         if raise_pr or staging_review:
             data["root_dir"] = git_root_dir()
@@ -2228,21 +2174,9 @@ class FunctionOptimizer:
                     else self.function_trace_id
                 )
                 staging_url = f"{get_cfapi_base_urls().cfwebapp_base_url}/review-optimizations/{trace_id}"
-                console.print(
-                    Panel(
-                        f"[bold green]✅ Staging created:[/bold green]\n[link={staging_url}]{staging_url}[/link]",
-                        title="Staging Link",
-                        border_style="green",
-                    )
-                )
+                print(f"✅ Staging created: {staging_url}")
             else:
-                console.print(
-                    Panel(
-                        f"[bold red]❌ Failed to create staging[/bold red]\nStatus: {response.status_code}",
-                        title="Staging Error",
-                        border_style="red",
-                    )
-                )
+                print(f"❌ Failed to create staging\nStatus: {response.status_code}")
 
         else:
             # Mark optimization success since no PR will be created
@@ -2385,7 +2319,7 @@ class FunctionOptimizer:
                         self.function_to_optimize.file_path,
                     )
 
-        console.print(
+        print(
             TestResults.report_to_tree(
                 behavioral_results.get_test_pass_fail_report_by_type(),
                 title="Overall test results for original code",
@@ -2603,7 +2537,7 @@ class FunctionOptimizer:
                     candidate_helper_code,
                     self.function_to_optimize.file_path,
                 )
-            console.print(
+            print(
                 TestResults.report_to_tree(
                     candidate_behavior_results.get_test_pass_fail_report_by_type(),
                     title=f"Behavioral Test Results for candidate {optimization_candidate_index}",
@@ -2801,14 +2735,8 @@ class FunctionOptimizer:
             unique_errors = extract_unique_errors(run_result.stdout)
 
             if unique_errors:
-                from rich.text import Text
-
                 for error in unique_errors:
-                    panel = Panel(
-                        Text.from_markup(f"⚠️  {error} ", style="bold red"),
-                        expand=False,
-                    )
-                    console.print(panel)
+                    print(f"⚠️  {error}")
 
         if testing_type in {TestingMode.BEHAVIOR, TestingMode.PERFORMANCE}:
             results, coverage_results = parse_test_results(

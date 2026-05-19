@@ -18,14 +18,13 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, ClassVar
 
-from rich.align import Align
-from rich.panel import Panel
-from rich.table import Table
-from rich.text import Text
-
 from codeflash.cli_cmds.console import console
 from codeflash.picklepatch.pickle_patcher import PicklePatcher
-from codeflash.tracing.tracing_utils import FunctionModules, filter_files_optimized, module_name_from_file_path
+from codeflash.tracing.tracing_utils import (
+    FunctionModules,
+    filter_files_optimized,
+    module_name_from_file_path,
+)
 
 # Suppress dill PicklingWarning
 warnings.filterwarnings("ignore", message="Cannot locate reference to")
@@ -95,7 +94,7 @@ class Tracer:
             functions = []
         if os.environ.get("CODEFLASH_TRACER_DISABLE", "0") == "1":
             console.rule(
-                "Codeflash: Tracer disabled by environment variable CODEFLASH_TRACER_DISABLE", style="bold red"
+                "Codeflash: Tracer disabled by environment variable CODEFLASH_TRACER_DISABLE"
             )
             disable = True
         self.disable = disable
@@ -103,7 +102,7 @@ class Tracer:
         if self.disable:
             return
         if sys.getprofile() is not None or sys.gettrace() is not None:
-            console.print(
+            print(
                 "WARNING - Codeflash: Another profiler, debugger or coverage tool is already running. "
                 "Please disable it before starting the Codeflash Tracer, both can't run. Codeflash Tracer is DISABLED."
             )
@@ -124,8 +123,15 @@ class Tracer:
         self.max_function_count = max_function_count
         self.config = config
         self.project_root = project_root
-        console.rule(f"Project Root: {self.project_root}", style="bold blue")
-        self.ignored_functions = {"<listcomp>", "<genexpr>", "<dictcomp>", "<setcomp>", "<lambda>", "<module>"}
+        console.rule(f"Project Root: {self.project_root}")
+        self.ignored_functions = {
+            "<listcomp>",
+            "<genexpr>",
+            "<dictcomp>",
+            "<setcomp>",
+            "<lambda>",
+            "<module>",
+        }
 
         self.sanitized_filename = self.sanitize_to_filename(command)
         # Place trace file next to replay tests in the tests directory
@@ -133,7 +139,9 @@ class Tracer:
 
         function_path = "_".join(functions) if functions else self.sanitized_filename
         test_file_path = get_test_file_path(
-            test_dir=Path(config["tests_root"]), function_name=function_path, test_type="replay"
+            test_dir=Path(config["tests_root"]),
+            function_name=function_path,
+            test_type="replay",
         )
         test_file_path.parent.mkdir(parents=True, exist_ok=True)
         trace_filename = test_file_path.stem + ".trace"
@@ -163,7 +171,7 @@ class Tracer:
         if self.disable:
             return
         if getattr(Tracer, "used_once", False):
-            console.print(
+            print(
                 "Codeflash: Tracer can only be used once per program run. "
                 "Please only enable the Tracer once. Skipping tracing this section."
             )
@@ -172,7 +180,7 @@ class Tracer:
         Tracer.used_once = True
 
         if Path(self.output_file).exists():
-            console.rule("Removing existing trace file", style="bold red")
+            console.rule("Removing existing trace file")
             console.rule()
         Path(self.output_file).unlink(missing_ok=True)
 
@@ -191,25 +199,39 @@ class Tracer:
 
         # Store command metadata
         cur.execute("INSERT INTO metadata VALUES (?, ?)", ("command", self.command))
-        cur.execute("INSERT INTO metadata VALUES (?, ?)", ("program_name", self.sanitized_filename))
         cur.execute(
             "INSERT INTO metadata VALUES (?, ?)",
-            ("functions_filter", json.dumps(self.functions) if self.functions else None),
+            ("program_name", self.sanitized_filename),
+        )
+        cur.execute(
+            "INSERT INTO metadata VALUES (?, ?)",
+            (
+                "functions_filter",
+                json.dumps(self.functions) if self.functions else None,
+            ),
         )
         cur.execute(
             "INSERT INTO metadata VALUES (?, ?)",
             ("timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat()),
         )
-        cur.execute("INSERT INTO metadata VALUES (?, ?)", ("project_root", str(self.project_root)))
-        console.rule("Codeflash: Traced Program Output Begin", style="bold blue")
-        frame = sys._getframe(0)  # Get this frame and simulate a call to it  # noqa: SLF001
+        cur.execute(
+            "INSERT INTO metadata VALUES (?, ?)",
+            ("project_root", str(self.project_root)),
+        )
+        console.rule("Codeflash: Traced Program Output Begin")
+        frame = sys._getframe(
+            0
+        )  # Get this frame and simulate a call to it  # noqa: SLF001
         self.dispatch["call"](self, frame, 0)
         self.start_time = time.time()
         sys.setprofile(self.trace_callback)
         threading.setprofile(self.trace_callback)
 
     def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         if self.disable or self._db_lock is None:
             return
@@ -221,7 +243,7 @@ class Tracer:
                 return
 
             self.con.commit()  # Commit any pending from tracer_logic
-            console.rule("Codeflash: Traced Program Output End", style="bold blue")
+            console.rule("Codeflash: Traced Program Output End")
             self.create_stats()  # This calls snapshot_stats which uses self.timings
 
             cur = self.con.cursor()
@@ -284,11 +306,17 @@ class Tracer:
         from codeflash.verification.verification_utils import get_test_file_path
 
         replay_test = create_trace_replay_test(
-            trace_file=self.output_file, functions=self.function_modules, max_run_count=self.max_function_count
+            trace_file=self.output_file,
+            functions=self.function_modules,
+            max_run_count=self.max_function_count,
         )
-        function_path = "_".join(self.functions) if self.functions else self.sanitized_filename
+        function_path = (
+            "_".join(self.functions) if self.functions else self.sanitized_filename
+        )
         test_file_path = get_test_file_path(
-            test_dir=Path(self.config["tests_root"]), function_name=function_path, test_type="replay"
+            test_dir=Path(self.config["tests_root"]),
+            function_name=function_path,
+            test_type="replay",
         )
         with suppress(Exception):
             replay_test = isort.code(replay_test)
@@ -297,11 +325,8 @@ class Tracer:
             file.write(replay_test)
         self.replay_test_file_path = test_file_path
 
-        console.print(
-            f"Codeflash: Traced {self.trace_count} function calls successfully and replay test created at - {test_file_path}",
-            crop=False,
-            soft_wrap=False,
-            overflow="ignore",
+        print(
+            f"Codeflash: Traced {self.trace_count} function calls successfully and replay test created at - {test_file_path}"
         )
         pickle_data = {"replay_test_file_path": self.replay_test_file_path}
         import pickle
@@ -315,7 +340,9 @@ class Tracer:
         if None is not self.timeout and (time.time() - self.start_time) > self.timeout:
             sys.setprofile(None)
             threading.setprofile(None)
-            console.print(f"Codeflash: Timeout reached! Stopping tracing at {self.timeout} seconds.")
+            print(
+                f"Codeflash: Timeout reached! Stopping tracing at {self.timeout} seconds."
+            )
             return
         if self.disable or self._db_lock is None or self.con is None:
             return
@@ -371,7 +398,9 @@ class Tracer:
         try:
             function_qualified_name = f"{file_name}:{code.co_qualname}"
         except AttributeError:
-            function_qualified_name = f"{file_name}:{(class_name + '.' if class_name else '')}{code.co_name}"
+            function_qualified_name = (
+                f"{file_name}:{(class_name + '.' if class_name else '')}{code.co_name}"
+            )
         if function_qualified_name in self.ignored_qualified_functions:
             return
         if function_qualified_name not in self.function_count:
@@ -391,7 +420,9 @@ class Tracer:
                 FunctionModules(
                     function_name=code.co_name,
                     file_name=file_name,
-                    module_name=module_name_from_file_path(file_name, project_root_path=self.project_root),
+                    module_name=module_name_from_file_path(
+                        file_name, project_root_path=self.project_root
+                    ),
                     class_name=class_name,
                     line_no=code.co_firstlineno,
                 )
@@ -419,10 +450,18 @@ class Tracer:
                 # We do not pickle self for __init__ to avoid recursion errors, and instead instantiate its class
                 # directly with the rest of the arguments in the replay tests. We copy the arguments to avoid memory
                 # leaks, bad references or side effects when unpickling.
-                arguments_copy = dict(arguments.items())  # Use the local 'arguments' from frame.f_locals
-                if class_name and code.co_name == "__init__" and "self" in arguments_copy:
+                arguments_copy = dict(
+                    arguments.items()
+                )  # Use the local 'arguments' from frame.f_locals
+                if (
+                    class_name
+                    and code.co_name == "__init__"
+                    and "self" in arguments_copy
+                ):
                     del arguments_copy["self"]
-                local_vars = PicklePatcher.dumps(arguments_copy, protocol=pickle.HIGHEST_PROTOCOL)
+                local_vars = PicklePatcher.dumps(
+                    arguments_copy, protocol=pickle.HIGHEST_PROTOCOL
+                )
                 sys.setrecursionlimit(original_recursion_limit)
             except Exception:
                 self.function_count[function_qualified_name] -= 1
@@ -535,7 +574,11 @@ class Tracer:
         # In multi-threaded environments, frames can get mismatched
         if frame is not self.cur[-2]:
             # Don't assert in threaded environments - frames can legitimately differ
-            if hasattr(frame, "f_back") and hasattr(self.cur[-2], "f_back") and frame is self.cur[-2].f_back:
+            if (
+                hasattr(frame, "f_back")
+                and hasattr(self.cur[-2], "f_back")
+                and frame is self.cur[-2].f_back
+            ):
                 self.trace_dispatch_return(self.cur[-2], 0)
             else:
                 # We're in a different thread or context, can't continue with this frame
@@ -608,7 +651,7 @@ class Tracer:
 
     def print_stats(self, sort: str | int | tuple = -1) -> None:
         if not self.stats:
-            console.print("Codeflash: No stats available to print")
+            print("Codeflash: No stats available to print")
             self.total_tt = 0
             return
 
@@ -631,14 +674,16 @@ class Tracer:
                 try:
                     # Make sure we have 5 elements in stats_data
                     if len(stats_data) != 5:
-                        console.print(f"Skipping malformed stats data for {func}: {stats_data}")
+                        print(f"Skipping malformed stats data for {func}: {stats_data}")
                         continue
 
                     cc, nc, tt, ct, callers = stats_data
 
                     if len(func) == 4:
                         file_name, line_num, func_name, class_name = func
-                        new_func_name = f"{class_name}.{func_name}" if class_name else func_name
+                        new_func_name = (
+                            f"{class_name}.{func_name}" if class_name else func_name
+                        )
                         new_func = (file_name, line_num, new_func_name)
                     else:
                         new_func = func  # Keep as is if already in correct format
@@ -648,13 +693,23 @@ class Tracer:
                     for caller_func, count in callers_items:
                         if isinstance(caller_func, tuple):
                             if len(caller_func) == 4:
-                                caller_file, caller_line, caller_name, caller_class = caller_func
-                                caller_new_name = f"{caller_class}.{caller_name}" if caller_class else caller_name
-                                new_caller_func = (caller_file, caller_line, caller_new_name)
+                                caller_file, caller_line, caller_name, caller_class = (
+                                    caller_func
+                                )
+                                caller_new_name = (
+                                    f"{caller_class}.{caller_name}"
+                                    if caller_class
+                                    else caller_name
+                                )
+                                new_caller_func = (
+                                    caller_file,
+                                    caller_line,
+                                    caller_new_name,
+                                )
                             else:
                                 new_caller_func = caller_func
                         else:
-                            console.print(f"Unexpected caller format: {caller_func}")
+                            print(f"Unexpected caller format: {caller_func}")
                             new_caller_func = str(caller_func)
 
                         new_callers[new_caller_func] = count
@@ -662,21 +717,25 @@ class Tracer:
                     # Store with new format
                     new_stats[new_func] = (cc, nc, tt, ct, new_callers)
                 except Exception as e:
-                    console.print(f"Error converting stats for {func}: {e}")
+                    print(f"Error converting stats for {func}: {e}")
                     continue
 
             timings_items = list(self.timings.items())
             for func, timing_data in timings_items:
                 try:
                     if len(timing_data) != 5:
-                        console.print(f"Skipping malformed timing data for {func}: {timing_data}")
+                        print(
+                            f"Skipping malformed timing data for {func}: {timing_data}"
+                        )
                         continue
 
                     cc, ns, tt, ct, callers = timing_data
 
                     if len(func) == 4:
                         file_name, line_num, func_name, class_name = func
-                        new_func_name = f"{class_name}.{func_name}" if class_name else func_name
+                        new_func_name = (
+                            f"{class_name}.{func_name}" if class_name else func_name
+                        )
                         new_func = (file_name, line_num, new_func_name)
                     else:
                         new_func = func
@@ -686,20 +745,30 @@ class Tracer:
                     for caller_func, count in callers_items:
                         if isinstance(caller_func, tuple):
                             if len(caller_func) == 4:
-                                caller_file, caller_line, caller_name, caller_class = caller_func
-                                caller_new_name = f"{caller_class}.{caller_name}" if caller_class else caller_name
-                                new_caller_func = (caller_file, caller_line, caller_new_name)
+                                caller_file, caller_line, caller_name, caller_class = (
+                                    caller_func
+                                )
+                                caller_new_name = (
+                                    f"{caller_class}.{caller_name}"
+                                    if caller_class
+                                    else caller_name
+                                )
+                                new_caller_func = (
+                                    caller_file,
+                                    caller_line,
+                                    caller_new_name,
+                                )
                             else:
                                 new_caller_func = caller_func
                         else:
-                            console.print(f"Unexpected caller format: {caller_func}")
+                            print(f"Unexpected caller format: {caller_func}")
                             new_caller_func = str(caller_func)
 
                         new_callers[new_caller_func] = count
 
                     new_timings[new_func] = (cc, ns, tt, ct, new_callers)
                 except Exception as e:
-                    console.print(f"Error converting timings for {func}: {e}")
+                    print(f"Error converting timings for {func}: {e}")
                     continue
 
             self.stats = new_stats
@@ -710,67 +779,43 @@ class Tracer:
             total_calls = sum(cc for cc, _, _, _, _ in self.stats.values())
             total_primitive = sum(nc for _, nc, _, _, _ in self.stats.values())
 
-            summary = Text.assemble(
-                f"{total_calls:,} function calls ",
-                ("(" + f"{total_primitive:,} primitive calls" + ")", "dim"),
-                f" in {self.total_tt / 1e6:.3f}milliseconds",
+            summary = f"{total_calls:,} function calls ({total_primitive:,} primitive calls) in {self.total_tt / 1e6:.3f}milliseconds"
+
+            print(summary)
+
+            print()
+            print("Function Profile (ordered by internal time)")
+            print(
+                f"Showing top {min(25, len(self.stats))} of {len(self.stats)} functions"
             )
-
-            console.print(Align.center(Panel(summary, border_style="blue", width=80, padding=(0, 2), expand=False)))
-
-            table = Table(
-                show_header=True,
-                header_style="bold magenta",
-                border_style="blue",
-                title="[bold]Function Profile[/bold] (ordered by internal time)",
-                title_style="cyan",
-                caption=f"Showing top {min(25, len(self.stats))} of {len(self.stats)} functions",
-            )
-
-            table.add_column("Calls", justify="right", style="green", width=10)
-            table.add_column("Time (ms)", justify="right", style="cyan", width=10)
-            table.add_column("Per Call", justify="right", style="cyan", width=10)
-            table.add_column("Cum (ms)", justify="right", style="yellow", width=10)
-            table.add_column("Cum/Call", justify="right", style="yellow", width=10)
-            table.add_column("Function", style="blue")
+            header = f"{'Calls':>10} {'Time (ms)':>10} {'Per Call':>10} {'Cum (ms)':>10} {'Cum/Call':>10}  Function"
+            print(header)
 
             sorted_stats = sorted(
-                ((func, stats) for func, stats in self.stats.items() if isinstance(func, tuple) and len(func) == 3),
-                key=lambda x: x[1][2],  # Sort by tt (internal time)
+                (
+                    (func, stats)
+                    for func, stats in self.stats.items()
+                    if isinstance(func, tuple) and len(func) == 3
+                ),
+                key=lambda x: x[1][2],
                 reverse=True,
-            )[:25]  # Limit to top 25
+            )[:25]
 
-            # Format and add each row to the table
             for func, (cc, nc, tt, ct, _) in sorted_stats:
                 filename, lineno, funcname = func
-
-                # Format calls - show recursive format if different
                 calls_str = f"{cc}/{nc}" if cc != nc else f"{cc:,}"
-
-                # Convert to milliseconds
                 tt_ms = tt / 1e6
                 ct_ms = ct / 1e6
-
-                # Calculate per-call times
                 per_call = tt_ms / cc if cc > 0 else 0
                 cum_per_call = ct_ms / nc if nc > 0 else 0
                 base_filename = Path(filename).name
-                file_link = f"[link=file://{filename}]{base_filename}[/link]"
-
-                table.add_row(
-                    calls_str,
-                    f"{tt_ms:.3f}",
-                    f"{per_call:.3f}",
-                    f"{ct_ms:.3f}",
-                    f"{cum_per_call:.3f}",
-                    f"{funcname} [dim]({file_link}:{lineno})[/dim]",
+                print(
+                    f"{calls_str:>10} {tt_ms:>10.3f} {per_call:>10.3f} {ct_ms:>10.3f} {cum_per_call:>10.3f}  {funcname} ({base_filename}:{lineno})"
                 )
 
-            console.print(Align.center(table))
-
         except Exception as e:
-            console.print(f"[bold red]Error in stats processing:[/bold red] {e}")
-            console.print(f"Traced {self.trace_count:,} function calls")
+            print(f"Error in stats processing: {e}")
+            print(f"Traced {self.trace_count:,} function calls")
             self.total_tt = 0
 
     def make_pstats_compatible(self) -> None:
@@ -831,7 +876,9 @@ class Tracer:
         # Fallback if resulting name is empty
         return arg or "untitled"
 
-    def runctx(self, cmd: str, global_vars: dict[str, Any], local_vars: dict[str, Any]) -> Tracer | None:
+    def runctx(
+        self, cmd: str, global_vars: dict[str, Any], local_vars: dict[str, Any]
+    ) -> Tracer | None:
         self.__enter__()
         try:
             exec(cmd, global_vars, local_vars)  # noqa: S102
@@ -853,7 +900,9 @@ if __name__ == "__main__":
         sys.path.insert(0, str(Path(args_dict["progname"]).resolve().parent))
         with io.open_code(args_dict["progname"]) as fp:
             code = compile(fp.read(), args_dict["progname"], "exec")
-        spec = importlib.machinery.ModuleSpec(name="__main__", loader=None, origin=args_dict["progname"])
+        spec = importlib.machinery.ModuleSpec(
+            name="__main__", loader=None, origin=args_dict["progname"]
+        )
         globs = {
             "__spec__": spec,
             "__file__": spec.origin,

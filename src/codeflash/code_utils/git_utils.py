@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import git
-from rich.prompt import Confirm
 from unidiff import PatchSet
 
 from codeflash.cli_cmds.console import logger
@@ -19,7 +18,10 @@ if TYPE_CHECKING:
 
 
 def get_git_diff(
-    repo_directory: Path | None = None, *, only_this_commit: Optional[str] = None, uncommitted_changes: bool = False
+    repo_directory: Path | None = None,
+    *,
+    only_this_commit: Optional[str] = None,
+    uncommitted_changes: bool = False,
 ) -> dict[str, list[int]]:
     if repo_directory is None:
         repo_directory = Path.cwd()
@@ -27,13 +29,21 @@ def get_git_diff(
     commit = repository.head.commit
     if only_this_commit:
         uni_diff_text = repository.git.diff(
-            only_this_commit + "^1", only_this_commit, ignore_blank_lines=True, ignore_space_at_eol=True
+            only_this_commit + "^1",
+            only_this_commit,
+            ignore_blank_lines=True,
+            ignore_space_at_eol=True,
         )
     elif uncommitted_changes:
-        uni_diff_text = repository.git.diff("HEAD", ignore_blank_lines=True, ignore_space_at_eol=True)
+        uni_diff_text = repository.git.diff(
+            "HEAD", ignore_blank_lines=True, ignore_space_at_eol=True
+        )
     else:
         uni_diff_text = repository.git.diff(
-            commit.hexsha + "^1", commit.hexsha, ignore_blank_lines=True, ignore_space_at_eol=True
+            commit.hexsha + "^1",
+            commit.hexsha,
+            ignore_blank_lines=True,
+            ignore_space_at_eol=True,
         )
     patch_set = PatchSet(StringIO(uni_diff_text))
     change_list: dict[str, list[int]] = {}  # list of changes
@@ -45,7 +55,10 @@ def get_git_diff(
         logger.debug(f"file name: {file_path}")
 
         add_line_no: list[int] = [
-            line.target_line_no for hunk in patched_file for line in hunk if line.is_added and line.value.strip() != ""
+            line.target_line_no
+            for hunk in patched_file
+            for line in hunk
+            if line.is_added and line.value.strip() != ""
         ]  # the row number of deleted lines
 
         logger.debug(f"added lines: {add_line_no}")
@@ -116,14 +129,22 @@ def get_git_remotes(repo: Repo) -> list[str]:
 
 
 @cache
-def get_repo_owner_and_name(repo: Repo | None = None, git_remote: str | None = "origin") -> tuple[str, str]:
+def get_repo_owner_and_name(
+    repo: Repo | None = None, git_remote: str | None = "origin"
+) -> tuple[str, str]:
     remote_url = get_remote_url(repo, git_remote)  # call only once
-    remote_url = remote_url.removesuffix(".git") if remote_url.endswith(".git") else remote_url
+    remote_url = (
+        remote_url.removesuffix(".git") if remote_url.endswith(".git") else remote_url
+    )
     # remote_url = get_remote_url(repo, git_remote).removesuffix(".git") if remote_url.endswith(".git") else remote_url
     remote_url = remote_url.rstrip("/")
     split_url = remote_url.split("/")
     repo_owner_with_github, repo_name = split_url[-2], split_url[-1]
-    repo_owner = repo_owner_with_github.split(":")[1] if ":" in repo_owner_with_github else repo_owner_with_github
+    repo_owner = (
+        repo_owner_with_github.split(":")[1]
+        if ":" in repo_owner_with_github
+        else repo_owner_with_github
+    )
     return repo_owner, repo_name
 
 
@@ -143,19 +164,22 @@ def check_running_in_git_repo(module_root: str) -> bool:
 
 def confirm_proceeding_with_no_git_repo() -> str | bool:
     if sys.__stdin__.isatty():
-        return Confirm.ask(
+        response = input(
             "WARNING: I did not find a git repository for your code. If you proceed with running codeflash, "
-            "optimized code will be written over your current code and you could irreversibly lose your current code. Proceed?",
-            default=False,
+            "optimized code will be written over your current code and you could irreversibly lose your current code. Proceed? (y/N): "
         )
-    # continue running on non-interactive environments, important for GitHub actions
+        return response.lower() in ("y", "yes")
     return True
 
 
-def check_and_push_branch(repo: git.Repo, git_remote: str | None = "origin", *, wait_for_push: bool = False) -> bool:
+def check_and_push_branch(
+    repo: git.Repo, git_remote: str | None = "origin", *, wait_for_push: bool = False
+) -> bool:
     # Check if HEAD is detached
     if repo.head.is_detached:
-        logger.warning("⚠️ HEAD is detached. Cannot push branch. Please check out a branch before creating a PR.")
+        logger.warning(
+            "⚠️ HEAD is detached. Cannot push branch. Please check out a branch before creating a PR."
+        )
         return False
 
     # Safe to access active_branch when HEAD is not detached
@@ -170,24 +194,34 @@ def check_and_push_branch(repo: git.Repo, git_remote: str | None = "origin", *, 
 
     # Check if the branch is pushed
     if f"{git_remote}/{current_branch_name}" not in repo.refs:
-        logger.warning(f"⚠️ The branch '{current_branch_name}' is not pushed to the remote repository.")
+        logger.warning(
+            f"⚠️ The branch '{current_branch_name}' is not pushed to the remote repository."
+        )
         if not sys.__stdin__.isatty():
             logger.warning("Non-interactive shell detected. Branch will not be pushed.")
             return False
-        if sys.__stdin__.isatty() and Confirm.ask(
+        response = input(
             f"⚡️ In order for me to create PRs, your current branch needs to be pushed. Do you want to push "
-            f"the branch '{current_branch_name}' to the remote repository?",
-            default=False,
-        ):
+            f"the branch '{current_branch_name}' to the remote repository? (y/N): "
+        )
+        if response.lower() in ("y", "yes"):
             remote.push(current_branch)
-            logger.info(f"⬆️ Branch '{current_branch_name}' has been pushed to {git_remote}.")
+            logger.info(
+                f"⬆️ Branch '{current_branch_name}' has been pushed to {git_remote}."
+            )
             if wait_for_push:
-                time.sleep(3)  # adding this to give time for the push to register with GitHub,
+                time.sleep(
+                    3
+                )  # adding this to give time for the push to register with GitHub,
                 # so that our modifications to it are not rejected
             return True
-        logger.info(f"🔘 Branch '{current_branch_name}' has not been pushed to {git_remote}.")
+        logger.info(
+            f"🔘 Branch '{current_branch_name}' has not been pushed to {git_remote}."
+        )
         return False
-    logger.debug(f"The branch '{current_branch_name}' is present in the remote repository.")
+    logger.debug(
+        f"The branch '{current_branch_name}' is present in the remote repository."
+    )
     return True
 
 

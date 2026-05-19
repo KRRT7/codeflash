@@ -4,7 +4,6 @@ from collections import Counter, defaultdict
 from typing import TYPE_CHECKING
 
 import libcst as cst
-from rich.tree import Tree
 
 from codeflash.cli_cmds.console import DEBUG_MODE, console, logger
 from codeflash.models.test_type import TestType
@@ -620,16 +619,13 @@ class CoverageData:
         return f"{self.coverage:.1f}%"
 
     def log_coverage(self) -> None:
-        from rich.tree import Tree
-
-        tree = Tree("Test Coverage Results")
-        tree.add(f"Main Function: {self.main_func_coverage.name}: {self.coverage:.2f}%")
+        print("Test Coverage Results")
+        print(f"  Main Function: {self.main_func_coverage.name}: {self.coverage:.2f}%")
         if self.dependent_func_coverage:
-            tree.add(
-                f"Dependent Function: {self.dependent_func_coverage.name}: {self.dependent_func_coverage.coverage:.2f}%"
+            print(
+                f"  Dependent Function: {self.dependent_func_coverage.name}: {self.dependent_func_coverage.coverage:.2f}%"
             )
-        tree.add(f"Total Coverage: {self.coverage:.2f}%")
-        console.print(tree)
+        print(f"  Total Coverage: {self.coverage:.2f}%")
         console.rule()
 
         if not self.coverage:
@@ -897,16 +893,15 @@ class TestResults(BaseModel):  # noqa: PLW1641
         )
 
     @staticmethod
-    def report_to_tree(report: dict[TestType, dict[str, int]], title: str) -> Tree:
-        tree = Tree(title)
-
+    def report_to_tree(report: dict[TestType, dict[str, int]], title: str) -> str:
+        lines = [title]
         for test_type in TestType:
             if test_type is TestType.INIT_STATE_TEST:
                 continue
-            tree.add(
-                f"{test_type.to_name()} - Passed: {report[test_type]['passed']}, Failed: {report[test_type]['failed']}"
+            lines.append(
+                f"  {test_type.to_name()} - Passed: {report[test_type]['passed']}, Failed: {report[test_type]['failed']}"
             )
-        return tree
+        return "\n".join(lines)
 
     def usable_runtime_data_by_test_case(self) -> dict[InvocationId, list[int]]:
         # Efficient single traversal, directly accumulating into a dict.

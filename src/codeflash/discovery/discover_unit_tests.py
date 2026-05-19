@@ -17,8 +17,6 @@ from typing import TYPE_CHECKING, Callable, Optional, final
 if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from pydantic.dataclasses import dataclass
-from rich.panel import Panel
-from rich.text import Text
 
 from codeflash.cli_cmds.console import console, logger, test_files_progress_bar
 from codeflash.code_utils.code_utils import (
@@ -650,11 +648,7 @@ def discover_tests_pytest(
                 match = ImportErrorPattern.search(result.stdout)
                 if match:
                     error_message = match.group()
-                    panel = Panel(
-                        Text.from_markup(f"⚠️  {error_message} ", style="bold red"),
-                        expand=False,
-                    )
-                    console.print(panel)
+                    print(f"⚠️  {error_message}")
 
         elif 0 <= exitcode <= 5:
             logger.warning(

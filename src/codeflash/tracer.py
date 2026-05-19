@@ -34,8 +34,16 @@ if TYPE_CHECKING:
 
 def main(args: Namespace | None = None) -> ArgumentParser:
     parser = ArgumentParser(allow_abbrev=False)
-    parser.add_argument("-o", "--outfile", dest="outfile", help="Save trace to <outfile>", default="codeflash.trace")
-    parser.add_argument("--only-functions", help="Trace only these functions", nargs="+", default=None)
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        dest="outfile",
+        help="Save trace to <outfile>",
+        default="codeflash.trace",
+    )
+    parser.add_argument(
+        "--only-functions", help="Trace only these functions", nargs="+", default=None
+    )
     parser.add_argument(
         "--max-function-count",
         help="Maximum number of inputs for one function to include in the trace.",
@@ -49,16 +57,29 @@ def main(args: Namespace | None = None) -> ArgumentParser:
         type=float,
         default=None,
     )
-    parser.add_argument("-m", action="store_true", dest="module", help="Trace a library module", default=False)
+    parser.add_argument(
+        "-m",
+        action="store_true",
+        dest="module",
+        help="Trace a library module",
+        default=False,
+    )
     parser.add_argument(
         "--codeflash-config",
         help="Optional path to the project's pyproject.toml file "
         "with the codeflash config. Will be auto-discovered if not specified.",
         default=None,
     )
-    parser.add_argument("--trace-only", action="store_true", help="Trace and create replay tests only, don't optimize")
     parser.add_argument(
-        "--limit", type=int, default=None, help="Limit the number of test files to process (for -m pytest mode)"
+        "--trace-only",
+        action="store_true",
+        help="Trace and create replay tests only, don't optimize",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Limit the number of test files to process (for -m pytest mode)",
     )
 
     if args is not None:
@@ -75,7 +96,7 @@ def main(args: Namespace | None = None) -> ArgumentParser:
         sys.argv[:] = unknown_args
 
         if getattr(args, "disable", False):
-            console.rule("Codeflash: Tracer disabled by --disable option", style="bold red")
+            console.rule("Codeflash: Tracer disabled by --disable option")
             return parser
 
     else:
@@ -92,7 +113,9 @@ def main(args: Namespace | None = None) -> ArgumentParser:
         parsed_args.outfile = Path(parsed_args.outfile).resolve()
     outfile = parsed_args.outfile
     config, found_config_path = parse_config_file(parsed_args.codeflash_config)
-    project_root = project_root_from_module_root(Path(config["module_root"]), found_config_path)
+    project_root = project_root_from_module_root(
+        Path(config["module_root"]), found_config_path
+    )
     if len(unknown_args) > 0:
         args_dict = {
             "functions": parsed_args.only_functions,
@@ -109,11 +132,17 @@ def main(args: Namespace | None = None) -> ArgumentParser:
             test_paths = []
             replay_test_paths = []
             if parsed_args.module and unknown_args[0] == "pytest":
-                pytest_splits, test_paths = pytest_split(unknown_args[1:], limit=parsed_args.limit)
+                pytest_splits, test_paths = pytest_split(
+                    unknown_args[1:], limit=parsed_args.limit
+                )
                 if pytest_splits is None or test_paths is None:
-                    console.print(f"❌ Could not find test files in the specified paths: {unknown_args[1:]}")
+                    console.print(
+                        f"❌ Could not find test files in the specified paths: {unknown_args[1:]}"
+                    )
                     console.print(f"Current working directory: {Path.cwd()}")
-                    console.print("Please ensure the test directory exists and contains test files.")
+                    console.print(
+                        "Please ensure the test directory exists and contains test files."
+                    )
                     sys.exit(1)
 
             if len(pytest_splits) > 1:
@@ -121,7 +150,9 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                 test_paths_set = set(test_paths)
                 result_pickle_file_paths = []
                 for i, test_split in enumerate(pytest_splits, start=1):
-                    result_pickle_file_path = get_run_tmp_file(Path(f"tracer_results_file_{i}.pkl"))
+                    result_pickle_file_path = get_run_tmp_file(
+                        Path(f"tracer_results_file_{i}.pkl")
+                    )
                     result_pickle_file_paths.append(result_pickle_file_path)
                     args_dict["result_pickle_file_path"] = str(result_pickle_file_path)
                     updated_sys_argv = []
@@ -135,14 +166,18 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                     pythonpath = env.get("PYTHONPATH", "")
                     project_root_str = str(project_root)
                     if pythonpath:
-                        env["PYTHONPATH"] = f"{project_root_str}{os.pathsep}{pythonpath}"
+                        env["PYTHONPATH"] = (
+                            f"{project_root_str}{os.pathsep}{pythonpath}"
+                        )
                     else:
                         env["PYTHONPATH"] = project_root_str
                     processes.append(
                         subprocess.Popen(
                             [
                                 SAFE_SYS_EXECUTABLE,
-                                Path(__file__).parent / "tracing" / "tracing_new_process.py",
+                                Path(__file__).parent
+                                / "tracing"
+                                / "tracing_new_process.py",
                                 *updated_sys_argv,
                                 json.dumps(args_dict),
                             ],
@@ -163,7 +198,9 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                     finally:
                         result_pickle_file_path.unlink(missing_ok=True)
             else:
-                result_pickle_file_path = get_run_tmp_file(Path("tracer_results_file.pkl"))
+                result_pickle_file_path = get_run_tmp_file(
+                    Path("tracer_results_file.pkl")
+                )
                 args_dict["result_pickle_file_path"] = str(result_pickle_file_path)
                 args_dict["command"] = " ".join(sys.argv)
 
