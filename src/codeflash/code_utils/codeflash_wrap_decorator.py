@@ -4,7 +4,6 @@ import asyncio
 import gc
 import os
 import sqlite3
-from enum import Enum
 from functools import wraps
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -12,15 +11,7 @@ from typing import Any, Callable, TypeVar
 
 import dill as pickle
 
-from codeflash._sqlite_schema import TEST_RESULTS_TABLE_SCHEMA
-
-
-class VerificationType(
-    str, Enum
-):  # moved from codeflash/verification/codeflash_capture.py
-    FUNCTION_CALL = "function_call"  # Correctness verification for a test function, checks input values and output values)
-    INIT_STATE_FTO = "init_state_fto"  # Correctness verification for fto class instance attributes after init
-    INIT_STATE_HELPER = "init_state_helper"  # Correctness verification for helper class instance attributes after init
+from codeflash._constants import TEST_RESULTS_TABLE_SCHEMA, VerificationType
 
 
 F = TypeVar("F", bound=Callable[..., Any])

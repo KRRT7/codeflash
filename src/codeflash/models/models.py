@@ -36,6 +36,7 @@ from codeflash.code_utils.code_utils import (
     module_name_from_file_path,
     validate_python_code,
 )
+from codeflash._constants import VerificationType
 from codeflash.code_utils.env_utils import is_end_to_end
 from codeflash.verification.comparator import comparator
 
@@ -685,13 +686,6 @@ class TestingMode(enum.Enum):
     BEHAVIOR = "behavior"
     PERFORMANCE = "performance"
     LINE_PROFILE = "line_profile"
-
-
-# TODO this class is duplicated in codeflash_capture
-class VerificationType(str, Enum):
-    FUNCTION_CALL = "function_call"  # Correctness verification for a test function, checks input values and output values)
-    INIT_STATE_FTO = "init_state_fto"  # Correctness verification for fto class instance attributes after init
-    INIT_STATE_HELPER = "init_state_helper"  # Correctness verification for helper class instance attributes after init
 
 
 @dataclass(frozen=True)

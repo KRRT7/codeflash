@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-# This file should not have any dependencies on codeflash (except _sqlite_schema)
+# This file should not have any dependencies on codeflash (except _constants)
 import functools
 import gc
 import inspect
@@ -12,18 +12,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable
 
-from codeflash._sqlite_schema import TEST_RESULTS_TABLE_SCHEMA
+from codeflash._constants import TEST_RESULTS_TABLE_SCHEMA, VerificationType
 
 import dill as pickle
 from dill import PicklingWarning
 
 warnings.filterwarnings("ignore", category=PicklingWarning)
-
-
-class VerificationType(str, Enum):
-    FUNCTION_CALL = "function_call"  # Correctness verification for a test function, checks input values and output values)
-    INIT_STATE_FTO = "init_state_fto"  # Correctness verification for fto class instance attributes after init
-    INIT_STATE_HELPER = "init_state_helper"  # Correctness verification for helper class instance attributes after init
 
 
 def get_test_info_from_stack(tests_root: str) -> tuple[str, str | None, str, str]:

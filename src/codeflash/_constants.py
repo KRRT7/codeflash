@@ -1,9 +1,18 @@
-"""Zero-dependency SQLite schema constants.
+"""Zero-dependency constants for codeflash internals.
 
 Must not import anything from codeflash — imported by files injected
 into user test code at runtime (codeflash_capture.py,
 codeflash_wrap_decorator.py).
 """
+
+from enum import Enum
+
+
+class VerificationType(str, Enum):
+    FUNCTION_CALL = "function_call"
+    INIT_STATE_FTO = "init_state_fto"
+    INIT_STATE_HELPER = "init_state_helper"
+
 
 TEST_RESULTS_TABLE_SCHEMA = (
     "CREATE TABLE IF NOT EXISTS test_results ("
