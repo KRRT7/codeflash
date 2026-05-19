@@ -265,12 +265,12 @@ def test_run_and_parse_picklepatch() -> None:
     """
     # Init paths
     project_root = Path(__file__).parent.parent.resolve()
-    tests_root = project_root / "code_to_optimize" / "tests" / "pytest"
-    benchmarks_root = project_root / "code_to_optimize" / "tests" / "pytest" / "benchmarks_socket_test"
+    tests_root = project_root / "tests" / "code_to_optimize" / "tests" / "pytest"
+    benchmarks_root = project_root / "tests" / "code_to_optimize" / "tests" / "pytest" / "benchmarks_socket_test"
     replay_tests_dir = benchmarks_root / "codeflash_replay_tests"
     output_file = (benchmarks_root / Path("test_trace_benchmarks.trace")).resolve()
-    fto_unused_socket_path = (project_root / "code_to_optimize" / "bubble_sort_picklepatch_test_unused_socket.py").resolve()
-    fto_used_socket_path = (project_root / "code_to_optimize" / "bubble_sort_picklepatch_test_used_socket.py").resolve()
+    fto_unused_socket_path = (project_root / "tests" / "code_to_optimize" / "bubble_sort_picklepatch_test_unused_socket.py").resolve()
+    fto_used_socket_path = (project_root / "tests" / "code_to_optimize" / "bubble_sort_picklepatch_test_used_socket.py").resolve()
     original_fto_unused_socket_code = fto_unused_socket_path.read_text("utf-8")
     original_fto_used_socket_code = fto_used_socket_path.read_text("utf-8")
     # Trace benchmarks
@@ -290,21 +290,21 @@ def test_run_and_parse_picklepatch() -> None:
         function_benchmark_timings = codeflash_benchmark_plugin.get_function_benchmark_timings(output_file)
         total_benchmark_timings = codeflash_benchmark_plugin.get_benchmark_timings(output_file)
         function_to_results = validate_and_format_benchmark_table(function_benchmark_timings, total_benchmark_timings)
-        assert "code_to_optimize.bubble_sort_picklepatch_test_unused_socket.bubble_sort_with_unused_socket" in function_to_results
+        assert "tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket.bubble_sort_with_unused_socket" in function_to_results
         
         # Close the connection to allow file cleanup on Windows
         conn.close()
         time.sleep(1)
 
         # Handle the case where function runs too fast to be measured
-        unused_socket_results = function_to_results["code_to_optimize.bubble_sort_picklepatch_test_unused_socket.bubble_sort_with_unused_socket"]
+        unused_socket_results = function_to_results["tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket.bubble_sort_with_unused_socket"]
         if unused_socket_results:
             test_name, total_time, function_time, percent = unused_socket_results[0]
             assert total_time >= 0.0
             # Function might be too fast, so we allow 0.0 function_time
             assert function_time >= 0.0
             assert percent >= 0.0
-        used_socket_results = function_to_results["code_to_optimize.bubble_sort_picklepatch_test_used_socket.bubble_sort_with_used_socket"]
+        used_socket_results = function_to_results["tests.code_to_optimize.bubble_sort_picklepatch_test_used_socket.bubble_sort_with_used_socket"]
         # on windows , if the socket is not used we might not have resultssss
         if used_socket_results:
             test_name, total_time, function_time, percent = used_socket_results[0]
@@ -312,16 +312,16 @@ def test_run_and_parse_picklepatch() -> None:
             assert function_time >= 0.0 
             assert percent >= 0.0
 
-        bubble_sort_unused_socket_path = (project_root / "code_to_optimize"/ "bubble_sort_picklepatch_test_unused_socket.py").as_posix()
-        bubble_sort_used_socket_path = (project_root / "code_to_optimize" / "bubble_sort_picklepatch_test_used_socket.py").as_posix()
+        bubble_sort_unused_socket_path = (project_root / "tests" / "code_to_optimize"/ "bubble_sort_picklepatch_test_unused_socket.py").as_posix()
+        bubble_sort_used_socket_path = (project_root / "tests" / "code_to_optimize" / "bubble_sort_picklepatch_test_used_socket.py").as_posix()
         # Expected function calls
         expected_calls = [
-            ("bubble_sort_with_unused_socket", "", "code_to_optimize.bubble_sort_picklepatch_test_unused_socket",
+            ("bubble_sort_with_unused_socket", "", "tests.code_to_optimize.bubble_sort_picklepatch_test_unused_socket",
              f"{bubble_sort_unused_socket_path}",
-             "test_socket_picklepatch", "code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket", 12),
-            ("bubble_sort_with_used_socket", "", "code_to_optimize.bubble_sort_picklepatch_test_used_socket",
+             "test_socket_picklepatch", "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket", 12),
+            ("bubble_sort_with_used_socket", "", "tests.code_to_optimize.bubble_sort_picklepatch_test_used_socket",
              f"{bubble_sort_used_socket_path}",
-             "test_used_socket_picklepatch", "code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket", 20)
+             "test_used_socket_picklepatch", "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket", 20)
         ]
         for idx, (actual, expected) in enumerate(zip(function_calls, expected_calls)):
             assert actual[0] == expected[0], f"Mismatch at index {idx} for function_name"
@@ -399,7 +399,7 @@ def test_run_and_parse_picklepatch() -> None:
             testing_time=1.0,
         )
         assert len(test_results_unused_socket) == 1
-        assert test_results_unused_socket.test_results[0].id.test_module_path == "code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
+        assert test_results_unused_socket.test_results[0].id.test_module_path == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
         assert test_results_unused_socket.test_results[0].id.test_function_name == "test_code_to_optimize_bubble_sort_picklepatch_test_unused_socket_bubble_sort_with_unused_socket_test_socket_picklepatch"
         assert test_results_unused_socket.test_results[0].did_pass == True
 
@@ -476,7 +476,7 @@ def bubble_sort_with_unused_socket(data_container):
         )
         assert len(test_results_used_socket) == 1
         assert test_results_used_socket.test_results[
-                   0].id.test_module_path == "code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
+                   0].id.test_module_path == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
         assert test_results_used_socket.test_results[
                    0].id.test_function_name == "test_code_to_optimize_bubble_sort_picklepatch_test_used_socket_bubble_sort_with_used_socket_test_used_socket_picklepatch"
         assert test_results_used_socket.test_results[0].did_pass is False
@@ -507,7 +507,7 @@ def bubble_sort_with_used_socket(data_container):
         )
         assert len(test_results_used_socket) == 1
         assert test_results_used_socket.test_results[
-                   0].id.test_module_path == "code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
+                   0].id.test_module_path == "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.codeflash_replay_tests.test_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0"
         assert test_results_used_socket.test_results[
                    0].id.test_function_name == "test_code_to_optimize_bubble_sort_picklepatch_test_used_socket_bubble_sort_with_used_socket_test_used_socket_picklepatch"
         assert test_results_used_socket.test_results[0].did_pass is False

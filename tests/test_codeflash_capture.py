@@ -36,7 +36,7 @@ class TestUnittestExample(unittest.TestCase):
        obj = MyClass()
        self.assertTrue(True)
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     sample_code = f"""
 from codeflash.verification.codeflash_capture import get_test_info_from_stack
 class MyClass:
@@ -69,19 +69,19 @@ class MyClass:
             # Format is (test_module_name, test_class_name, test_name, line_id)
 
         # First test (test_example_test)
-        assert results[0][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[0][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[0][1].strip() == "None"  # test_class_name
         assert results[0][2] == "test_example_test"  # test_name
         assert results[0][3] == "6"  # line_id
 
         # Second test (test_example_test_2 in TestExampleClass)
-        assert results[1][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[1][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[1][1].strip() == "TestExampleClass"  # test_class_name
         assert results[1][2] == "test_example_test_2"  # test_name
         assert results[1][3] == "11"  # line_id
 
         # Third test (test_example_test_3 in TestUnittestExample)
-        assert results[2][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[2][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[2][1].strip() == "TestUnittestExample"  # test_class_name
         assert results[2][2] == "test_example_test_3"  # test_name
         assert results[2][3] == "16"  # line_id
@@ -111,7 +111,7 @@ class TestUnittestExample(unittest.TestCase):
    def test_example_test_3(self):
        self.assertEqual(obj.x, 2)
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     sample_code = f"""
 from codeflash.verification.codeflash_capture import get_test_info_from_stack
 class MyClass:
@@ -143,7 +143,7 @@ class MyClass:
             results.append(values)
             # Format is (test_module_name, test_class_name, test_name, line_id)
         assert len(results) == 1
-        assert results[0][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[0][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[0][1].strip() == "None"  # test_class_name
         assert results[0][2].strip() == "None"  # test_name
         assert results[0][3] == "5"  # line_id
@@ -175,7 +175,7 @@ class TestUnittestExample(unittest.TestCase):
         result = get_obj().x
         self.assertEqual(result, 2)
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     sample_code = f"""
 from codeflash.verification.codeflash_capture import get_test_info_from_stack
 class MyClass:
@@ -183,7 +183,7 @@ class MyClass:
         self.x = 2
         print(f"TEST_INFO_START|{{get_test_info_from_stack('{test_dir.as_posix()}')}}|TEST_INFO_END")
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     test_file_name = "test_stack_info_temp.py"
 
     test_path = test_dir / test_file_name
@@ -208,17 +208,17 @@ class MyClass:
             results.append(values)
             # Format is (test_module_name, test_class_name, test_name, line_id)
         assert len(results) == 3
-        assert results[0][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[0][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[0][1].strip() == "None"  # test_class_name
         assert results[0][2].strip() == "test_example_test"  # test_name
         assert results[0][3] == "9"  # line_id
 
-        assert results[1][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[1][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[1][1].strip() == "TestExampleClass"  # test_class_name
         assert results[1][2] == "test_example_test_2"  # test_name
         assert results[1][3] == "14"  # line_id
 
-        assert results[2][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[2][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[2][1].strip() == "TestUnittestExample"  # test_class_name
         assert results[2][2] == "test_example_test_3"  # test_name
         assert results[2][3] == "19"  # line_id
@@ -254,7 +254,7 @@ class TestUnittestExample(unittest.TestCase):
         recursive_call(1)
 """
     # Make sure this directory aligns with your existing path structure.
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     sample_code = f"""
 from codeflash.verification.codeflash_capture import get_test_info_from_stack
 class MyClass:
@@ -300,20 +300,20 @@ class MyClass:
 
         # For the first 3 results, we expect them to come from `test_example_test`
         for i in range(3):
-            assert results[i][0] == "code_to_optimize.tests.pytest.test_stack_info_recursive_temp"  # Module name
+            assert results[i][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_recursive_temp"  # Module name
             assert results[i][1] == "None"  # No class
             assert results[i][2] == "test_example_test"  # Test name
             assert results[i][3] == "13"
 
         # Next 2 should come from the `TestExampleClass.test_example_test_2`
         for i in range(3, 5):
-            assert results[i][0] == "code_to_optimize.tests.pytest.test_stack_info_recursive_temp"
+            assert results[i][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_recursive_temp"
             assert results[i][1] == "TestExampleClass"
             assert results[i][2] == "test_example_test_2"
             assert results[i][3] == "18"
 
         # Last call should come from the `TestUnittestExample.test_example_test_3`
-        assert results[5][0] == "code_to_optimize.tests.pytest.test_stack_info_recursive_temp"
+        assert results[5][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_recursive_temp"
         assert results[5][1] == "TestUnittestExample"
         assert results[5][2] == "test_example_test_3"
         assert results[5][3] == "23"
@@ -337,7 +337,7 @@ def test_example_test():
     this_obj = MyClass()
     assert this_obj.x == get_diff_obj().x
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     sample_code = f"""
 from codeflash.verification.codeflash_capture import get_test_info_from_stack
 class MyClass:
@@ -345,7 +345,7 @@ class MyClass:
         self.x = 2
         print(f"TEST_INFO_START|{{get_test_info_from_stack('{test_dir.as_posix()}')}}|TEST_INFO_END")
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     test_file_name = "test_stack_info_temp.py"
 
     test_path = test_dir / test_file_name
@@ -370,17 +370,17 @@ class MyClass:
             results.append(values)
             # Format is (test_module_name, test_class_name, test_name, line_id)
 
-        assert results[0][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[0][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[0][1].strip() == "None"  # test_class_name
         assert results[0][2].strip() == "None"  # test_name
         assert results[0][3] == "5"  # line_id
 
-        assert results[1][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[1][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[1][1].strip() == "None"  # test_class_name
         assert results[1][2].strip() == "test_example_test"  # test_name
         assert results[1][3] == "11"  # line_id
 
-        assert results[2][0] == "code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
+        assert results[2][0] == "tests.code_to_optimize.tests.pytest.test_stack_info_temp"  # test_module_name
         assert results[2][1].strip() == "None"  # test_class_name
         assert results[2][2].strip() == "test_example_test"  # test_name
         assert results[2][3] == "12"  # line_id
@@ -392,7 +392,7 @@ class MyClass:
 
 def test_codeflash_capture_basic() -> None:
     test_code = """
-from code_to_optimize.tests.pytest.sample_code import MyClass
+from tests.code_to_optimize.tests.pytest.sample_code import MyClass
 import unittest
 
 def test_example_test():
@@ -409,7 +409,7 @@ class TestUnittestExample(unittest.TestCase):
        obj = MyClass()
        self.assertTrue(True)
     """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     tmp_dir_path = get_run_tmp_file(Path("test_return_values"))
     sample_code = f"""
 from codeflash.verification.codeflash_capture import codeflash_capture
@@ -424,7 +424,7 @@ class MyClass:
     test_path = test_dir / test_file_name
     test_path_perf = test_dir / "test_codeflash_capture_temp_perf.py"
 
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
     sample_code_path = test_dir / "sample_code.py"
     try:
@@ -474,7 +474,7 @@ class MyClass:
         assert test_results[0].return_value[0]["x"] == 2
         assert test_results[0].id.test_function_name == "test_example_test"
         assert test_results[0].id.test_class_name is None
-        assert test_results[0].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[0].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[0].id.function_getting_tested == "some_function"
         assert test_results[0].id.iteration_id == "6_0"
 
@@ -482,14 +482,14 @@ class MyClass:
         assert test_results[1].return_value[0]["x"] == 2
         assert test_results[1].id.test_function_name == "test_example_test_2"
         assert test_results[1].id.test_class_name == "TestExampleClass"
-        assert test_results[1].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[1].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[1].id.function_getting_tested == "some_function"
         assert test_results[1].id.iteration_id == "11_0"
         assert test_results[2].did_pass
         assert test_results[2].return_value[0]["x"] == 2
         assert test_results[2].id.test_function_name == "test_example_test_3"
         assert test_results[2].id.test_class_name == "TestUnittestExample"
-        assert test_results[2].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[2].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[2].id.function_getting_tested == "some_function"
         assert test_results[2].id.iteration_id == "16_0"
 
@@ -512,7 +512,7 @@ class MyClass:
 
 def test_codeflash_capture_super_init() -> None:
     test_code = """
-from code_to_optimize.tests.pytest.sample_code import MyClass
+from tests.code_to_optimize.tests.pytest.sample_code import MyClass
 import unittest
 
 def test_example_test():
@@ -529,7 +529,7 @@ class TestUnittestExample(unittest.TestCase):
        obj = MyClass()
        self.assertTrue(True)
     """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     tmp_dir_path = get_run_tmp_file(Path("test_return_values"))
     # MyClass did not have an init function, we created the init function with the codeflash_capture decorator using instrumentation
     sample_code = f"""
@@ -548,7 +548,7 @@ class MyClass(ParentClass):
     test_path = test_dir / test_file_name
     test_path_perf = test_dir / "test_codeflash_capture_temp_perf.py"
 
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
     sample_code_path = test_dir / "sample_code.py"
     try:
@@ -597,7 +597,7 @@ class MyClass(ParentClass):
         assert test_results[0].return_value[0]["x"] == 2
         assert test_results[0].id.test_function_name == "test_example_test"
         assert test_results[0].id.test_class_name is None
-        assert test_results[0].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[0].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[0].id.function_getting_tested == "some_function"
         assert test_results[0].id.iteration_id == "6_0"
 
@@ -605,7 +605,7 @@ class MyClass(ParentClass):
         assert test_results[1].return_value[0]["x"] == 2
         assert test_results[1].id.test_function_name == "test_example_test_2"
         assert test_results[1].id.test_class_name == "TestExampleClass"
-        assert test_results[1].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[1].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[1].id.function_getting_tested == "some_function"
         assert test_results[1].id.iteration_id == "11_0"
 
@@ -613,7 +613,7 @@ class MyClass(ParentClass):
         assert test_results[2].return_value[0]["x"] == 2
         assert test_results[2].id.test_function_name == "test_example_test_3"
         assert test_results[2].id.test_class_name == "TestUnittestExample"
-        assert test_results[2].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[2].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[2].id.function_getting_tested == "some_function"
         assert test_results[2].id.iteration_id == "16_0"
 
@@ -637,7 +637,7 @@ class MyClass(ParentClass):
 
 def test_codeflash_capture_recursive() -> None:
     test_code = """
-from code_to_optimize.tests.pytest.sample_code import MyClass
+from tests.code_to_optimize.tests.pytest.sample_code import MyClass
 import unittest
 
 def recursive_call(n):
@@ -651,7 +651,7 @@ def test_example_test():
     assert True
 
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     tmp_dir_path = get_run_tmp_file(Path("test_return_values"))
     sample_code = f"""
 from codeflash.verification.codeflash_capture import codeflash_capture
@@ -671,7 +671,7 @@ class MyClass:
     test_path = test_dir / test_file_name
     test_path_perf = test_dir / "test_codeflash_capture_temp_perf.py"
 
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
     sample_code_path = test_dir / "sample_code.py"
 
@@ -726,7 +726,7 @@ class MyClass:
         assert test_results[0].return_value[0]["x"] == 2
         assert test_results[0].id.test_function_name == "test_example_test"
         assert test_results[0].id.test_class_name is None
-        assert test_results[0].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[0].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[0].id.function_getting_tested == "some_function"
         assert test_results[0].id.iteration_id == "12_0"
 
@@ -734,7 +734,7 @@ class MyClass:
         assert test_results[1].return_value[0]["x"] == 2
         assert test_results[1].id.test_function_name == "test_example_test"
         assert test_results[1].id.test_class_name is None
-        assert test_results[1].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[1].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[1].id.function_getting_tested == "some_function"
         assert test_results[1].id.iteration_id == "12_1"
 
@@ -742,7 +742,7 @@ class MyClass:
         assert test_results[2].return_value[0]["x"] == 2
         assert test_results[2].id.test_function_name == "test_example_test"
         assert test_results[2].id.test_class_name is None
-        assert test_results[2].id.test_module_path == "code_to_optimize.tests.pytest.test_codeflash_capture_temp"
+        assert test_results[2].id.test_module_path == "tests.code_to_optimize.tests.pytest.test_codeflash_capture_temp"
         assert test_results[2].id.function_getting_tested == "some_function"
         assert test_results[2].id.iteration_id == "12_2"  # Third call
 
@@ -765,17 +765,17 @@ class MyClass:
 
 def test_codeflash_capture_multiple_helpers() -> None:
     test_code = """
-from code_to_optimize.tests.pytest.fto_file import MyClass
+from tests.code_to_optimize.tests.pytest.fto_file import MyClass
 
 def test_helper_classes():
     assert MyClass().target_function() == 6
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     tmp_dir_path = get_run_tmp_file(Path("test_return_values"))
     original_code = f"""
 from codeflash.verification.codeflash_capture import codeflash_capture
-from code_to_optimize.tests.pytest.helper_file_1 import HelperClass1
-from code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
+from tests.code_to_optimize.tests.pytest.helper_file_1 import HelperClass1
+from tests.code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
 
 class MyClass:
     @codeflash_capture(function_name='MyClass.__init__', tmp_dir_path='{tmp_dir_path.as_posix()}', tests_root="{test_dir.as_posix()}" , is_fto=True)
@@ -832,7 +832,7 @@ class AnotherHelperClass:
     helper_path_2 = test_dir / helper_file_2
     fto_file_path = test_dir / fto_file_name
 
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
 
     try:
@@ -918,15 +918,15 @@ class AnotherHelperClass:
 def test_instrument_codeflash_capture_and_run_tests() -> None:
     # End to end run that instruments code and runs tests. Made to be similar to code used in the optimizer.py
     test_code = """
-from code_to_optimize.tests.pytest.fto_file import MyClass
+from tests.code_to_optimize.tests.pytest.fto_file import MyClass
 
 def test_helper_classes():
     assert MyClass().target_function() == 6
 """
 
     original_code = """
-from code_to_optimize.tests.pytest.helper_file_1 import HelperClass1
-from code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
+from tests.code_to_optimize.tests.pytest.helper_file_1 import HelperClass1
+from tests.code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
 
 class MyClass:
     def __init__(self):
@@ -967,7 +967,7 @@ class AnotherHelperClass:
         return 3
     """
 
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     test_file_name = "test_multiple_helpers.py"
 
     fto_file_name = "fto_file.py"
@@ -980,7 +980,7 @@ class AnotherHelperClass:
     helper_path_2 = test_dir / helper_file_2
     fto_file_path = test_dir / fto_file_name
 
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
 
     try:
@@ -1060,8 +1060,8 @@ class AnotherHelperClass:
 
         # Now, let's say we optimize the code and make changes.
         new_fto_code = """
-from code_to_optimize.tests.pytest.helper_file_1 import HelperClass1
-from code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
+from tests.code_to_optimize.tests.pytest.helper_file_1 import HelperClass1
+from tests.code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
 
 class MyClass:
     def __init__(self):
@@ -1100,8 +1100,8 @@ class MyClass:
 
         # Now, this fto_code mutates the instance so it should fail
         mutated_fto_code = """
-from code_to_optimize.tests.pytest.helper_file_1 import HelperClass1
-from code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
+from tests.code_to_optimize.tests.pytest.helper_file_1 import HelperClass1
+from tests.code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
 
 class MyClass:
     def __init__(self):
@@ -1141,7 +1141,7 @@ class MyClass:
 
         # This fto code stopped using a helper class. it should still pass
         no_helper1_fto_code = """
-from code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
+from tests.code_to_optimize.tests.pytest.helper_file_2 import HelperClass2, AnotherHelperClass
 
 class MyClass:
     def __init__(self):
@@ -1206,7 +1206,7 @@ def test_dummy():
     # This test exists just to make pytest run the file
     assert obj.x == 2
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     sample_code = f"""
 from codeflash.verification.codeflash_capture import get_test_info_from_stack
 class MyClass:
@@ -1247,7 +1247,7 @@ class MyClass:
         # test_name should come from env var (CODEFLASH_TEST_FUNCTION) since stack walking didn't find it
         assert results[0][2] == "test_env_fallback_function"  # test_name from env var
         # test_module_name is found via stack walking at module level, so env var doesn't override
-        assert results[0][0] == "code_to_optimize.tests.pytest.test_env_var_fallback_temp"  # from stack
+        assert results[0][0] == "tests.code_to_optimize.tests.pytest.test_env_var_fallback_temp"  # from stack
         # test_class_name should come from env var since stack walking didn't find a class
         assert results[0][1] == "EnvFallbackClass"  # test_class_name from env var
 
@@ -1272,7 +1272,7 @@ def test_real_test_function():
     obj = MyClass()
     assert obj.x == 2
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     sample_code = f"""
 from codeflash.verification.codeflash_capture import get_test_info_from_stack
 class MyClass:
@@ -1306,7 +1306,7 @@ class MyClass:
 
         # Stack walking should have found the test function, so env vars should NOT override
         assert results[0][2] == "test_real_test_function"  # test_name from stack, not env var
-        assert results[0][0] == "code_to_optimize.tests.pytest.test_env_var_partial_temp"  # module from stack
+        assert results[0][0] == "tests.code_to_optimize.tests.pytest.test_env_var_partial_temp"  # module from stack
         assert results[0][1].strip() == "None"  # no class in this test
 
     finally:
@@ -1319,7 +1319,7 @@ def test_instrument_codeflash_capture_and_run_tests_2() -> None:
     test_code = """import math    
 import pytest
 from typing import List, Tuple, Optional
-from code_to_optimize.tests.pytest.fto_file import calculate_portfolio_metrics
+from tests.code_to_optimize.tests.pytest.fto_file import calculate_portfolio_metrics
 
 def test_calculate_portfolio_metrics():
     # Test case 1: Basic portfolio
@@ -1402,7 +1402,7 @@ def calculate_portfolio_metrics(
         'total_assets': len(investments)
     }
 """
-    test_dir = (Path(__file__).parent.parent / "code_to_optimize" / "tests" / "pytest").resolve()
+    test_dir = (Path(__file__).parent /"code_to_optimize" / "tests" / "pytest").resolve()
     test_file_name = "test_multiple_helpers.py"
 
     fto_file_name = "fto_file.py"
@@ -1411,7 +1411,7 @@ def calculate_portfolio_metrics(
     test_path_perf = test_dir / "test_multiple_helpers_perf.py"
     fto_file_path = test_dir / fto_file_name
 
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
 
     try:

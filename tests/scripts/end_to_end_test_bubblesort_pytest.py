@@ -15,7 +15,7 @@ def run_test(expected_improvement_pct: int) -> bool:
             )
         ],
     )
-    cwd = (pathlib.Path(__file__).parent.parent.parent / "code_to_optimize").resolve()
+    cwd = (pathlib.Path(__file__).parent.parent / "code_to_optimize").resolve()
     return run_codeflash_command(
         cwd, config, expected_improvement_pct, ['print("codeflash stdout: Sorting list")', 'print(f"result: {arr}")']
     )

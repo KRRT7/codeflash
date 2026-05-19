@@ -48,7 +48,7 @@ codeflash_wrap_string = """def codeflash_wrap(codeflash_wrapped, codeflash_test_
 
 
 def test_bubble_sort_behavior_results() -> None:
-    code = """from code_to_optimize.bubble_sort import sorter
+    code = """from tests.code_to_optimize.bubble_sort import sorter
 
 
 def test_sort():
@@ -69,7 +69,7 @@ import time
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -97,19 +97,19 @@ def test_sort():
 
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_temp.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_perf_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_perf_temp.py"
     ).resolve()
-    fto_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
+    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
     original_code = fto_path.read_text("utf-8")
     try:
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
@@ -126,7 +126,7 @@ def test_sort():
         assert success
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp",
             tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
@@ -184,7 +184,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -200,7 +200,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -230,7 +230,7 @@ result: [0, 1, 2, 3, 4, 5]
 
 
 def test_method_full_instrumentation() -> None:
-    code = """from code_to_optimize.bubble_sort_method import BubbleSorter
+    code = """from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
 
 def test_sort():
@@ -253,7 +253,7 @@ import time
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort_method import BubbleSorter
+from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
 
 """
@@ -280,7 +280,7 @@ def test_sort():
     codeflash_con.close()
 """
     )
-    fto_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_method.py").resolve()
+    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py").resolve()
     original_code = fto_path.read_text("utf-8")
     fto = FunctionToOptimize(
         function_name="sorter", parents=[FunctionParent(name="BubbleSorter", type="ClassDef")], file_path=Path(fto_path)
@@ -296,14 +296,14 @@ def test_sort():
     assert new_test.replace('"', "'") == expected.format(
         module_path=tmp_test_path.stem, tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
     ).replace('"', "'")
-    tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/").resolve()
+    tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
     test_path = tests_root / "test_class_method_behavior_results_temp.py"
     test_path_perf = tests_root / "test_class_method_behavior_results_perf_temp.py"
     project_root_path = (Path(__file__).parent / "..").resolve()
 
     try:
         new_test = expected.format(
-            module_path="code_to_optimize.tests.pytest.test_class_method_behavior_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_class_method_behavior_results_temp",
             tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         )
 
@@ -359,7 +359,7 @@ def test_sort():
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_class_method_behavior_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_class_method_behavior_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -379,7 +379,7 @@ def test_sort():
         assert test_results[3].id.test_function_name == "test_sort"
         assert (
             test_results[3].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_class_method_behavior_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_class_method_behavior_results_temp"
         )
         assert test_results[3].runtime > 0
         assert test_results[3].did_pass
@@ -420,7 +420,7 @@ class BubbleSorter:
         # Force reload of module
         import importlib
 
-        module_name = "code_to_optimize.bubble_sort_method"
+        module_name = "tests.code_to_optimize.bubble_sort_method"
         if module_name not in sys.modules:
             __import__(module_name)
         importlib.reload(sys.modules[module_name])
@@ -469,7 +469,7 @@ class BubbleSorter:
         assert new_test_results[1].id.test_function_name == "test_sort"
         assert (
             new_test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_class_method_behavior_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_class_method_behavior_results_temp"
         )
         assert new_test_results[1].runtime > 0
         assert new_test_results[1].did_pass
@@ -486,7 +486,7 @@ class BubbleSorter:
         assert new_test_results[3].id.test_function_name == "test_sort"
         assert (
             new_test_results[3].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_class_method_behavior_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_class_method_behavior_results_temp"
         )
         assert new_test_results[3].runtime > 0
         assert new_test_results[3].did_pass
@@ -500,7 +500,7 @@ class BubbleSorter:
 
 
 def test_classmethod_full_instrumentation() -> None:
-    code = """from code_to_optimize.bubble_sort_method import BubbleSorter
+    code = """from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
 
 def test_sort():
@@ -521,7 +521,7 @@ import time
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort_method import BubbleSorter
+from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
 
 """
@@ -546,7 +546,7 @@ def test_sort():
     codeflash_con.close()
 """
     )
-    fto_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_method.py").resolve()
+    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py").resolve()
     original_code = fto_path.read_text("utf-8")
     fto = FunctionToOptimize(
         function_name="sorter_classmethod", parents=[FunctionParent(name="BubbleSorter", type="ClassDef")], file_path=Path(fto_path)
@@ -562,14 +562,14 @@ def test_sort():
     assert new_test.replace('"', "'") == expected.format(
         module_path=tmp_test_path.stem, tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
     ).replace('"', "'")
-    tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/").resolve()
+    tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
     test_path = tests_root / "test_classmethod_behavior_results_temp.py"
     test_path_perf = tests_root / "test_classmethod_behavior_results_perf_temp.py"
     project_root_path = (Path(__file__).parent / "..").resolve()
 
     try:
         new_test = expected.format(
-            module_path="code_to_optimize.tests.pytest.test_classmethod_behavior_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_classmethod_behavior_results_temp",
             tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         )
 
@@ -621,7 +621,7 @@ def test_sort():
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_classmethod_behavior_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_classmethod_behavior_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -638,7 +638,7 @@ def test_sort():
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_classmethod_behavior_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_classmethod_behavior_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -665,7 +665,7 @@ def test_sort():
 
 
 def test_staticmethod_full_instrumentation() -> None:
-    code = """from code_to_optimize.bubble_sort_method import BubbleSorter
+    code = """from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
 
 def test_sort():
@@ -686,7 +686,7 @@ import time
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort_method import BubbleSorter
+from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
 
 """
@@ -711,7 +711,7 @@ def test_sort():
     codeflash_con.close()
 """
     )
-    fto_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_method.py").resolve()
+    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py").resolve()
     original_code = fto_path.read_text("utf-8")
     fto = FunctionToOptimize(
         function_name="sorter_staticmethod", parents=[FunctionParent(name="BubbleSorter", type="ClassDef")], file_path=Path(fto_path)
@@ -727,14 +727,14 @@ def test_sort():
     assert new_test.replace('"', "'") == expected.format(
         module_path=tmp_test_path.stem, tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
     ).replace('"', "'")
-    tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/").resolve()
+    tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
     test_path = tests_root / "test_staticmethod_behavior_results_temp.py"
     test_path_perf = tests_root / "test_staticmethod_behavior_results_perf_temp.py"
     project_root_path = (Path(__file__).parent / "..").resolve()
 
     try:
         new_test = expected.format(
-            module_path="code_to_optimize.tests.pytest.test_staticmethod_behavior_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_staticmethod_behavior_results_temp",
             tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         )
 
@@ -786,7 +786,7 @@ def test_sort():
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_staticmethod_behavior_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_staticmethod_behavior_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -803,7 +803,7 @@ def test_sort():
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_staticmethod_behavior_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_staticmethod_behavior_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass

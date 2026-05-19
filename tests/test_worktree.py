@@ -8,7 +8,7 @@ from codeflash.optimization.optimizer import Optimizer
 
 def test_mirror_paths_for_worktree_mode(monkeypatch: pytest.MonkeyPatch):
     repo_root = Path(__file__).resolve().parent.parent
-    project_root = repo_root / "code_to_optimize" / "code_directories" / "nested_module_root"
+    project_root = repo_root / "tests" / "code_to_optimize" / "code_directories" / "nested_module_root"
 
     monkeypatch.setattr("codeflash.optimization.optimizer.git_root_dir", lambda: project_root)
 

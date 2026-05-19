@@ -7,7 +7,7 @@ def test_merge_test_results_1():
     test_results_xml.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -26,7 +26,7 @@ def test_merge_test_results_1():
     test_results_xml.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -45,7 +45,7 @@ def test_merge_test_results_1():
     test_results_xml.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -66,7 +66,7 @@ def test_merge_test_results_1():
     test_results_bin.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -85,7 +85,7 @@ def test_merge_test_results_1():
     test_results_bin.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -104,7 +104,7 @@ def test_merge_test_results_1():
     test_results_bin.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -125,7 +125,7 @@ def test_merge_test_results_1():
     expected_merged_results.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -144,7 +144,7 @@ def test_merge_test_results_1():
     expected_merged_results.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -163,7 +163,7 @@ def test_merge_test_results_1():
     expected_merged_results.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -188,7 +188,7 @@ def test_merge_test_results_1():
     test_results_xml_single.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name="TestPigLatin",
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -227,7 +227,7 @@ def test_merge_test_results_1():
     test_results_xml_pytest.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name=None,
                 test_function_name="test_sort",
                 function_getting_tested="",
@@ -248,7 +248,7 @@ def test_merge_test_results_1():
     test_results_bin_pytest.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name=None,
                 test_function_name="test_sort",
                 function_getting_tested="sorter",
@@ -267,7 +267,7 @@ def test_merge_test_results_1():
     test_results_bin_pytest.add(
         FunctionTestInvocation(
             id=InvocationId(
-                test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                 test_class_name=None,
                 test_function_name="test_sort",
                 function_getting_tested="sorter",

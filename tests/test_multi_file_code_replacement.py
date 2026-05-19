@@ -11,7 +11,7 @@ class Args:
 
 def test_multi_file_replcement01() -> None:
     root_dir = Path(__file__).parent.parent.resolve()
-    helper_file = (root_dir / "code_to_optimize/temp_helper.py").resolve()
+    helper_file = (root_dir / "tests/code_to_optimize/temp_helper.py").resolve()
     
     helper_file.write_text("""import re
 from collections.abc import Sequence
@@ -38,7 +38,7 @@ def _estimate_string_tokens(content: str | Sequence[UserContent]) -> int:
     return tokens
 """, encoding="utf-8")
 
-    main_file = (root_dir / "code_to_optimize/temp_main.py").resolve()
+    main_file = (root_dir / "tests/code_to_optimize/temp_main.py").resolve()
 
     original_main = """from temp_helper import _estimate_string_tokens
 from pydantic_ai_slim.pydantic_ai.usage import Usage

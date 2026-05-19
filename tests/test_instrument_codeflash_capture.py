@@ -15,7 +15,7 @@ class MyClass:
     def target_function(self):
         return self.x + 1
 """
-    test_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_file.py").resolve()
+    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_file.py").resolve()
     expected = f"""
 from codeflash.verification.codeflash_capture import codeflash_capture
 
@@ -58,7 +58,7 @@ class MyClass:
     def target_function(self):
         return self.x + 1
 """
-    test_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_file.py").resolve()
+    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_file.py").resolve()
     test_path.write_text(original_code)
 
     function = FunctionToOptimize(function_name="target_function", file_path=test_path, parents=[])
@@ -79,7 +79,7 @@ class MyClass(ParentClass):
     def target_function(self):
         return self.x + 1
 """
-    test_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_file.py").resolve()
+    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_file.py").resolve()
     expected = f"""
 from codeflash.verification.codeflash_capture import codeflash_capture
 
@@ -121,7 +121,7 @@ class MyClass:
     def helper(self):
         return self.x
 """
-    test_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_file.py").resolve()
+    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_file.py").resolve()
     expected = f"""
 from codeflash.verification.codeflash_capture import codeflash_capture
 
@@ -175,7 +175,7 @@ class HelperClass:
     def helper(self):
         return 1
 """
-    test_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_file.py").resolve()
+    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_file.py").resolve()
     expected = f"""
 from test_helper_file import HelperClass
 
@@ -206,7 +206,7 @@ class HelperClass:
 """
 
     test_path.write_text(original_code)
-    helper_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_helper_file.py").resolve()
+    helper_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_helper_file.py").resolve()
     helper_path.write_text(original_helper)
 
     function = FunctionToOptimize(
@@ -261,7 +261,7 @@ class AnotherHelperClass:
     def another_helper(self):
         return 3
 """
-    test_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_file.py").resolve()
+    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_file.py").resolve()
     expected = f"""
 from helper_file_1 import HelperClass1
 from helper_file_2 import AnotherHelperClass, HelperClass2
@@ -322,8 +322,8 @@ class AnotherHelperClass:
 """
 
     # Set up test files
-    helper1_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/helper_file_1.py").resolve()
-    helper2_path = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/helper_file_2.py").resolve()
+    helper1_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/helper_file_1.py").resolve()
+    helper2_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/helper_file_2.py").resolve()
 
     # Write original content to files
     test_path.write_text(original_code)

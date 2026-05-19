@@ -505,7 +505,7 @@ def test_pytest_unittest_path_resolution_with_prefix(tmp_path: Path) -> None:
     classname includes the parent directory like "project.tests.unittest.test_file.TestClass".
     """
     # Setup directory structure: /tmp/code_to_optimize/tests/unittest/
-    project_root = tmp_path / "code_to_optimize"
+    project_root = tmp_path / "tests" / "code_to_optimize"
     tests_root = project_root / "tests"
     unittest_dir = tests_root / "unittest"
     unittest_dir.mkdir(parents=True, exist_ok=True)
@@ -517,24 +517,24 @@ def test_pytest_unittest_path_resolution_with_prefix(tmp_path: Path) -> None:
     generated_test = unittest_dir / "test_sorter__unit_test_0.py"
     generated_test.touch()
     
-    # Case 1: pytest reports classname with full path including "code_to_optimize.tests"
+    # Case 1: pytest reports classname with full path including "tests.code_to_optimize.tests"
     # but base_dir is .../tests (not the project root)
     result = resolve_test_file_from_class_path(
-        "code_to_optimize.tests.unittest.test_bubble_sort.TestPigLatin",
+        "tests.code_to_optimize.tests.unittest.test_bubble_sort.TestPigLatin",
         tests_root
     )
     assert result == test_file
     
     # Case 2: Generated test file with class name
     result = resolve_test_file_from_class_path(
-        "code_to_optimize.tests.unittest.test_sorter__unit_test_0.TestSorter",
+        "tests.code_to_optimize.tests.unittest.test_sorter__unit_test_0.TestSorter",
         tests_root
     )
     assert result == generated_test
     
     # Case 3: Without the class name (just the module path)
     result = resolve_test_file_from_class_path(
-        "code_to_optimize.tests.unittest.test_bubble_sort",
+        "tests.code_to_optimize.tests.unittest.test_bubble_sort",
         tests_root
     )
     assert result == test_file
@@ -577,7 +577,7 @@ def test_pytest_unittest_instrumented_files(tmp_path: Path) -> None:
     
     # pytest classname includes parent directories
     result = resolve_test_file_from_class_path(
-        "code_to_optimize.tests.unittest.test_bubble_sort__perfinstrumented.TestPigLatin",
+        "tests.code_to_optimize.tests.unittest.test_bubble_sort__perfinstrumented.TestPigLatin",
         tmp_path / "tests"
     )
     assert result == instrumented_file
@@ -606,7 +606,7 @@ def test_pytest_unittest_no_match_returns_none(tmp_path: Path) -> None:
     
     # File doesn't exist
     result = resolve_test_file_from_class_path(
-        "code_to_optimize.tests.unittest.nonexistent_test.TestClass",
+        "tests.code_to_optimize.tests.unittest.nonexistent_test.TestClass",
         tests_root
     )
     assert result is None

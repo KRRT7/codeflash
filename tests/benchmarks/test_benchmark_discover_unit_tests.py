@@ -5,7 +5,7 @@ from codeflash.verification.verification_utils import TestConfig
 
 
 def test_benchmark_code_to_optimize_test_discovery(benchmark) -> None:
-    project_path = Path(__file__).parent.parent.parent.resolve() / "code_to_optimize"
+    project_path = Path(__file__).parent.parent.resolve() / "code_to_optimize"
     tests_path = project_path / "tests" / "pytest"
     test_config = TestConfig(
         tests_root=tests_path,

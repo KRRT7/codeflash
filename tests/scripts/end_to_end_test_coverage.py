@@ -13,7 +13,7 @@ def run_test(expected_improvement_pct: int) -> bool:
         ],
     )
     cwd = (
-        pathlib.Path(__file__).parent.parent.parent / "code_to_optimize" / "code_directories" / "my-best-repo"
+        pathlib.Path(__file__).parent.parent / "code_to_optimize" / "code_directories" / "my-best-repo"
     ).resolve()
     return run_codeflash_command(cwd, config, expected_improvement_pct)
 

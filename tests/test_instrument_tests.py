@@ -123,7 +123,7 @@ def tmp_dir():
 def test_perfinjector_bubble_sort(tmp_dir) -> None:
     code = """import unittest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 class TestPigLatin(unittest.TestCase):
@@ -149,7 +149,7 @@ import unittest
 import dill as pickle"""
     # timeout_decorator no longer used since pytest handles timeouts
 
-    imports += "\n\nfrom code_to_optimize.bubble_sort import sorter"
+    imports += "\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
     
     wrapper_func = codeflash_wrap_string
     
@@ -303,7 +303,7 @@ def test_prepare_image_for_yolo():
 
 def test_perfinjector_bubble_sort_results() -> None:
     computed_fn_opt = False
-    code = """from code_to_optimize.bubble_sort import sorter
+    code = """from tests.code_to_optimize.bubble_sort import sorter
 import datetime
 
 
@@ -327,7 +327,7 @@ import time
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -360,7 +360,7 @@ import gc
 import os
 import time
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -380,17 +380,17 @@ def test_sort():
 
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_temp.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_perf_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_perf_temp.py"
     ).resolve()
     try:
         with test_path.open("w") as f:
             f.write(code)
-        code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
-        tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+        code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+        tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
         project_root_path = (Path(__file__).parent / "..").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
@@ -407,7 +407,7 @@ def test_sort():
         assert success
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
 
@@ -421,7 +421,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert success
         assert new_perf_test is not None
         assert new_perf_test.replace('"', "'") == expected_perfonly.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
 
@@ -467,7 +467,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -479,7 +479,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -502,7 +502,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results_perf[0].id.test_function_name == "test_sort"
         assert (
             test_results_perf[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
         )
         assert test_results_perf[0].runtime > 0
         assert test_results_perf[0].did_pass
@@ -520,7 +520,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results_perf[1].id.test_function_name == "test_sort"
         assert (
             test_results_perf[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp"
         )
         assert test_results_perf[1].runtime > 0
         assert test_results_perf[1].did_pass
@@ -565,7 +565,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
 
 def test_perfinjector_bubble_sort_parametrized_results() -> None:
     computed_fn_opt = False
-    code = """from code_to_optimize.bubble_sort import sorter
+    code = """from tests.code_to_optimize.bubble_sort import sorter
 import pytest
 
 
@@ -591,7 +591,7 @@ import time
 import dill as pickle
 import pytest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -619,7 +619,7 @@ import time
 
 import pytest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -632,20 +632,20 @@ def test_sort_parametrized(input, expected_output):
     assert output == expected_output
 """
     )
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_results_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_results_temp.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_results_temp_perf.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_results_temp_perf.py"
     ).resolve()
     try:
         with open(test_path, "w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
@@ -664,11 +664,11 @@ def test_sort_parametrized(input, expected_output):
         assert success
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp",
             tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         assert new_test_perf.replace('"', "'") == expected_perfonly.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp",
             tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         #
@@ -714,7 +714,7 @@ def test_sort_parametrized(input, expected_output):
         assert test_results[0].id.test_function_name == "test_sort_parametrized"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -731,7 +731,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[1].id.test_function_name == "test_sort_parametrized"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -748,7 +748,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[2].id.test_function_name == "test_sort_parametrized"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -768,7 +768,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results_perf[0].id.test_function_name == "test_sort_parametrized"
         assert (
             test_results_perf[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
         )
         assert test_results_perf[0].runtime > 0
         assert test_results_perf[0].did_pass
@@ -780,7 +780,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results_perf[1].id.test_function_name == "test_sort_parametrized"
         assert (
             test_results_perf[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
         )
         assert test_results_perf[1].runtime > 0
         assert test_results_perf[1].did_pass
@@ -796,7 +796,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results_perf[2].id.test_function_name == "test_sort_parametrized"
         assert (
             test_results_perf[2].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_results_temp"
         )
         assert test_results_perf[2].runtime > 0
         assert test_results_perf[2].did_pass
@@ -836,7 +836,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
 
 def test_perfinjector_bubble_sort_parametrized_loop_results() -> None:
     computed_fn_opt = False
-    code = """from code_to_optimize.bubble_sort import sorter
+    code = """from tests.code_to_optimize.bubble_sort import sorter
 import pytest
 
 
@@ -863,7 +863,7 @@ import time
 import dill as pickle
 import pytest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -891,7 +891,7 @@ import time
 
 import pytest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -905,24 +905,24 @@ def test_sort_parametrized_loop(input, expected_output):
         assert output == expected_output
 """
     )
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_loop_results_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_loop_results_temp.py"
     ).resolve()
     test_path_behavior = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_loop_results_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_loop_results_temp.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_loop_results_temp_perf.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_loop_results_temp_perf.py"
     ).resolve()
     try:
         with open(test_path, "w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
@@ -941,7 +941,7 @@ def test_sort_parametrized_loop(input, expected_output):
         assert success
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
 
@@ -950,7 +950,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
             f.write(new_test)
 
         assert new_test_perf.replace('"', "'") == expected_perf.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
 
@@ -1003,7 +1003,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[0].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -1018,7 +1018,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[1].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -1030,7 +1030,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[2].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -1045,7 +1045,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[3].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[3].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[3].runtime > 0
         assert test_results[3].did_pass
@@ -1058,7 +1058,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[4].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[4].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[4].runtime > 0
         assert test_results[4].did_pass
@@ -1073,7 +1073,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[5].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[5].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[5].runtime > 0
         assert test_results[5].did_pass
@@ -1095,7 +1095,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[0].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -1107,7 +1107,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[1].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -1119,7 +1119,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[2].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -1131,7 +1131,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[3].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[3].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[3].runtime > 0
         assert test_results[3].did_pass
@@ -1143,7 +1143,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[4].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[4].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[4].runtime > 0
         assert test_results[4].did_pass
@@ -1155,7 +1155,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[5].id.test_function_name == "test_sort_parametrized_loop"
         assert (
             test_results[5].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp"
         )
         assert test_results[5].runtime > 0
         assert test_results[5].did_pass
@@ -1196,7 +1196,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
 
 def test_perfinjector_bubble_sort_loop_results() -> None:
     computed_fn_opt = False
-    code = """from code_to_optimize.bubble_sort import sorter
+    code = """from tests.code_to_optimize.bubble_sort import sorter
 
 
 def test_sort():
@@ -1218,7 +1218,7 @@ import time
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -1248,7 +1248,7 @@ def test_sort():
 import os
 import time
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -1265,24 +1265,24 @@ def test_sort():
         assert output == expected_output
 """
     )
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_loop_results_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_loop_results_temp.py"
     ).resolve()
     test_path_behavior = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_loop_results_temp_behavior.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_loop_results_temp_behavior.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_loop_results_temp_perf.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_loop_results_temp_perf.py"
     ).resolve()
     try:
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
@@ -1300,12 +1300,12 @@ def test_sort():
         assert success
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
 
         assert new_test_perf.replace('"', "'") == expected_perf.format(
-            module_path="code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
 
@@ -1360,7 +1360,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -1372,7 +1372,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -1383,7 +1383,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -1402,7 +1402,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -1418,7 +1418,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -1433,7 +1433,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
+            == "tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -1480,7 +1480,7 @@ def test_perfinjector_bubble_sort_unittest_results() -> None:
     
     code = """import unittest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 class TestPigLatin(unittest.TestCase):
@@ -1511,7 +1511,7 @@ import unittest
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -1549,7 +1549,7 @@ import os
 import time
 import unittest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -1581,7 +1581,7 @@ import unittest
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -1619,7 +1619,7 @@ import os
 import time
 import unittest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -1640,24 +1640,24 @@ class TestPigLatin(unittest.TestCase):
         self.assertEqual(output, list(range(50)))
 """
         )
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_results_temp.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_results_temp.py"
     ).resolve()
     test_path_behavior = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_results_temp_behavior.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_results_temp_behavior.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_results_temp_perf.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_results_temp_perf.py"
     ).resolve()
     try:
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/unittest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
@@ -1684,11 +1684,11 @@ class TestPigLatin(unittest.TestCase):
         assert success
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected.format(
-            module_path="code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
         assert new_test_perf.replace('"', "'") == expected_perf.format(
-            module_path="code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
         #
@@ -1743,7 +1743,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -1759,7 +1759,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -1774,7 +1774,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -1793,7 +1793,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -1804,7 +1804,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -1815,7 +1815,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -1833,7 +1833,7 @@ def test_perfinjector_bubble_sort_unittest_parametrized_results() -> None:
     code = """import unittest
 from parameterized import parameterized
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 class TestPigLatin(unittest.TestCase):
@@ -1851,7 +1851,7 @@ class TestPigLatin(unittest.TestCase):
 
     # Build expected behavior output with platform-aware imports
     imports_behavior = build_expected_unittest_imports("from parameterized import parameterized")
-    imports_behavior += "\n\nfrom code_to_optimize.bubble_sort import sorter"
+    imports_behavior += "\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
     
     test_decorator_behavior = ""  # pytest-timeout handles timeouts now
     test_class_behavior = """class TestPigLatin(unittest.TestCase):
@@ -1881,7 +1881,7 @@ import time
 import unittest
 """
     # pytest-timeout handles timeouts now, no timeout_decorator needed
-    imports_perf += "\nfrom parameterized import parameterized\n\nfrom code_to_optimize.bubble_sort import sorter"
+    imports_perf += "\nfrom parameterized import parameterized\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
     
     test_decorator_perf = ""  # pytest-timeout handles timeouts now
     test_class_perf = """class TestPigLatin(unittest.TestCase):
@@ -1897,23 +1897,23 @@ import unittest
 """
     
     expected_perf = imports_perf + "\n\n\n" + codeflash_wrap_perfonly_string + "\n" + test_class_perf
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_results_temp.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_results_temp.py"
     ).resolve()
     test_path_behavior = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_results_temp_behavior.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_results_temp_behavior.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_results_temp_perf.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_results_temp_perf.py"
     ).resolve()
     try:
         with test_path.open("w") as f:
             f.write(code)
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/unittest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
@@ -1932,13 +1932,13 @@ import unittest
         assert success
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected_behavior.format(
-            module_path="code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
 
         assert new_test_perf is not None
         assert new_test_perf.replace('"', "'") == expected_perf.format(
-            module_path="code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
 
@@ -1993,7 +1993,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -2009,7 +2009,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -2024,7 +2024,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -2048,7 +2048,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -2060,7 +2060,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -2071,7 +2071,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -2085,7 +2085,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
 def test_perfinjector_bubble_sort_unittest_loop_results() -> None:
     code = """import unittest
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 class TestPigLatin(unittest.TestCase):
@@ -2101,7 +2101,7 @@ class TestPigLatin(unittest.TestCase):
 
     # Build expected behavior output with platform-aware imports  
     imports_behavior = build_expected_unittest_imports()
-    imports_behavior += "\n\nfrom code_to_optimize.bubble_sort import sorter"
+    imports_behavior += "\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
     
     test_decorator_behavior = ""  # pytest-timeout handles timeouts now
     test_class_behavior = """class TestPigLatin(unittest.TestCase):
@@ -2136,7 +2136,7 @@ import time
 import unittest
 """
     # pytest-timeout handles timeouts now, no timeout_decorator needed
-    imports_perf += "\nfrom code_to_optimize.bubble_sort import sorter"
+    imports_perf += "\nfrom tests.code_to_optimize.bubble_sort import sorter"
     
     test_decorator_perf = ""  # pytest-timeout handles timeouts now
     test_class_perf = """class TestPigLatin(unittest.TestCase):
@@ -2156,24 +2156,24 @@ import unittest
 """
     
     expected_perf = imports_perf + "\n\n\n" + codeflash_wrap_perfonly_string + "\n" + test_class_perf
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_loop_results_temp.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_loop_results_temp.py"
     ).resolve()
     test_path_behavior = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_loop_results_temp_behavior.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_loop_results_temp_behavior.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_loop_results_temp_perf.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_loop_results_temp_perf.py"
     ).resolve()
     try:
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/unittest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
@@ -2191,11 +2191,11 @@ import unittest
         assert success
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected_behavior.format(
-            module_path="code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
         assert new_test_perf.replace('"', "'") == expected_perf.format(
-            module_path="code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
         #
@@ -2249,7 +2249,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -2265,7 +2265,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -2280,7 +2280,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -2304,7 +2304,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -2316,7 +2316,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -2327,7 +2327,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -2341,7 +2341,7 @@ def test_perfinjector_bubble_sort_unittest_parametrized_loop_results() -> None:
     code = """import unittest
 from parameterized import parameterized
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 class TestPigLatin(unittest.TestCase):
@@ -2360,7 +2360,7 @@ class TestPigLatin(unittest.TestCase):
 
     # Build expected behavior output with platform-aware imports
     imports_behavior = build_expected_unittest_imports("from parameterized import parameterized")
-    imports_behavior += "\n\nfrom code_to_optimize.bubble_sort import sorter"
+    imports_behavior += "\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
     
     test_decorator_behavior = ""  # pytest-timeout handles timeouts now
     test_class_behavior = """class TestPigLatin(unittest.TestCase):
@@ -2391,7 +2391,7 @@ import time
 import unittest
 """
     # pytest-timeout handles timeouts now, no timeout_decorator needed
-    imports_perf += "\nfrom parameterized import parameterized\n\nfrom code_to_optimize.bubble_sort import sorter"
+    imports_perf += "\nfrom parameterized import parameterized\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
     
     test_decorator_perf = ""  # pytest-timeout handles timeouts now
     test_class_perf = """class TestPigLatin(unittest.TestCase):
@@ -2408,23 +2408,23 @@ import unittest
 """
     
     expected_perf = imports_perf + "\n\n\n" + codeflash_wrap_perfonly_string + "\n" + test_class_perf
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp.py"
     ).resolve()
     test_path_behavior = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp_behavior.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp_behavior.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp_perf.py"
+        / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp_perf.py"
     ).resolve()
     try:
         with test_path.open("w") as _f:
             _f.write(code)
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/unittest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
@@ -2441,11 +2441,11 @@ import unittest
         assert success
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected_behavior.format(
-            module_path="code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
         assert new_test_perf.replace('"', "'") == expected_perf.format(
-            module_path="code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp",
 tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         ).replace('"', "'")
         #
@@ -2501,7 +2501,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -2517,7 +2517,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -2532,7 +2532,7 @@ result: [0, 1, 2, 3, 4, 5]
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -2547,7 +2547,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[3].id.test_function_name == "test_sort"
         assert (
             test_results[3].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[3].runtime > 0
         assert test_results[3].did_pass
@@ -2558,7 +2558,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[4].id.test_function_name == "test_sort"
         assert (
             test_results[4].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[4].runtime > 0
         assert test_results[4].did_pass
@@ -2569,7 +2569,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[5].id.test_function_name == "test_sort"
         assert (
             test_results[5].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[5].runtime > 0
         assert test_results[5].did_pass
@@ -2588,7 +2588,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[0].id.test_function_name == "test_sort"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[0].runtime > 0
         assert test_results[0].did_pass
@@ -2600,7 +2600,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[1].id.test_function_name == "test_sort"
         assert (
             test_results[1].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[1].runtime > 0
         assert test_results[1].did_pass
@@ -2611,7 +2611,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[2].id.test_function_name == "test_sort"
         assert (
             test_results[2].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[2].runtime > 0
         assert test_results[2].did_pass
@@ -2622,7 +2622,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[3].id.test_function_name == "test_sort"
         assert (
             test_results[3].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[3].runtime > 0
         assert test_results[3].did_pass
@@ -2633,7 +2633,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[4].id.test_function_name == "test_sort"
         assert (
             test_results[4].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[4].runtime > 0
         assert test_results[4].did_pass
@@ -2644,7 +2644,7 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert test_results[5].id.test_function_name == "test_sort"
         assert (
             test_results[5].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
+            == "tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp"
         )
         assert test_results[5].runtime > 0
         assert test_results[5].did_pass
@@ -2722,13 +2722,13 @@ def test_class_name_A_function_name():
     )
 
     test_path = (
-        Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_class_function_instrumentation_temp.py"
+        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_class_function_instrumentation_temp.py"
     )
     try:
         with open(test_path, "w") as f:
             f.write(code)
 
-        project_root_path = Path(__file__).parent.resolve() / "../code_to_optimize/"
+        project_root_path = Path(__file__).parent.resolve() / "code_to_optimize/"
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
         func = FunctionToOptimize(
@@ -2799,14 +2799,14 @@ def test_common_tags_1():
     )
 
     test_path = (
-        Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_wrong_function_instrumentation_temp.py"
+        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_wrong_function_instrumentation_temp.py"
     )
     try:
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
-        project_root_path = Path(__file__).parent.resolve() / "../code_to_optimize/"
+        tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        project_root_path = Path(__file__).parent.resolve() / "code_to_optimize/"
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
         func = FunctionToOptimize(
@@ -2829,7 +2829,7 @@ def test_common_tags_1():
 
 
 def test_conditional_instrumentation() -> None:
-    code = """from code_to_optimize.bubble_sort import sorter
+    code = """from tests.code_to_optimize.bubble_sort import sorter
 
 
 def test_sort():
@@ -2846,7 +2846,7 @@ import time
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort import sorter
+from tests.code_to_optimize.bubble_sort import sorter
 
 
 """
@@ -2867,14 +2867,14 @@ def test_sort():
 """
     )
     test_path = (
-        Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_conditional_instrumentation_temp.py"
+        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_conditional_instrumentation_temp.py"
     )
     try:
         with open(test_path, "w") as f:
             f.write(code)
 
-        tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
-        project_root_path = Path(__file__).parent.resolve() / "../code_to_optimize/"
+        tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        project_root_path = Path(__file__).parent.resolve() / "code_to_optimize/"
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
         func = FunctionToOptimize(function_name="sorter", file_path=project_root_path / "module.py", parents=[])
@@ -2895,7 +2895,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
 
 
 def test_static_method_instrumentation():
-    code = """from code_to_optimize.bubble_sort import BubbleSorter
+    code = """from tests.code_to_optimize.bubble_sort import BubbleSorter
 
 
 def test_sort():
@@ -2916,7 +2916,7 @@ import time
 
 import dill as pickle
 
-from code_to_optimize.bubble_sort import BubbleSorter
+from tests.code_to_optimize.bubble_sort import BubbleSorter
 
 
 """
@@ -2944,7 +2944,7 @@ def test_sort():
 
     function_to_optimize = FunctionToOptimize(
         function_name="sorter",
-        file_path=Path("/Users/renaud/repos/codeflash/cli/code_to_optimize/bubble_sort.py"),
+        file_path=Path("/Users/renaud/repos/codeflash/cli/tests/code_to_optimize/bubble_sort.py"),
         parents=[FunctionParent("BubbleSorter", "ClassDef")],
         starting_line=None,
         ending_line=None,
@@ -2952,13 +2952,13 @@ def test_sort():
 
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_temp.py"
+        / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_results_temp.py"
     )
     try:
         with test_path.open("w") as f:
             f.write(code)
-        tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
-        project_root_path = Path(__file__).parent.resolve() / "../code_to_optimize/"
+        tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        project_root_path = Path(__file__).parent.resolve() / "code_to_optimize/"
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
 
@@ -3074,7 +3074,7 @@ def test_code_replacement10() -> None:
 
 
 def test_time_correction_instrumentation() -> None:
-    code = """from code_to_optimize.sleeptime import accurate_sleepfunc
+    code = """from tests.code_to_optimize.sleeptime import accurate_sleepfunc
 import pytest
 @pytest.mark.parametrize("n, expected_total_sleep_time", [
     (0.01, 0.010),
@@ -3093,7 +3093,7 @@ import time
 
 import pytest
 
-from code_to_optimize.sleeptime import accurate_sleepfunc
+from tests.code_to_optimize.sleeptime import accurate_sleepfunc
 
 
 """
@@ -3106,16 +3106,16 @@ def test_sleepfunc_sequence_short(n, expected_total_sleep_time):
     assert output == expected_total_sleep_time
 """
     )
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/sleeptime.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/sleeptime.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_time_correction_instrumentation_temp.py"
+        / "code_to_optimize/tests/pytest/test_time_correction_instrumentation_temp.py"
     ).resolve()
     try:
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
@@ -3133,7 +3133,7 @@ def test_sleepfunc_sequence_short(n, expected_total_sleep_time):
         assert success, "Test instrumentation failed"
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
-            module_path="code_to_optimize.tests.pytest.test_time_correction_instrumentation_temp",
+            module_path="tests.code_to_optimize.tests.pytest.test_time_correction_instrumentation_temp",
             tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         # Overwrite old test with new instrumented test
@@ -3174,7 +3174,7 @@ def test_sleepfunc_sequence_short(n, expected_total_sleep_time):
         assert test_results[0].id.test_function_name == "test_sleepfunc_sequence_short"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.pytest.test_time_correction_instrumentation_temp"
+            == "tests.code_to_optimize.tests.pytest.test_time_correction_instrumentation_temp"
         )
 
         assert len(test_results) == 4
@@ -3190,7 +3190,7 @@ def test_time_correction_instrumentation_unittest() -> None:
     code = """import unittest
 from parameterized import parameterized
 
-from code_to_optimize.sleeptime import accurate_sleepfunc
+from tests.code_to_optimize.sleeptime import accurate_sleepfunc
 
 class TestPigLatin(unittest.TestCase):
     @parameterized.expand([
@@ -3208,7 +3208,7 @@ import time
 import unittest
 """
     # pytest-timeout handles timeouts now, no timeout_decorator needed
-    imports += "\nfrom parameterized import parameterized\n\nfrom code_to_optimize.sleeptime import accurate_sleepfunc"
+    imports += "\nfrom parameterized import parameterized\n\nfrom tests.code_to_optimize.sleeptime import accurate_sleepfunc"
     
     test_decorator = ""  # pytest-timeout handles timeouts now
     test_class = """class TestPigLatin(unittest.TestCase):
@@ -3223,16 +3223,16 @@ import unittest
 """
     
     expected = imports + "\n\n\n" + codeflash_wrap_perfonly_string + "\n" + test_class
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/sleeptime.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/sleeptime.py").resolve()
     test_path = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/unittest/test_time_correction_instrumentation_unittest_temp.py"
+        / "code_to_optimize/tests/unittest/test_time_correction_instrumentation_unittest_temp.py"
     ).resolve()
     try:
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "../code_to_optimize/tests/unittest/").resolve()
+        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
@@ -3250,7 +3250,7 @@ import unittest
         assert success, "Test instrumentation failed"
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
-            module_path="code_to_optimize.tests.unittest.test_time_correction_instrumentation_unittest_temp",
+            module_path="tests.code_to_optimize.tests.unittest.test_time_correction_instrumentation_unittest_temp",
             tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         # Overwrite old test with new instrumented test
@@ -3299,7 +3299,7 @@ import unittest
         assert test_results[0].id.test_function_name == "test_sleepfunc_sequence_short"
         assert (
             test_results[0].id.test_module_path
-            == "code_to_optimize.tests.unittest.test_time_correction_instrumentation_unittest_temp"
+            == "tests.code_to_optimize.tests.unittest.test_time_correction_instrumentation_unittest_temp"
         )
 
         assert len(test_results) == 2

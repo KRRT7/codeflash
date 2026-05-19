@@ -8,7 +8,7 @@ def run_test(expected_improvement_pct: int) -> bool:
     config = TestConfig(
         file_path="bubble_sort.py", function_name="sorter", min_improvement_x=0.30, no_gen_tests=True
     )
-    cwd = (pathlib.Path(__file__).parent.parent.parent / "code_to_optimize").resolve()
+    cwd = (pathlib.Path(__file__).parent.parent / "code_to_optimize").resolve()
     return run_codeflash_command(cwd, config, expected_improvement_pct)
 
 

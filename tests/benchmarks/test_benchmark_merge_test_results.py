@@ -15,7 +15,7 @@ def generate_test_invocations(count=100):
         test_results_xml.add(
             FunctionTestInvocation(
                 id=InvocationId(
-                    test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                    test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                     test_class_name="TestPigLatin",
                     test_function_name="test_sort",
                     function_getting_tested="sorter",
@@ -36,7 +36,7 @@ def generate_test_invocations(count=100):
         test_results_bin.add(
             FunctionTestInvocation(
                 id=InvocationId(
-                    test_module_path="code_to_optimize.tests.unittest.test_bubble_sort",
+                    test_module_path="tests.code_to_optimize.tests.unittest.test_bubble_sort",
                     test_class_name="TestPigLatin",
                     test_function_name="test_sort",
                     function_getting_tested="sorter",

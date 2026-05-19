@@ -6,7 +6,7 @@ from argparse import Namespace
 from pathlib import Path
 
 import isort
-from code_to_optimize.bubble_sort_method import BubbleSorter
+from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 from codeflash.code_utils.code_utils import get_run_tmp_file
 from codeflash.code_utils.formatter import sort_imports
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
@@ -95,7 +95,7 @@ def test_class_method_test_instrumentation_only() -> None:
         behavior_logging_code
         + """
 import pytest
-from code_to_optimize.bubble_sort_method import BubbleSorter
+from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
 
 def test_single_element_list():
@@ -106,7 +106,7 @@ def test_single_element_list():
 
     codeflash_return_value = codeflash_wrap(
         obj.sorter,
-        "code_to_optimize.tests.pytest.test_aiservice_behavior_results_temp",
+        "tests.code_to_optimize.tests.pytest.test_aiservice_behavior_results_temp",
         None,
         "test_single_element_list",
         "sorter",
@@ -122,17 +122,17 @@ def test_single_element_list():
 
     # Init paths
     test_path = (
-        Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_aiservice_behavior_results_temp.py"
+        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_aiservice_behavior_results_temp.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_aiservice_behavior_results_perf_temp.py"
+        / "code_to_optimize/tests/pytest/test_aiservice_behavior_results_perf_temp.py"
     ).resolve()
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
     run_cwd = Path(__file__).parent.parent.resolve()
     os.chdir(run_cwd)
-    fto_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_method.py").resolve()
+    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py").resolve()
     original_code = fto_path.read_text("utf-8")
 
     try:
@@ -236,7 +236,7 @@ def test_class_method_full_instrumentation() -> None:
         behavior_logging_code
         + """
 import pytest
-from code_to_optimize.bubble_sort_method import BubbleSorter
+from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
 
 def test_single_element_list():
@@ -247,7 +247,7 @@ def test_single_element_list():
 
     codeflash_return_value = codeflash_wrap(
         obj.sorter,
-        "code_to_optimize.tests.pytest.test_aiservice_behavior_results_temp",
+        "tests.code_to_optimize.tests.pytest.test_aiservice_behavior_results_temp",
         None,
         "test_single_element_list",
         "sorter",
@@ -263,16 +263,16 @@ def test_single_element_list():
 
     # Init paths
     test_path = (
-        Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/test_aiservice_behavior_results_temp.py"
+        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_aiservice_behavior_results_temp.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
-        / "../code_to_optimize/tests/pytest/test_aiservice_behavior_results_perf_temp.py"
+        / "code_to_optimize/tests/pytest/test_aiservice_behavior_results_perf_temp.py"
     ).resolve()
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
 
-    fto_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_method.py").resolve()
+    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py").resolve()
     original_code = fto_path.read_text("utf-8")
     function_to_optimize = FunctionToOptimize("sorter", fto_path, [FunctionParent("BubbleSorter", "ClassDef")])
 
@@ -368,7 +368,7 @@ class BubbleSorter:
         # Force reload of module
         import importlib
 
-        module_name = "code_to_optimize.bubble_sort_method"
+        module_name = "tests.code_to_optimize.bubble_sort_method"
         if module_name not in sys.modules:
             __import__(module_name)
         importlib.reload(sys.modules[module_name])

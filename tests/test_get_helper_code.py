@@ -390,7 +390,7 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
 
 
 def test_bubble_sort_deps() -> None:
-    file_path = (Path(__file__) / ".." / ".." / "code_to_optimize" / "bubble_sort_deps.py").resolve()
+    file_path = (Path(__file__) / ".." / "code_to_optimize" / "bubble_sort_deps.py").resolve()
 
     function_to_optimize = FunctionToOptimize(
         function_name="sorter_deps", file_path=file_path, parents=[], starting_line=None, ending_line=None
@@ -412,19 +412,19 @@ def test_bubble_sort_deps() -> None:
     code_context = ctx_result.unwrap()
     assert (
             code_context.testgen_context.flat
-            == f"""{get_code_block_splitter(Path("code_to_optimize/bubble_sort_dep1_helper.py"))}
+            == f"""{get_code_block_splitter(Path("tests/code_to_optimize/bubble_sort_dep1_helper.py"))}
 def dep1_comparer(arr, j: int) -> bool:
     return arr[j] > arr[j + 1]
 
-{get_code_block_splitter(Path("code_to_optimize/bubble_sort_dep2_swap.py"))}
+{get_code_block_splitter(Path("tests/code_to_optimize/bubble_sort_dep2_swap.py"))}
 def dep2_swap(arr, j):
     temp = arr[j]
     arr[j] = arr[j + 1]
     arr[j + 1] = temp
 
-{get_code_block_splitter(Path("code_to_optimize/bubble_sort_deps.py"))}
-from code_to_optimize.bubble_sort_dep1_helper import dep1_comparer
-from code_to_optimize.bubble_sort_dep2_swap import dep2_swap
+{get_code_block_splitter(Path("tests/code_to_optimize/bubble_sort_deps.py"))}
+from tests.code_to_optimize.bubble_sort_dep1_helper import dep1_comparer
+from tests.code_to_optimize.bubble_sort_dep2_swap import dep2_swap
 
 def sorter_deps(arr):
     for i in range(len(arr)):
@@ -438,6 +438,6 @@ def sorter_deps(arr):
     assert len(code_context.helper_functions) == 2
     assert (
             code_context.helper_functions[0].fully_qualified_name
-            == "code_to_optimize.bubble_sort_dep1_helper.dep1_comparer"
+            == "tests.code_to_optimize.bubble_sort_dep1_helper.dep1_comparer"
     )
-    assert code_context.helper_functions[1].fully_qualified_name == "code_to_optimize.bubble_sort_dep2_swap.dep2_swap"
+    assert code_context.helper_functions[1].fully_qualified_name == "tests.code_to_optimize.bubble_sort_dep2_swap.dep2_swap"

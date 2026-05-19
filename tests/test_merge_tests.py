@@ -8,7 +8,7 @@ def test_merge_unit_tests_pytest():
     unit_tests = """
 import time
 import gc
-from code_to_optimize.tsp import tsp
+from tests.code_to_optimize.tsp import tsp
 import pytest
 import math
 import sys
@@ -118,7 +118,7 @@ import sys
 import itertools
 import time
 import gc
-from code_to_optimize.tsp import tsp
+from tests.code_to_optimize.tsp import tsp
 import pytest
 import math
 import sys

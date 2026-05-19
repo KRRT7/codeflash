@@ -32,9 +32,9 @@ _______________________ test_calculate_portfolio_metrics _______________________
 E       assert 4.109589046841222e-08 < 1e-10
 E        +  where 4.109589046841222e-08 = abs((0.890411 - 0.8904109589041095))
 
-code_to_optimize/tests/pytest/test_multiple_helpers.py:26: AssertionError
+tests/code_to_optimize/tests/pytest/test_multiple_helpers.py:26: AssertionError
 =========================== short test summary info ============================
-FAILED code_to_optimize/tests/pytest/test_multiple_helpers.py::test_calculate_portfolio_metrics[ 1 ]
+FAILED tests/code_to_optimize/tests/pytest/test_multiple_helpers.py::test_calculate_portfolio_metrics[ 1 ]
 1 failed, 3 passed in 0.15s
 
 
@@ -67,7 +67,7 @@ FAILED code_to_optimize/tests/pytest/test_multiple_helpers.py::test_calculate_po
 E       assert 4.109589046841222e-08 < 1e-10
 E        +  where 4.109589046841222e-08 = abs((0.890411 - 0.8904109589041095))
 
-code_to_optimize/tests/pytest/test_multiple_helpers.py:26: AssertionError
+tests/code_to_optimize/tests/pytest/test_multiple_helpers.py:26: AssertionError
 '''
 
 def test_extracting_no_pytest_failures():
@@ -92,7 +92,7 @@ ________________________ test_simple_failure ________________________
 >       assert x == 3
 E       assert 2 == 3
 
-code_to_optimize/tests/test_simple.py:10: AssertionError
+tests/code_to_optimize/tests/test_simple.py:10: AssertionError
 ________________ TestCalculator.test_divide_by_zero ________________
 
     class TestCalculator:
@@ -100,10 +100,10 @@ ________________ TestCalculator.test_divide_by_zero ________________
 >           Calculator().divide(10, 0)
 E           ZeroDivisionError: division by zero
 
-code_to_optimize/tests/test_calculator.py:22: ZeroDivisionError
+tests/code_to_optimize/tests/test_calculator.py:22: ZeroDivisionError
 =========================== short test summary info ============================
-FAILED code_to_optimize/tests/test_simple.py::test_simple_failure
-FAILED code_to_optimize/tests/test_calculator.py::TestCalculator::test_divide_by_zero
+FAILED tests/code_to_optimize/tests/test_simple.py::test_simple_failure
+FAILED tests/code_to_optimize/tests/test_calculator.py::TestCalculator::test_divide_by_zero
 2 failed, 1 passed in 0.18s
 '''
     errors = parse_test_failures_from_stdout(stdout)
@@ -117,7 +117,7 @@ FAILED code_to_optimize/tests/test_calculator.py::TestCalculator::test_divide_by
 >       assert x == 3
 E       assert 2 == 3
 
-code_to_optimize/tests/test_simple.py:10: AssertionError
+tests/code_to_optimize/tests/test_simple.py:10: AssertionError
 '''
 
     assert 'TestCalculator.test_divide_by_zero' in errors
@@ -127,7 +127,7 @@ code_to_optimize/tests/test_simple.py:10: AssertionError
 >           Calculator().divide(10, 0)
 E           ZeroDivisionError: division by zero
 
-code_to_optimize/tests/test_calculator.py:22: ZeroDivisionError
+tests/code_to_optimize/tests/test_calculator.py:22: ZeroDivisionError
 ''' == errors['TestCalculator.test_divide_by_zero']
 
 def test_extracting_from_invalid_pytest_stdout():

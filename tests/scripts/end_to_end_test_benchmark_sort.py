@@ -5,7 +5,7 @@ from end_to_end_test_utilities import CoverageExpectation, TestConfig, run_codef
 
 
 def run_test(expected_improvement_pct: int) -> bool:
-    cwd = (pathlib.Path(__file__).parent.parent.parent / "code_to_optimize").resolve()
+    cwd = (pathlib.Path(__file__).parent.parent / "code_to_optimize").resolve()
     config = TestConfig(
         file_path=pathlib.Path("bubble_sort.py"),
         function_name="sorter",

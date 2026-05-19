@@ -210,8 +210,8 @@ class Graph:
 
 def test_bubble_sort_helper() -> None:
     path_to_fto = (
-        Path(__file__).resolve().parent.parent
-        / "code_to_optimize"
+        Path(__file__).resolve().parent
+        /"code_to_optimize"
         / "code_directories"
         / "retriever"
         / "bubble_sort_imported.py"
@@ -1134,7 +1134,7 @@ class HelperClass:
 
 
 def test_repo_helper() -> None:
-    project_root = Path(__file__).resolve().parent.parent / "code_to_optimize" / "code_directories" / "retriever"
+    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
     path_to_file = project_root / "main.py"
     path_to_utils = project_root / "utils.py"
     function_to_optimize = FunctionToOptimize(
@@ -1226,7 +1226,7 @@ def fetch_and_process_data():
 
 
 def test_repo_helper_of_helper() -> None:
-    project_root = Path(__file__).resolve().parent.parent / "code_to_optimize" / "code_directories" / "retriever"
+    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
     path_to_file = project_root / "main.py"
     path_to_utils = project_root / "utils.py"
     path_to_transform_utils = project_root / "transform_utils.py"
@@ -1327,7 +1327,7 @@ def fetch_and_transform_data():
 
 
 def test_repo_helper_of_helper_same_class() -> None:
-    project_root = Path(__file__).resolve().parent.parent / "code_to_optimize" / "code_directories" / "retriever"
+    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
     path_to_utils = project_root / "utils.py"
     path_to_transform_utils = project_root / "transform_utils.py"
     function_to_optimize = FunctionToOptimize(
@@ -1407,7 +1407,7 @@ class DataProcessor:
 
 
 def test_repo_helper_of_helper_same_file() -> None:
-    project_root = Path(__file__).resolve().parent.parent / "code_to_optimize" / "code_directories" / "retriever"
+    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
     path_to_utils = project_root / "utils.py"
     path_to_transform_utils = project_root / "transform_utils.py"
     function_to_optimize = FunctionToOptimize(
@@ -1483,7 +1483,7 @@ class DataProcessor:
 
 
 def test_repo_helper_all_same_file() -> None:
-    project_root = Path(__file__).resolve().parent.parent / "code_to_optimize" / "code_directories" / "retriever"
+    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
     path_to_transform_utils = project_root / "transform_utils.py"
     function_to_optimize = FunctionToOptimize(
         function_name="transform_data_all_same_file",
@@ -1546,7 +1546,7 @@ def update_data(data):
 
 
 def test_repo_helper_circular_dependency() -> None:
-    project_root = Path(__file__).resolve().parent.parent / "code_to_optimize" / "code_directories" / "retriever"
+    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
     path_to_utils = project_root / "utils.py"
     path_to_transform_utils = project_root / "transform_utils.py"
     function_to_optimize = FunctionToOptimize(
@@ -1577,7 +1577,7 @@ class DataProcessor:
         return DataTransformer().circular_dependency(data)
 ```
 ```python:{path_to_transform_utils.relative_to(project_root)}
-from code_to_optimize.code_directories.retriever.utils import DataProcessor
+from tests.code_to_optimize.code_directories.retriever.utils import DataProcessor
 
 class DataTransformer:
     def __init__(self):
@@ -1690,7 +1690,7 @@ class MyClass:
 
 
 def test_direct_module_import() -> None:
-    project_root = Path(__file__).resolve().parent.parent / "code_to_optimize" / "code_directories" / "retriever"
+    project_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "retriever"
     path_to_main = project_root / "main.py"
     path_to_fto = project_root / "import_test.py"
     function_to_optimize = FunctionToOptimize(
@@ -1744,7 +1744,7 @@ def fetch_and_transform_data():
 ```
 ```python:import_test.py
 def function_to_optimize():
-    return code_to_optimize.code_directories.retriever.main.fetch_and_transform_data()
+    return tests.code_to_optimize.code_directories.retriever.main.fetch_and_transform_data()
 ```
 """
     expected_read_write_context = f"""
@@ -1767,10 +1767,10 @@ def fetch_and_transform_data():
     return transformed
 ```
 ```python:{path_to_fto.relative_to(project_root)}
-import code_to_optimize.code_directories.retriever.main
+import tests.code_to_optimize.code_directories.retriever.main
 
 def function_to_optimize():
-    return code_to_optimize.code_directories.retriever.main.fetch_and_transform_data()
+    return tests.code_to_optimize.code_directories.retriever.main.fetch_and_transform_data()
 ```
 """
     assert read_write_context.markdown.strip() == expected_read_write_context.strip()
@@ -2567,7 +2567,7 @@ class SimpleClass:
 
 # This shouldn't happen as we are now using a scoped optimization context, but keep it just in case
 def test_circular_deps():
-    path_to_root = Path(__file__).resolve().parent.parent / "code_to_optimize" / "code_directories" / "circular_deps"
+    path_to_root = Path(__file__).resolve().parent /"code_to_optimize" / "code_directories" / "circular_deps"
     file_abs_path = path_to_root / "api_client.py"
     optimized_code = Path(path_to_root / "optimized.py").read_text(encoding="utf-8")
     content = Path(file_abs_path).read_text(encoding="utf-8")

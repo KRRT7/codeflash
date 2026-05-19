@@ -9,12 +9,12 @@ from codeflash.models.models import FunctionParent
 
 @pytest.fixture
 def trace_file():
-    return Path(__file__).parent.parent / "code_to_optimize/code_directories/simple_tracer_e2e/codeflash.trace"
+    return Path(__file__).parent / "code_to_optimize/code_directories/simple_tracer_e2e/codeflash.trace"
 
 
 @pytest.fixture
 def workload_functions():
-    workloads_file = Path(__file__).parent.parent / "code_to_optimize/code_directories/simple_tracer_e2e/workload.py"
+    workloads_file = Path(__file__).parent / "code_to_optimize/code_directories/simple_tracer_e2e/workload.py"
     functions_dict = find_all_functions_in_file(workloads_file)
     all_functions = []
     for functions_list in functions_dict.values():

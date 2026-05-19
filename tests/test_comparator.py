@@ -1204,16 +1204,16 @@ def test_custom_object():
 
 
 def test_custom_object_2():
-    fto_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_method.py").resolve()
+    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py").resolve()
     original_code = fto_path.read_text("utf-8")
-    from code_to_optimize.bubble_sort_method import BubbleSorter
+    from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
     a = BubbleSorter()
     assert a.x == 0
     try:
         # Remove the module from sys.modules, to get the updated class
-        sys.modules.pop("code_to_optimize.bubble_sort_method", None)
-        from code_to_optimize.bubble_sort_method import BubbleSorter
+        sys.modules.pop("tests.code_to_optimize.bubble_sort_method", None)
+        from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
         b = BubbleSorter()
         assert comparator(
@@ -1237,8 +1237,8 @@ class BubbleSorter:
         return arr
                                     """
         fto_path.write_text(optimized_code_mutated_attr, "utf-8")
-        sys.modules.pop("code_to_optimize.bubble_sort_method", None)
-        from code_to_optimize.bubble_sort_method import BubbleSorter
+        sys.modules.pop("tests.code_to_optimize.bubble_sort_method", None)
+        from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
         c = BubbleSorter()
         assert c.x == 1
@@ -1261,8 +1261,8 @@ class BubbleSorter:
         return arr
                                             """
         fto_path.write_text(optimized_code_new_attr, "utf-8")
-        sys.modules.pop("code_to_optimize.bubble_sort_method", None)
-        from code_to_optimize.bubble_sort_method import BubbleSorter
+        sys.modules.pop("tests.code_to_optimize.bubble_sort_method", None)
+        from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 
         d = BubbleSorter()
         assert d.x == 0

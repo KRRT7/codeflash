@@ -44,7 +44,7 @@ class Args:
 
 def test_code_replacement_global_statements():
     project_root = Path(__file__).parent.parent.resolve()
-    code_path = (project_root / "code_to_optimize/bubble_sort_optimized.py").resolve()
+    code_path = (project_root / "tests/code_to_optimize/bubble_sort_optimized.py").resolve()
     optimized_code = f"""```python:{code_path.relative_to(project_root)}
 import numpy as np
 
@@ -53,11 +53,11 @@ def sorter(arr):
     return arr.sort()
 ```
 """
-    original_code_str = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").read_text(
+    original_code_str = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").read_text(
         encoding="utf-8"
     )
     code_path.write_text(original_code_str, encoding="utf-8")
-    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/code_to_optimize/tests/pytest/")
+    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/tests/code_to_optimize/tests/pytest/")
     project_root_path = (Path(__file__).parent / "..").resolve()
     func = FunctionToOptimize(function_name="sorter", parents=[], file_path=code_path)
     test_config = TestConfig(
@@ -354,8 +354,8 @@ def supersort(doink):
         fix(doink, i)
 """
 
-    original_code = """from code_to_optimize.bubble_sort_dep1_helper import dep1_comparer
-from code_to_optimize.bubble_sort_dep2_swap import dep2_swap
+    original_code = """from tests.code_to_optimize.bubble_sort_dep1_helper import dep1_comparer
+from tests.code_to_optimize.bubble_sort_dep2_swap import dep2_swap
 
 def sorter_deps(arr):
     for i in range(len(arr)):
@@ -364,8 +364,8 @@ def sorter_deps(arr):
                 dep2_swap(arr, j)
     return arr
 """
-    expected = """from code_to_optimize.bubble_sort_dep1_helper import dep1_comparer
-from code_to_optimize.bubble_sort_dep2_swap import dep2_swap
+    expected = """from tests.code_to_optimize.bubble_sort_dep1_helper import dep1_comparer
+from tests.code_to_optimize.bubble_sort_dep2_swap import dep2_swap
 
 @lru_cache(17)
 def sorter_deps(arr):
@@ -1349,7 +1349,7 @@ def cosine_similarity_top_k(
         FakeFunctionSource(
             file_path=(Path(__file__).parent / "code_to_optimize" / "math_utils.py").resolve(),
             qualified_name="Matrix",
-            fully_qualified_name="code_to_optimize.math_utils.Matrix",
+            fully_qualified_name="tests.code_to_optimize.math_utils.Matrix",
             only_function_name="Matrix",
             source_code="",
             jedi_definition=JediDefinition(type="class"),
@@ -1357,7 +1357,7 @@ def cosine_similarity_top_k(
         FakeFunctionSource(
             file_path=(Path(__file__).parent / "code_to_optimize" / "math_utils.py").resolve(),
             qualified_name="cosine_similarity",
-            fully_qualified_name="code_to_optimize.math_utils.cosine_similarity",
+            fully_qualified_name="tests.code_to_optimize.math_utils.cosine_similarity",
             only_function_name="cosine_similarity",
             source_code="",
             jedi_definition=JediDefinition(type="function"),
@@ -1693,7 +1693,7 @@ print("Hello world")
 
 def test_global_reassignment() -> None:
     root_dir = Path(__file__).parent.parent.resolve()
-    code_path = (root_dir / "code_to_optimize/global_var_original.py").resolve()
+    code_path = (root_dir / "tests/code_to_optimize/global_var_original.py").resolve()
 
     original_code = """a=1
 print("Hello world")
@@ -1745,7 +1745,7 @@ class NewClass:
     def new_function2(value):
         return cst.ensure_type(value, str)"""
     code_path.write_text(original_code, encoding="utf-8")
-    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/code_to_optimize/tests/pytest/")
+    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/tests/code_to_optimize/tests/pytest/")
     project_root_path = (Path(__file__).parent / "..").resolve()
     func = FunctionToOptimize(function_name="some_fn", parents=[], file_path=code_path)
     test_config = TestConfig(
@@ -1820,9 +1820,9 @@ class NewClass:
         return cst.ensure_type(value, str)
 a=2    
 """
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/global_var_original.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/global_var_original.py").resolve()
     code_path.write_text(original_code, encoding="utf-8")
-    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/code_to_optimize/tests/pytest/")
+    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/tests/code_to_optimize/tests/pytest/")
     project_root_path = (Path(__file__).parent / "..").resolve()
     func = FunctionToOptimize(function_name="some_fn", parents=[], file_path=code_path)
     test_config = TestConfig(
@@ -1898,9 +1898,9 @@ class NewClass:
     def new_function2(value):
         return cst.ensure_type(value, str)
 """
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/global_var_original.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/global_var_original.py").resolve()
     code_path.write_text(original_code, encoding="utf-8")
-    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/code_to_optimize/tests/pytest/")
+    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/tests/code_to_optimize/tests/pytest/")
     project_root_path = (Path(__file__).parent / "..").resolve()
     func = FunctionToOptimize(function_name="some_fn", parents=[], file_path=code_path)
     test_config = TestConfig(
@@ -1975,9 +1975,9 @@ class NewClass:
     def new_function2(value):
         return cst.ensure_type(value, str)
 """
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/global_var_original.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/global_var_original.py").resolve()
     code_path.write_text(original_code, encoding="utf-8")
-    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/code_to_optimize/tests/pytest/")
+    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/tests/code_to_optimize/tests/pytest/")
     project_root_path = (Path(__file__).parent / "..").resolve()
     func = FunctionToOptimize(function_name="some_fn", parents=[], file_path=code_path)
     test_config = TestConfig(
@@ -2053,9 +2053,9 @@ class NewClass:
     def new_function2(value):
         return cst.ensure_type(value, str)
 """
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/global_var_original.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/global_var_original.py").resolve()
     code_path.write_text(original_code, encoding="utf-8")
-    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/code_to_optimize/tests/pytest/")
+    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/tests/code_to_optimize/tests/pytest/")
     project_root_path = (Path(__file__).parent / "..").resolve()
     func = FunctionToOptimize(function_name="some_fn", parents=[], file_path=code_path)
     test_config = TestConfig(
@@ -2142,9 +2142,9 @@ class NewClass:
     def new_function2(value):
         return cst.ensure_type(value, str)
 """
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/global_var_original.py").resolve()
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/global_var_original.py").resolve()
     code_path.write_text(original_code, encoding="utf-8")
-    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/code_to_optimize/tests/pytest/")
+    tests_root = Path("/Users/codeflash/Downloads/codeflash-dev/codeflash/tests/code_to_optimize/tests/pytest/")
     project_root_path = (Path(__file__).parent / "..").resolve()
     func = FunctionToOptimize(function_name="some_fn", parents=[], file_path=code_path)
     test_config = TestConfig(
@@ -3244,7 +3244,7 @@ class HuggingFaceModel(Model):
 
 def test_top_level_global_assignments() -> None:
     root_dir = Path(__file__).parent.parent.resolve()
-    main_file = Path(root_dir / "code_to_optimize/temp_main.py").resolve()
+    main_file = Path(root_dir / "tests/code_to_optimize/temp_main.py").resolve()
 
     original_code = '''"""
 Module for generating GeneratedWorkflowParameters schema from workflow run input_text actions.

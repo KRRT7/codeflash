@@ -16,7 +16,7 @@ from pathlib import Path
 from codeflash.discovery.discover_unit_tests import discover_unit_tests
 
 def test_unit_test_discovery_pytest():
-    project_path = Path(__file__).parent.parent.resolve() / "code_to_optimize"
+    project_path = Path(__file__).parent.resolve() /"code_to_optimize"
     tests_path = project_path / "tests" / "pytest"
     test_config = TestConfig(
         tests_root=tests_path,
@@ -29,7 +29,7 @@ def test_unit_test_discovery_pytest():
 
 
 def test_benchmark_test_discovery_pytest():
-    project_path = Path(__file__).parent.parent.resolve() / "code_to_optimize"
+    project_path = Path(__file__).parent.resolve() /"code_to_optimize"
     tests_path = project_path / "tests" / "pytest" / "benchmarks"
     test_config = TestConfig(
         tests_root=tests_path,
@@ -42,7 +42,7 @@ def test_benchmark_test_discovery_pytest():
 
 
 def test_unit_test_discovery_unittest():
-    project_path = Path(__file__).parent.parent.resolve() / "code_to_optimize"
+    project_path = Path(__file__).parent.resolve() /"code_to_optimize"
     test_path = project_path / "tests" / "unittest"
     test_config = TestConfig(
         tests_root=project_path,
@@ -1518,7 +1518,7 @@ def test_analyze_imports_method():
     with tempfile.TemporaryDirectory() as tmpdirname:
         test_file = Path(tmpdirname) / "test_example.py"
         test_content = """
-from code_to_optimize.topological_sort import Graph
+from tests.code_to_optimize.topological_sort import Graph
 
 
 def test_topological_sort():
@@ -1543,7 +1543,7 @@ def test_analyze_imports_fixture():
     with tempfile.TemporaryDirectory() as tmpdirname:
         test_file = Path(tmpdirname) / "test_example.py"
         test_content = """
-from code_to_optimize.topological_sort import Graph
+from tests.code_to_optimize.topological_sort import Graph
 import pytest
 
 @pytest.fixture
@@ -1933,7 +1933,7 @@ def test_analyze_imports_class_with_module_prefix():
     with tempfile.TemporaryDirectory() as tmpdirname:
         test_file = Path(tmpdirname) / "test_example.py"
         test_content = """
-from code_to_optimize.topological_sort import Graph
+from tests.code_to_optimize.topological_sort import Graph
 
 def test_fully_qualified():
     g = Graph(5)
@@ -1942,7 +1942,7 @@ def test_fully_qualified():
         test_file.write_text(test_content)
 
         # Looking with full module path would require more complex module resolution
-        target_functions = {"code_to_optimize.topological_sort.Graph.topologicalSort"}
+        target_functions = {"tests.code_to_optimize.topological_sort.Graph.topologicalSort"}
         should_process = analyze_imports_in_test_file(test_file, target_functions)
 
         # Currently not supported - would need to match module path with imports

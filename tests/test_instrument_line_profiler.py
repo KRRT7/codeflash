@@ -12,8 +12,8 @@ from codeflash.verification.verification_utils import TestConfig
 
 
 def test_add_decorator_imports_helper_in_class():
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_classmethod.py").resolve()
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_classmethod.py").resolve()
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
     run_cwd = Path(__file__).parent.parent.resolve()
     test_config = TestConfig(
@@ -41,7 +41,7 @@ def test_add_decorator_imports_helper_in_class():
         expected_code_main = f"""from line_profiler import profile as codeflash_line_profile
 codeflash_line_profile.enable(output_prefix='{line_profiler_output_file.as_posix()}')
 
-from code_to_optimize.bubble_sort_in_class import BubbleSortClass
+from tests.code_to_optimize.bubble_sort_in_class import BubbleSortClass
 
 
 @codeflash_line_profile
@@ -82,8 +82,8 @@ class BubbleSortClass:
 
 def test_add_decorator_imports_helper_in_nested_class():
     #Need to invert the assert once the helper detection is fixed
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_nested_classmethod.py").resolve()
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_nested_classmethod.py").resolve()
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
     run_cwd = Path(__file__).parent.parent.resolve()
     test_config = TestConfig(
@@ -111,7 +111,7 @@ def test_add_decorator_imports_helper_in_nested_class():
         expected_code_main = f"""from line_profiler import profile as codeflash_line_profile
 codeflash_line_profile.enable(output_prefix='{line_profiler_output_file.as_posix()}')
 
-from code_to_optimize.bubble_sort_in_nested_class import WrapperClass
+from tests.code_to_optimize.bubble_sort_in_nested_class import WrapperClass
 
 
 @codeflash_line_profile
@@ -129,8 +129,8 @@ def sort_classmethod(x):
         )
 
 def test_add_decorator_imports_nodeps():
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort.py").resolve()
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
     run_cwd = Path(__file__).parent.parent.resolve()
     test_config = TestConfig(
@@ -178,8 +178,8 @@ def sorter(arr):
         )
 
 def test_add_decorator_imports_helper_outside():
-    code_path = (Path(__file__).parent.resolve() / "../code_to_optimize/bubble_sort_deps.py").resolve()
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_deps.py").resolve()
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
     run_cwd = Path(__file__).parent.parent.resolve()
     test_config = TestConfig(
@@ -207,8 +207,8 @@ def test_add_decorator_imports_helper_outside():
         expected_code_main = f"""from line_profiler import profile as codeflash_line_profile
 codeflash_line_profile.enable(output_prefix='{line_profiler_output_file.as_posix()}')
 
-from code_to_optimize.bubble_sort_dep1_helper import dep1_comparer
-from code_to_optimize.bubble_sort_dep2_swap import dep2_swap
+from tests.code_to_optimize.bubble_sort_dep1_helper import dep1_comparer
+from tests.code_to_optimize.bubble_sort_dep2_swap import dep2_swap
 
 
 @codeflash_line_profile
@@ -254,7 +254,7 @@ class helper:
     code_path = TemporaryDirectory()
     code_write_path = Path(code_path.name) / "dunder_class.py"
     code_write_path.write_text(code_str,"utf-8")
-    tests_root = Path(__file__).parent.resolve() / "../code_to_optimize/tests/pytest/"
+    tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = Path(code_path.name)
     run_cwd = Path(__file__).parent.parent.resolve()
     test_config = TestConfig(
