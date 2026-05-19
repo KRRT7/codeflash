@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from argparse import Namespace
 
     from codeflash.benchmarking.function_ranker import FunctionRanker
-    from codeflash.code_utils.checkpoint import CodeflashRunCheckpoint
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
     from codeflash.models.models import BenchmarkKey, FunctionCalledInTest
     from codeflash.optimization.function_optimizer import FunctionOptimizer
@@ -60,7 +59,6 @@ class Optimizer:
         )
         self.replay_tests_dir = None
         self.trace_file: Path | None = None
-        self.functions_checkpoint: CodeflashRunCheckpoint | None = None
         self.current_function_being_optimized: FunctionToOptimize | None = None
         self.current_function_optimizer: FunctionOptimizer | None = None
         self.current_worktree: Path | None = None
@@ -170,7 +168,6 @@ class Optimizer:
             ignore_paths=self.args.ignore_paths,
             project_root=self.args.project_root,
             module_root=self.args.module_root,
-            previous_checkpoint_functions=self.args.previous_checkpoint_functions,
         )
 
     def create_function_optimizer(
@@ -439,8 +436,6 @@ class Optimizer:
             return globally_ranked
 
     def run(self) -> None:
-        from codeflash.code_utils.checkpoint import CodeflashRunCheckpoint
-
         logger.info("Running optimizer.")
         console.rule()
         if not env_utils.ensure_codeflash_api_key():
@@ -493,10 +488,6 @@ class Optimizer:
                 return
 
             function_to_tests, _ = self.discover_tests(file_to_funcs_to_optimize)
-            if self.args.all:
-                self.functions_checkpoint = CodeflashRunCheckpoint(
-                    self.args.module_root
-                )
 
             # GLOBAL RANKING: Rank all functions together before optimizing
             globally_ranked_functions = self.rank_all_functions_globally(
@@ -549,12 +540,6 @@ class Optimizer:
 
                     self.current_function_optimizer = function_optimizer  # needed to clean up from the outside of this function
                     best_optimization = function_optimizer.optimize_function()
-                    if self.functions_checkpoint:
-                        self.functions_checkpoint.add_function_to_checkpoint(
-                            function_to_optimize.qualified_name_with_modules_from_root(
-                                self.args.project_root
-                            )
-                        )
                     if is_successful(best_optimization):
                         optimizations_found += 1
                         # create a diff patch for successful optimization
@@ -592,8 +577,6 @@ class Optimizer:
                 logger.info(
                     f"Created {len(self.patch_files)} patch(es) ({[str(patch_path) for patch_path in self.patch_files]})"
                 )
-            if self.functions_checkpoint:
-                self.functions_checkpoint.cleanup()
             if hasattr(self.args, "command") and self.args.command == "optimize":
                 self.cleanup_replay_tests()
             if optimizations_found == 0:

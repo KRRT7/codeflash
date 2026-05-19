@@ -8,7 +8,6 @@ from codeflash.cli_cmds.cli import parse_args, process_pyproject_config
 from codeflash.cli_cmds.cmd_init import CODEFLASH_LOGO, ask_run_end_to_end_test
 from codeflash.cli_cmds.console import paneled_text
 from codeflash.code_utils import env_utils
-from codeflash.code_utils.checkpoint import ask_should_use_checkpoint_get_functions
 from codeflash.code_utils.version_check import check_for_newer_minor_version
 
 
@@ -29,7 +28,6 @@ def main() -> None:
         args = process_pyproject_config(args)
         if not env_utils.check_formatter_installed(args.formatter_cmds):
             return
-        args.previous_checkpoint_functions = ask_should_use_checkpoint_get_functions(args)
 
         from codeflash.optimization import optimizer
 
@@ -38,7 +36,9 @@ def main() -> None:
 
 def print_codeflash_banner() -> None:
     paneled_text(
-        CODEFLASH_LOGO, panel_args={"title": "https://codeflash.ai", "expand": False}, text_args={"style": "bold gold3"}
+        CODEFLASH_LOGO,
+        panel_args={"title": "https://codeflash.ai", "expand": False},
+        text_args={"style": "bold gold3"},
     )
 
 

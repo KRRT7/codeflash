@@ -196,7 +196,6 @@ def get_functions_to_optimize(
     ignore_paths: list[Path],
     project_root: Path,
     module_root: Path,
-    previous_checkpoint_functions: dict[str, dict[str, str]] | None = None,
 ) -> tuple[dict[Path, list[FunctionToOptimize]], int, Path | None]:
     assert sum([bool(optimize_all), bool(replay_test), bool(file)]) <= 1, (
         "Only one of optimize_all, replay_test, or file should be provided"
@@ -262,7 +261,6 @@ def get_functions_to_optimize(
             ignore_paths,
             project_root,
             module_root,
-            previous_checkpoint_functions,
         )
 
         logger.info(
@@ -708,7 +706,6 @@ def filter_functions(
     ignore_paths: list[Path],
     project_root: Path,
     module_root: Path,
-    previous_checkpoint_functions: dict[Path, dict[str, Any]] | None = None,
     *,
     disable_logs: bool = False,
 ) -> tuple[dict[Path, list[FunctionToOptimize]], int]:
@@ -729,7 +726,6 @@ def filter_functions(
     malformed_paths_count: int = 0
     submodule_ignored_paths_count: int = 0
     blocklist_funcs_removed_count: int = 0
-    previous_checkpoint_functions_removed_count: int = 0
     # Normalize paths for case-insensitive comparison on Windows
     tests_root_str = os.path.normcase(str(tests_root))
     module_root_str = os.path.normcase(str(module_root))
@@ -785,18 +781,6 @@ def filter_functions(
                 functions_tmp.append(function)
             _functions = functions_tmp
 
-        if previous_checkpoint_functions:
-            functions_tmp = []
-            for function in _functions:
-                if (
-                    function.qualified_name_with_modules_from_root(project_root)
-                    in previous_checkpoint_functions
-                ):
-                    previous_checkpoint_functions_removed_count += 1
-                    continue
-                functions_tmp.append(function)
-            _functions = functions_tmp
-
         filtered_modified_functions[file_path] = _functions
         functions_count += len(_functions)
 
@@ -814,10 +798,6 @@ def filter_functions(
             "Blocklisted functions removed": (
                 blocklist_funcs_removed_count,
                 "bright_red",
-            ),
-            "Functions skipped from checkpoint": (
-                previous_checkpoint_functions_removed_count,
-                "green",
             ),
         }
         ignored_items = [

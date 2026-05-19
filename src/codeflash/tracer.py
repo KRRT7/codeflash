@@ -247,7 +247,6 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                 )
 
                 args = process_pyproject_config(args)
-                args.previous_checkpoint_functions = None
 
                 from codeflash.optimization import optimizer
 
