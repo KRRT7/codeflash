@@ -17,7 +17,7 @@ from collections.abc import Collection
 from enum import Enum, IntEnum
 from pathlib import Path
 from re import Pattern
-from typing import Annotated, NamedTuple, Optional, cast
+from typing import Annotated, Any, NamedTuple, cast
 
 from jedi.api.classes import Name
 from pydantic import (
@@ -95,9 +95,9 @@ class TestDiff:
 
     original_value: str | None = None
     candidate_value: str | None = None
-    test_src_code: Optional[str] = None
-    candidate_pytest_error: Optional[str] = None
-    original_pytest_error: Optional[str] = None
+    test_src_code: str | None = None
+    candidate_pytest_error: str | None = None
+    original_pytest_error: str | None = None
 
 
 @dataclass(frozen=True)
@@ -170,16 +170,16 @@ class FunctionSource:
 
 class BestOptimization(BaseModel):
     candidate: OptimizedCandidate
-    explanation_v2: Optional[str] = None
+    explanation_v2: str | None = None
     helper_functions: list[FunctionSource]
     code_context: CodeOptimizationContext
     runtime: int
-    replay_performance_gain: Optional[dict[BenchmarkKey, float]] = None
+    replay_performance_gain: dict[BenchmarkKey, float] | None = None
     winning_behavior_test_results: TestResults
     winning_benchmarking_test_results: TestResults
-    winning_replay_benchmarking_test_results: Optional[TestResults] = None
+    winning_replay_benchmarking_test_results: TestResults | None = None
     line_profiler_test_results: dict
-    async_throughput: Optional[int] = None
+    async_throughput: int | None = None
 
 
 @dataclass(frozen=True)
@@ -206,7 +206,7 @@ class BenchmarkDetail:
             f"Benchmark speedup for {self.benchmark_name}::{self.test_function}: {self.speedup_percent:.2f}%\n"
         )
 
-    def to_dict(self) -> dict[str, any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "benchmark_name": self.benchmark_name,
             "test_function": self.test_function,
@@ -229,7 +229,7 @@ class ProcessedBenchmarkInfo:
             result += detail.to_string() + "\n"
         return result
 
-    def to_dict(self) -> dict[str, list[dict[str, any]]]:
+    def to_dict(self) -> dict[str, list[dict[str, Any]]]:
         return {
             "benchmark_details": [detail.to_dict() for detail in self.benchmark_details]
         }
@@ -237,7 +237,7 @@ class ProcessedBenchmarkInfo:
 
 class CodeString(BaseModel):
     code: Annotated[str, AfterValidator(validate_python_code)]
-    file_path: Optional[Path] = None
+    file_path: Path | None = None
 
 
 def get_code_block_splitter(file_path: Path) -> str:
@@ -355,10 +355,10 @@ class OptimizedCandidateResult(BaseModel):
     best_test_runtime: int
     behavior_test_results: TestResults
     benchmarking_test_results: TestResults
-    replay_benchmarking_test_results: Optional[dict[BenchmarkKey, TestResults]] = None
+    replay_benchmarking_test_results: dict[BenchmarkKey, TestResults] | None = None
     optimization_candidate_index: int
     total_candidate_timing: int
-    async_throughput: Optional[int] = None
+    async_throughput: int | None = None
 
 
 class GeneratedTests(BaseModel):
@@ -376,10 +376,10 @@ class GeneratedTestsList(BaseModel):
 class TestFile(BaseModel):
     instrumented_behavior_file_path: Path
     benchmarking_file_path: Path = None
-    original_file_path: Optional[Path] = None
-    original_source: Optional[str] = None
+    original_file_path: Path | None = None
+    original_source: str | None = None
     test_type: TestType
-    tests_in_file: Optional[list[TestsInFile]] = None
+    tests_in_file: list[TestsInFile] | None = None
 
 
 class TestFiles(BaseModel):
@@ -448,7 +448,7 @@ class TestFiles(BaseModel):
 
 class OptimizationSet(BaseModel):
     control: list[OptimizedCandidate]
-    experiment: Optional[list[OptimizedCandidate]]
+    experiment: list[OptimizedCandidate] | None
 
 
 @dataclass
@@ -547,7 +547,7 @@ class CandidateEvaluationContext:
 @dataclass(frozen=True)
 class TestsInFile:
     test_file: Path
-    test_class: Optional[str]
+    test_class: str | None
     test_function: str
     test_type: TestType
 
@@ -591,11 +591,11 @@ class FunctionParent:
 class OriginalCodeBaseline(BaseModel):
     behavior_test_results: TestResults
     benchmarking_test_results: TestResults
-    replay_benchmarking_test_results: Optional[dict[BenchmarkKey, TestResults]] = None
+    replay_benchmarking_test_results: dict[BenchmarkKey, TestResults] | None = None
     line_profile_results: dict
     runtime: int
-    coverage_results: Optional[CoverageData]
-    async_throughput: Optional[int] = None
+    coverage_results: CoverageData | None
+    async_throughput: int | None = None
 
 
 class CoverageStatus(Enum):
@@ -614,7 +614,7 @@ class CoverageData:
     graph: dict[str, dict[str, Collection[object]]]
     code_context: CodeOptimizationContext
     main_func_coverage: FunctionCoverage
-    dependent_func_coverage: Optional[FunctionCoverage]
+    dependent_func_coverage: FunctionCoverage | None
     status: CoverageStatus
     blank_re: Pattern[str] = re.compile(r"\s*(#|$)")
     else_re: Pattern[str] = re.compile(r"\s*else\s*:\s*(#|$)")
@@ -691,12 +691,12 @@ class TestingMode(enum.Enum):
 @dataclass(frozen=True)
 class InvocationId:
     test_module_path: str  # The fully qualified name of the test module
-    test_class_name: Optional[str]  # The name of the class where the test is defined
-    test_function_name: Optional[
-        str
-    ]  # The name of the test_function. Does not include the components of the file_name
+    test_class_name: str | None  # The name of the class where the test is defined
+    test_function_name: (
+        str | None
+    )  # The name of the test_function. Does not include the components of the file_name
     function_getting_tested: str
-    iteration_id: Optional[str]
+    iteration_id: str | None
 
     # test_module_path:TestSuiteClass.test_function_name:function_tested:iteration_id
     def id(self) -> str:
@@ -717,13 +717,13 @@ class InvocationId:
 
     def find_func_in_class(
         self, class_node: cst.ClassDef, func_name: str
-    ) -> Optional[cst.FunctionDef]:
+    ) -> cst.FunctionDef | None:
         for stmt in class_node.body.body:
             if isinstance(stmt, cst.FunctionDef) and stmt.name.value == func_name:
                 return stmt
         return None
 
-    def get_src_code(self, test_path: Path) -> Optional[str]:
+    def get_src_code(self, test_path: Path) -> str | None:
         if not test_path.exists():
             return None
         try:
@@ -780,13 +780,13 @@ class FunctionTestInvocation:
     did_pass: (
         bool  # Whether the test this function invocation was part of, passed or failed
     )
-    runtime: Optional[int]  # Time in nanoseconds
+    runtime: int | None  # Time in nanoseconds
     test_framework: str  # unittest or pytest
     test_type: TestType
-    return_value: Optional[object]  # The return value of the function invocation
-    timed_out: Optional[bool]
-    verification_type: Optional[str] = VerificationType.FUNCTION_CALL
-    stdout: Optional[str] = None
+    return_value: object | None  # The return value of the function invocation
+    timed_out: bool | None
+    verification_type: str | None = VerificationType.FUNCTION_CALL
+    stdout: str | None = None
 
     @property
     def unique_invocation_loop_id(self) -> str:
@@ -799,9 +799,9 @@ class TestResults(BaseModel):  # noqa: PLW1641
     test_results: list[FunctionTestInvocation] = []
     test_result_idx: dict[str, int] = {}
 
-    perf_stdout: Optional[str] = None
+    perf_stdout: str | None = None
     # mapping between test function name and stdout failure message
-    test_failures: Optional[dict[str, str]] = None
+    test_failures: dict[str, str] | None = None
 
     def add(self, function_test_invocation: FunctionTestInvocation) -> None:
         unique_id = function_test_invocation.unique_invocation_loop_id

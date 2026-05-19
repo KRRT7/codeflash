@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import git
 
@@ -216,10 +216,10 @@ def check_create_pr(
     replay_tests: str,
     concolic_tests: str,
     root_dir: Path,
-    git_remote: Optional[str] = None,
+    git_remote: str | None = None,
     optimization_review: str = "",
 ) -> None:
-    pr_number: Optional[int] = env_utils.get_pr_number()
+    pr_number: int | None = env_utils.get_pr_number()
     git_repo = git.Repo(search_parent_directories=True)
 
     if pr_number is not None:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 import textwrap
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from codeflash.discovery.functions_to_optimize import inspect_top_level_functions_or_methods
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def get_next_arg_and_return(
-    trace_file: str, function_name: str, file_name: str, class_name: Optional[str] = None, num_to_get: int = 25
+    trace_file: str, function_name: str, file_name: str, class_name: str | None = None, num_to_get: int = 25
 ) -> Generator[Any]:
     db = sqlite3.connect(trace_file)
     cur = db.cursor()

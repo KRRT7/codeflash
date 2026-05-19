@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import libcst as cst
 
@@ -30,13 +30,13 @@ class AddDecoratorTransformer(cst.CSTTransformer):
             self.class_name = ""  # Even if nested classes are not visited, this function is still called on them
         return updated_node
 
-    def visit_ClassDef(self, node: ClassDef) -> Optional[bool]:
+    def visit_ClassDef(self, node: ClassDef) -> bool | None:
         if self.class_name:  # Don't go into nested class
             return False
         self.class_name = node.name.value
         return None
 
-    def visit_FunctionDef(self, node: FunctionDef) -> Optional[bool]:
+    def visit_FunctionDef(self, node: FunctionDef) -> bool | None:
         if self.function_name:  # Don't go into nested function
             return False
         self.function_name = node.name.value

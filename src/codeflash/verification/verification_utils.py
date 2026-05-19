@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
-from typing import Optional
 
 from pydantic.dataclasses import dataclass
 
@@ -71,9 +70,9 @@ class TestConfig:
     project_root_path: Path
     tests_project_rootdir: Path
     # tests_project_rootdir corresponds to pytest rootdir
-    concolic_test_root_dir: Optional[Path] = None
+    concolic_test_root_dir: Path | None = None
     pytest_cmd: str = "pytest"
-    benchmark_tests_root: Optional[Path] = None
+    benchmark_tests_root: Path | None = None
     use_cache: bool = True
 
     @property

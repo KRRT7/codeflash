@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from codeflash.api.cfapi import is_github_app_installed_on_repo
 from codeflash.cli_cmds.cli_common import apologize_and_exit
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from git import Repo
 
 
-def get_github_secrets_page_url(repo: Optional[Repo] = None) -> str:
+def get_github_secrets_page_url(repo: Repo | None = None) -> str:
     owner, repo_name = get_repo_owner_and_name(repo)
     return f"https://github.com/{owner}/{repo_name}/settings/secrets/actions"
 

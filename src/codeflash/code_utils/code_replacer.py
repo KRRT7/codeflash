@@ -4,7 +4,7 @@ import ast
 from collections import defaultdict
 from functools import lru_cache
 from itertools import chain
-from typing import TYPE_CHECKING, Optional, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import libcst as cst
 from libcst.metadata import PositionProvider
@@ -351,13 +351,13 @@ class OptimFunctionCollector(cst.CSTVisitor):
 class OptimFunctionReplacer(cst.CSTTransformer):
     def __init__(
         self,
-        modified_functions: Optional[
+        modified_functions: 
             dict[tuple[str | None, str], cst.FunctionDef]
-        ] = None,
-        new_classes: Optional[list[cst.ClassDef]] = None,
-        new_functions: Optional[list[cst.FunctionDef]] = None,
-        new_class_functions: Optional[dict[str, list[cst.FunctionDef]]] = None,
-        modified_init_functions: Optional[dict[str, cst.FunctionDef]] = None,
+         | None = None,
+        new_classes: list[cst.ClassDef] | None = None,
+        new_functions: list[cst.FunctionDef] | None = None,
+        new_class_functions: dict[str, list[cst.FunctionDef]] | None = None,
+        modified_init_functions: dict[str, cst.FunctionDef] | None = None,
     ) -> None:
         super().__init__()
         self.modified_functions = (

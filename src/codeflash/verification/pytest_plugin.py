@@ -12,7 +12,7 @@ import sys
 import time as _time_module
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable
 from unittest import TestCase
 
 # PyTest Imports
@@ -275,7 +275,7 @@ def pytest_configure(config: Config) -> None:
     _apply_deterministic_patches()
 
 
-def get_runtime_from_stdout(stdout: str) -> Optional[int]:
+def get_runtime_from_stdout(stdout: str) -> int | None:
     marker_start = "!######"
     marker_end = "######!"
 

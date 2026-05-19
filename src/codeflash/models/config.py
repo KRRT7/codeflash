@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -12,26 +11,26 @@ class AppConfig:
     project_root: Path
     module_root: Path
     tests_root: Path
-    file: Optional[Path] = None
-    function: Optional[str] = None
-    all: Optional[Path] = None
-    replay_test: Optional[list[Path]] = None
+    file: Path | None = None
+    function: str | None = None
+    all: Path | None = None
+    replay_test: list[Path] | None = None
     no_pr: bool = False
     no_gen_tests: bool = False
     staging_review: bool = False
     benchmark: bool = False
-    benchmarks_root: Optional[Path] = None
+    benchmarks_root: Path | None = None
     no_draft: bool = False
     worktree: bool = False
     effort: str = "medium"
     pytest_cmd: str = "pytest"
-    formatter_cmds: Optional[list[str]] = None
+    formatter_cmds: list[str] | None = None
     disable_imports_sorting: bool = False
-    git_remote: Optional[str] = None
-    override_fixtures: Optional[list[str]] = None
+    git_remote: str | None = None
+    override_fixtures: list[str] | None = None
     ignore_paths: list[Path] = field(default_factory=list)
-    test_project_root: Optional[Path] = None
-    command: Optional[str] = None
+    test_project_root: Path | None = None
+    command: str | None = None
     verify_setup: bool = False
 
     @classmethod

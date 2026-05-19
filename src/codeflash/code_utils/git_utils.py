@@ -6,7 +6,7 @@ import time
 from functools import cache
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import git
 from unidiff import PatchSet
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 def get_git_diff(
     repo_directory: Path | None = None,
     *,
-    only_this_commit: Optional[str] = None,
+    only_this_commit: str | None = None,
     uncommitted_changes: bool = False,
 ) -> dict[str, list[int]]:
     if repo_directory is None:

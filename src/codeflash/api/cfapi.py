@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import git
 import requests
@@ -32,8 +32,8 @@ from packaging import version
 
 @dataclass
 class BaseUrls:
-    cfapi_base_url: Optional[str] = None
-    cfwebapp_base_url: Optional[str] = None
+    cfapi_base_url: str | None = None
+    cfwebapp_base_url: str | None = None
 
 
 @lru_cache(maxsize=1)
@@ -108,7 +108,7 @@ def make_cfapi_request(
 
 
 @lru_cache(maxsize=1)
-def get_user_id(api_key: Optional[str] = None) -> Optional[str]:  # noqa: PLR0911
+def get_user_id(api_key: str | None = None) -> str | None:  # noqa: PLR0911
     """Retrieve the user's userid by making a request to the /cfapi/cli-get-user endpoint.
 
     :param api_key: The API key to use. If None, uses get_codeflash_api_key().

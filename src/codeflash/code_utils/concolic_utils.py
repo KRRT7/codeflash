@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ast
 import re
-from typing import Optional
 
 
 class AssertCleanup:
@@ -16,7 +15,7 @@ class AssertCleanup:
 
         return "\n".join(result_lines)
 
-    def _transform_assert_line(self, line: str) -> Optional[str]:
+    def _transform_assert_line(self, line: str) -> str | None:
         indent = line[: len(line) - len(line.lstrip())]
 
         assert_match = self.assert_re.match(line)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.console import logger
 from codeflash.code_utils.time_utils import humanize_runtime
@@ -69,7 +69,7 @@ def process_benchmark_data(
     replay_performance_gain: dict[BenchmarkKey, float],
     fto_benchmark_timings: dict[BenchmarkKey, int],
     total_benchmark_timings: dict[BenchmarkKey, int],
-) -> Optional[ProcessedBenchmarkInfo]:
+) -> ProcessedBenchmarkInfo | None:
     """Process benchmark data and generate detailed benchmark information.
 
     Args:

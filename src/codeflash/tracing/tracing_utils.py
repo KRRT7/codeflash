@@ -4,7 +4,7 @@ import site
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 import git
 
@@ -16,8 +16,8 @@ class FunctionModules:
     function_name: str
     file_name: Path
     module_name: str
-    class_name: Optional[str] = None
-    line_no: Optional[int] = None
+    class_name: str | None = None
+    line_no: int | None = None
 
 
 def path_belongs_to_site_packages(file_path: Path) -> bool:

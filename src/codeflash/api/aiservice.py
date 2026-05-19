@@ -136,7 +136,7 @@ class AiServiceClient:
         - source_code (str): The python code to optimize.
         - dependency_code (str): The dependency code used as read-only context for the optimization
         - trace_id (str): Trace id of optimization run
-        - experiment_metadata (Optional[ExperimentalMetadata, None]): Any available experiment metadata for this optimization
+        - experiment_metadata (ExperimentalMetadata, None | None): Any available experiment metadata for this optimization
         - is_async (bool): Whether the function being optimized is async
         - n_candidates (int): Number of candidates to generate
 
@@ -205,7 +205,7 @@ class AiServiceClient:
         - dependency_code (str): The dependency code used as read-only context for the optimization
         - trace_id (str): Trace id of optimization run
         - line_profiler_results (str): Line profiler output to guide optimization
-        - experiment_metadata (Optional[ExperimentalMetadata, None]): Any available experiment metadata for this optimization
+        - experiment_metadata (ExperimentalMetadata, None | None): Any available experiment metadata for this optimization
         - n_candidates (int): Number of candidates to generate
 
         Returns
@@ -527,10 +527,10 @@ class AiServiceClient:
         Parameters
         ----------
         - function_trace_id (str): The UUID.
-        - speedup_ratio (Optional[Dict[str, float]]): The speedup.
-        - original_runtime (Optional[Dict[str, float]]): The original runtime.
-        - optimized_runtime (Optional[Dict[str, float]]): The optimized runtime.
-        - is_correct (Optional[Dict[str, bool]]): Whether the optimized code is correct.
+        - speedup_ratio (Dict[str, float] | None): The speedup.
+        - original_runtime (Dict[str, float] | None): The original runtime.
+        - optimized_runtime (Dict[str, float] | None): The optimized runtime.
+        - is_correct (Dict[str, bool] | None): Whether the optimized code is correct.
         - optimized_line_profiler_results: line_profiler results for every candidate mapped to their optimization_id
         - metadata: contains the best optimization id
         - optimizations_post - dict mapping opt id to code str after postprocessing

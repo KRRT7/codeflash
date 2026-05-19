@@ -12,7 +12,7 @@ import subprocess
 import unittest
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Optional, final
+from typing import TYPE_CHECKING, Callable, final
 
 if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
@@ -57,8 +57,8 @@ class PytestExitCode(enum.IntEnum):  # don't need to import entire pytest just f
 @dataclass(frozen=True)
 class TestFunction:
     function_name: str
-    test_class: Optional[str]
-    parameters: Optional[str]
+    test_class: str | None
+    parameters: str | None
     test_type: TestType
 
 

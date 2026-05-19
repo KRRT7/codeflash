@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 import linecache
 import os
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import dill as pickle
 
@@ -87,7 +87,7 @@ def show_text(stats: dict) -> str:
     return out_table
 
 
-def parse_line_profile_results(line_profiler_output_file: Optional[Path]) -> dict:
+def parse_line_profile_results(line_profiler_output_file: Path | None) -> dict:
     line_profiler_output_file = line_profiler_output_file.with_suffix(".lprof")
     stats_dict = {}
     if not line_profiler_output_file.exists():

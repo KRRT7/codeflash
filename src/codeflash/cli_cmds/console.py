@@ -4,7 +4,7 @@ import logging
 import shutil
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any
@@ -66,9 +66,9 @@ def paneled_text(
 
 def code_print(
     code_str: str,
-    file_name: Optional[str] = None,
-    function_name: Optional[str] = None,
-    lsp_message_id: Optional[str] = None,
+    file_name: str | None = None,
+    function_name: str | None = None,
+    lsp_message_id: str | None = None,
 ) -> None:
     console.rule()
     print(code_str)

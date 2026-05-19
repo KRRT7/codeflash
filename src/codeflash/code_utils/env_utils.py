@@ -7,7 +7,7 @@ import shutil
 import tempfile
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from codeflash.cli_cmds.console import logger
 from codeflash.code_utils.code_utils import exit_with_message
@@ -131,7 +131,7 @@ def ensure_codeflash_api_key() -> bool:
 
 
 @lru_cache(maxsize=1)
-def get_pr_number() -> Optional[int]:
+def get_pr_number() -> int | None:
     event_data = get_cached_gh_event_data()
     pr_number = event_data.get("number")
     if pr_number:

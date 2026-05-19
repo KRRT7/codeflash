@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from importlib.util import find_spec
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import jedi
 import libcst as cst
@@ -36,32 +36,32 @@ class GlobalAssignmentCollector(cst.CSTVisitor):
         self.scope_depth = 0
         self.if_else_depth = 0
 
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:  # noqa: ARG002
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool | None:  # noqa: ARG002
         self.scope_depth += 1
         return True
 
     def leave_FunctionDef(self, original_node: cst.FunctionDef) -> None:  # noqa: ARG002
         self.scope_depth -= 1
 
-    def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:  # noqa: ARG002
+    def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:  # noqa: ARG002
         self.scope_depth += 1
         return True
 
     def leave_ClassDef(self, original_node: cst.ClassDef) -> None:  # noqa: ARG002
         self.scope_depth -= 1
 
-    def visit_If(self, node: cst.If) -> Optional[bool]:  # noqa: ARG002
+    def visit_If(self, node: cst.If) -> bool | None:  # noqa: ARG002
         self.if_else_depth += 1
         return True
 
     def leave_If(self, original_node: cst.If) -> None:  # noqa: ARG002
         self.if_else_depth -= 1
 
-    def visit_Else(self, node: cst.Else) -> Optional[bool]:  # noqa: ARG002
+    def visit_Else(self, node: cst.Else) -> bool | None:  # noqa: ARG002
         # Else blocks are already counted as part of the if statement
         return True
 
-    def visit_Assign(self, node: cst.Assign) -> Optional[bool]:
+    def visit_Assign(self, node: cst.Assign) -> bool | None:
         # Only process global assignments (not inside functions, classes, etc.)
         if self.scope_depth == 0 and self.if_else_depth == 0:  # We're at module level
             for target in node.targets:
@@ -243,7 +243,7 @@ class DottedImportCollector(cst.CSTVisitor):
         import dbt.adapters.factory                                                ==> "dbt.adapters.factory"
         from pathlib import Path                                                   ==> "pathlib.Path"
         from recce.adapter.base import BaseAdapter                                 ==> "recce.adapter.base.BaseAdapter"
-        from typing import Any, List, Optional                                     ==> "typing.Any", "typing.List", "typing.Optional"
+        from typing import Any, List                                     ==> "typing.Any", "typing.List", "typing."
         from recce.util.lineage import ( build_column_key, filter_dependency_maps) ==> "recce.util.lineage.build_column_key", "recce.util.lineage.filter_dependency_maps"
 
     """
@@ -784,7 +784,7 @@ class FunctionDefinitionInfo:
     start_line: int
     end_line: int
     is_method: bool
-    class_name: Optional[str] = None
+    class_name: str | None = None
 
 
 class FunctionCallFinder(ast.NodeVisitor):
@@ -973,7 +973,7 @@ class FunctionCallFinder(ast.NodeVisitor):
 
         return False
 
-    def _get_call_name(self, func_node) -> Optional[str]:  # noqa: ANN001
+    def _get_call_name(self, func_node) -> str | None:  # noqa: ANN001
         """Extract the name being called from a function node."""
         # Fast path short-circuit for ast.Name nodes
         if isinstance(func_node, ast.Name):
@@ -1114,7 +1114,7 @@ def find_occurances(
 
 def find_specific_function_in_file(
     source_code: str, filepath: Union[str, Path], target_function: str, target_class: str | None
-) -> Optional[tuple[int, int]]:
+) -> tuple[int, int] | None:
     """Find a specific function definition in a Python file and return its location.
 
     Stops searching once the target is found (optimized for performance).

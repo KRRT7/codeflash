@@ -4,7 +4,7 @@ import ast
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import libcst as cst
 from libcst import MetadataWrapper
@@ -175,7 +175,7 @@ def add_runtime_comments_to_generated_tests(
     generated_tests: GeneratedTestsList,
     original_runtimes: dict[InvocationId, list[int]],
     optimized_runtimes: dict[InvocationId, list[int]],
-    tests_project_rootdir: Optional[Path] = None,
+    tests_project_rootdir: Path | None = None,
 ) -> GeneratedTestsList:
     """Add runtime performance comments to function calls in generated tests."""
     original_runtimes_dict = unique_inv_id(original_runtimes, tests_project_rootdir or Path())

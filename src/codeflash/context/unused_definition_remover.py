@@ -5,7 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import libcst as cst
 
@@ -49,7 +49,7 @@ def extract_names_from_targets(target: cst.CSTNode) -> list[str]:
 
 
 def collect_top_level_definitions(
-    node: cst.CSTNode, definitions: Optional[dict[str, UsageInfo]] = None
+    node: cst.CSTNode, definitions: dict[str, UsageInfo] | None = None
 ) -> dict[str, UsageInfo]:
     """Recursively collect all top-level variable, function, and class definitions."""
     # Locally bind types and helpers for faster lookup
@@ -680,7 +680,7 @@ def _analyze_imports_in_optimized_code(
 
 def find_target_node(
     root: ast.AST, function_to_optimize: FunctionToOptimize
-) -> Optional[ast.FunctionDef | ast.AsyncFunctionDef]:
+) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
     parents = function_to_optimize.parents
     node = root
     for parent in parents:

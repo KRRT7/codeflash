@@ -7,7 +7,7 @@ import sys
 from enum import Enum, auto
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Union, cast
 
 import webbrowser
 
@@ -245,7 +245,7 @@ class CommonSections(Enum):
 
 
 @lru_cache(maxsize=1)
-def get_valid_subdirs(current_dir: Optional[Path] = None) -> list[str]:
+def get_valid_subdirs(current_dir: Path | None = None) -> list[str]:
     ignore_subdirs = [
         "venv",
         "node_modules",
@@ -266,7 +266,7 @@ def get_valid_subdirs(current_dir: Optional[Path] = None) -> list[str]:
     ]
 
 
-def get_suggestions(section: str) -> tuple[list[str], Optional[str]]:
+def get_suggestions(section: str) -> tuple[list[str], str | None]:
     valid_subdirs = get_valid_subdirs()
     if section == CommonSections.module_root:
         return [d for d in valid_subdirs if d != "tests"], None
@@ -1221,7 +1221,7 @@ def get_formatter_cmds(formatter: str) -> list[str]:
 
 # Create or update the pyproject.toml file with the Codeflash dependency & configuration
 def configure_pyproject_toml(
-    setup_info: Union[VsCodeSetupInfo, CLISetupInfo], config_file: Optional[Path] = None
+    setup_info: Union[VsCodeSetupInfo, CLISetupInfo], config_file: Path | None = None
 ) -> bool:
     for_vscode = isinstance(setup_info, VsCodeSetupInfo)
     toml_path = config_file or Path.cwd() / "pyproject.toml"

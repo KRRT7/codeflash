@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from io import StringIO
 from pathlib import Path
-from typing import Optional
 
 from pydantic.dataclasses import dataclass
 
@@ -20,9 +19,9 @@ class Explanation:
     best_runtime_ns: int
     function_name: str
     file_path: Path
-    benchmark_details: Optional[list[BenchmarkDetail]] = None
-    original_async_throughput: Optional[int] = None
-    best_async_throughput: Optional[int] = None
+    benchmark_details: list[BenchmarkDetail] | None = None
+    original_async_throughput: int | None = None
+    best_async_throughput: int | None = None
 
     @property
     def perf_improvement_line(self) -> str:

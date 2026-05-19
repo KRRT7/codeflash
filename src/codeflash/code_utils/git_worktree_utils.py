@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import git
 
@@ -53,7 +53,7 @@ def create_worktree_snapshot_commit(worktree_dir: Path, commit_message: str) -> 
             cw.remove_option("user", "email")
 
 
-def create_detached_worktree(module_root: Path) -> Optional[Path]:
+def create_detached_worktree(module_root: Path) -> Path | None:
     if not check_running_in_git_repo(module_root):
         logger.warning("Module is not in a git repository. Skipping worktree creation.")
         return None
@@ -120,8 +120,8 @@ def remove_worktree(worktree_dir: Path) -> None:
 
 
 def create_diff_patch_from_worktree(
-    worktree_dir: Path, files: list[Path], fto_name: Optional[str] = None
-) -> Optional[Path]:
+    worktree_dir: Path, files: list[Path], fto_name: str | None = None
+) -> Path | None:
     repository = git.Repo(worktree_dir, search_parent_directories=True)
     uni_diff_text = repository.git.diff(None, "HEAD", *files, ignore_blank_lines=True, ignore_space_at_eol=True)
 

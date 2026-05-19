@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import isort
 
@@ -45,7 +45,7 @@ def generate_unified_diff(
 def apply_formatter_cmds(
     cmds: list[str],
     path: Path,
-    test_dir_str: Optional[str],
+    test_dir_str: str | None,
     print_status: bool,  # noqa
     exit_on_failure: bool = True,  # noqa
 ) -> tuple[Path, str, bool]:

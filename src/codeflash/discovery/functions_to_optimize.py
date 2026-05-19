@@ -8,7 +8,7 @@ from _ast import AsyncFunctionDef, ClassDef, FunctionDef
 from collections import defaultdict
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import git
 import libcst as cst
@@ -45,10 +45,10 @@ _ast_name = ast.Name
 @dataclass(frozen=True)
 class FunctionProperties:
     is_top_level: bool
-    has_args: Optional[bool]
-    is_staticmethod: Optional[bool]
-    is_classmethod: Optional[bool]
-    staticmethod_class_name: Optional[str]
+    has_args: bool | None
+    is_staticmethod: bool | None
+    is_classmethod: bool | None
+    staticmethod_class_name: str | None
 
 
 class ReturnStatementVisitor(cst.CSTVisitor):
@@ -159,8 +159,8 @@ class FunctionToOptimize:
     function_name: str
     file_path: Path
     parents: list[FunctionParent]  # list[ClassDef | FunctionDef | AsyncFunctionDef]
-    starting_line: Optional[int] = None
-    ending_line: Optional[int] = None
+    starting_line: int | None = None
+    ending_line: int | None = None
     is_async: bool = False
 
     @property

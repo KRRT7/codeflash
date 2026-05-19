@@ -6,7 +6,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.console import logger
 from codeflash.code_utils.compat import LF
@@ -70,7 +70,7 @@ def is_powershell() -> bool:
     return False
 
 
-def read_api_key_from_shell_config() -> Optional[str]:
+def read_api_key_from_shell_config() -> str | None:
     """Read API key from shell configuration file."""
     shell_rc_path = get_shell_rc_path()
     # Ensure shell_rc_path is a Path object for consistent handling
@@ -241,7 +241,7 @@ def save_api_key_to_rc(api_key: str) -> Result[str, str]:
 def get_cross_platform_subprocess_run_args(
     cwd: Path | str | None = None,
     env: Mapping[str, str] | None = None,
-    timeout: Optional[float] = None,
+    timeout: float | None = None,
     check: bool = False,  # noqa: FBT001, FBT002
     text: bool = True,  # noqa: FBT001, FBT002
     capture_output: bool = True,  # noqa: FBT001, FBT002 (only for non-Windows)
