@@ -38,6 +38,7 @@ dependencies = [
     "line_profiler>=4.2.0",
     "platformdirs>=4.3.7",
     "pygls>=2.0.0,<3.0.0",
+    "requests>=2.28.0",
     "codeflash-benchmark",
     "filelock",
     "pytest-asyncio>=1.2.0",
@@ -46,6 +47,7 @@ dependencies = [
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
 markers = ["ci_skip: mark test to skip in CI environment"]
+norecursedirs = ["tests/code_to_optimize"]
 
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
