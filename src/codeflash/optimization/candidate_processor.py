@@ -4,9 +4,8 @@ import concurrent.futures
 import queue
 from collections.abc import Callable
 
-from codeflash.cli_cmds.logging_config import logger, progress_bar
+from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.config_consts import EffortKeys, get_effort_value
-from codeflash.code_utils.env_utils import get_pr_number
 from codeflash.models.domain import (
     CandidateEvaluationContext,
     OptimizedCandidate,
@@ -169,37 +168,31 @@ class CandidateProcessor:
     ) -> CandidateNode | None:
         if len(future_candidates) == 0:
             return None
-        with progress_bar(
-            loading_msg.format(len(future_candidates)),
-            transient=True,
-            revert_to_print=bool(get_pr_number()),
-        ):
-            concurrent.futures.wait(future_candidates)
-            candidates: list[OptimizedCandidate] = []
-            for future_c in future_candidates:
-                candidate_result = future_c.result()
-                if not candidate_result:
-                    continue
-                if isinstance(candidate_result, list):
-                    candidates.extend(candidate_result)
-                else:
-                    candidates.append(candidate_result)
+        logger.info(loading_msg.format(len(future_candidates)))
+        concurrent.futures.wait(future_candidates)
+        candidates: list[OptimizedCandidate] = []
+        for future_c in future_candidates:
+            candidate_result = future_c.result()
+            if not candidate_result:
+                continue
+            if isinstance(candidate_result, list):
+                candidates.extend(candidate_result)
+            else:
+                candidates.append(candidate_result)
 
-            candidates = (
-                filter_candidates_func(candidates)
-                if filter_candidates_func
-                else candidates
-            )
-            for candidate in candidates:
-                self.forest.add(candidate)
-                self.candidate_queue.put(candidate)
-                self.candidate_len += 1
+        candidates = (
+            filter_candidates_func(candidates) if filter_candidates_func else candidates
+        )
+        for candidate in candidates:
+            self.forest.add(candidate)
+            self.candidate_queue.put(candidate)
+            self.candidate_len += 1
 
-            if candidates:
-                logger.info(success_msg.format(len(candidates), self.candidate_len))
+        if candidates:
+            logger.info(success_msg.format(len(candidates), self.candidate_len))
 
-            callback()
-            return self.get_next_candidate()
+        callback()
+        return self.get_next_candidate()
 
     def _filter_refined_candidates(
         self, candidates: list[OptimizedCandidate]

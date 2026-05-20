@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import logging
 import shutil
-from collections.abc import Generator
-from contextlib import contextmanager
 
 VERBOSE_LOGGING_FORMAT = (
     "%(asctime)s [%(pathname)s:%(lineno)s in function %(funcName)s] %(message)s"
@@ -51,25 +49,3 @@ def rule(title: str = "") -> None:
         print(f"{prefix} {title} {suffix}")
     else:
         print("─" * width)
-
-
-@contextmanager
-def progress_bar(
-    message: str, *, transient: bool = False, revert_to_print: bool = False
-) -> Generator[int, None, None]:
-    logger.info(message)
-    yield 0
-
-
-class _DummyProgress:
-    @staticmethod
-    def advance(task_id: int, advance: int = 1) -> None:
-        pass
-
-
-@contextmanager
-def test_files_progress_bar(
-    total: int, description: str
-) -> Generator[tuple[_DummyProgress, int], None, None]:
-    logger.info(f"{description}: 0/{total}")
-    yield _DummyProgress(), 0

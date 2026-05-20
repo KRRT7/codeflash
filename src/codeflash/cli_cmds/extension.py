@@ -10,7 +10,7 @@ from typing import Any
 
 import requests
 
-from codeflash.cli_cmds.logging_config import logger, progress_bar
+from codeflash.cli_cmds.logging_config import logger
 
 supported_editor_paths = [
     (Path(Path.home()) / ".vscode", "VSCode"),
@@ -55,10 +55,8 @@ def download_and_extract_extension(download_url: str) -> Path:
 
 @contextmanager
 def download_and_extract_extension_with_progress(download_url: str) -> Path:
-    with (
-        progress_bar("Downloading CodeFlash extension from open-vsx.org..."),
-        download_and_extract_extension(download_url) as extension_path,
-    ):
+    logger.info("Downloading CodeFlash extension from open-vsx.org...")
+    with download_and_extract_extension(download_url) as extension_path:
         yield extension_path
 
 
@@ -148,8 +146,8 @@ def is_latest_version_installed(editor_path: Path, latest_version: str) -> bool:
 def manually_install_vscode_extension(
     downloadable_paths: list[tuple[Path, str]],
 ) -> None:
-    with progress_bar("Fetching extension metadata..."):
-        info = get_extension_info()
+    logger.info("Fetching extension metadata...")
+    info = get_extension_info()
 
     download_url = info.get("files", {}).get("download", "")
     latest_version = info.get("version", "")

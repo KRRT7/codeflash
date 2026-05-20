@@ -45,7 +45,7 @@ from codeflash.api.cfapi import (
     mark_optimization_success,
 )
 from codeflash.benchmarking.utils import process_benchmark_data
-from codeflash.cli_cmds.logging_config import logger, progress_bar, rule
+from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_extractor import get_opt_review_metrics
 from codeflash.code_utils.code_replacer import (
@@ -70,7 +70,6 @@ from codeflash.code_utils.edit_generated_tests import (
     add_runtime_comments_to_generated_tests,
     remove_functions_from_generated_tests,
 )
-from codeflash.code_utils.env_utils import get_pr_number
 from codeflash.code_utils.formatter import (
     format_code,
     format_generated_code,
@@ -306,38 +305,32 @@ def log_optimization_context(
     ) -> CandidateNode | None:
         if len(future_candidates) == 0:
             return None
-        with progress_bar(
-            loading_msg.format(len(future_candidates)),
-            transient=True,
-            revert_to_print=bool(get_pr_number()),
-        ):
-            concurrent.futures.wait(future_candidates)
-            candidates: list[OptimizedCandidate] = []
-            for future_c in future_candidates:
-                candidate_result = future_c.result()
-                if not candidate_result:
-                    continue
+        logger.info(loading_msg.format(len(future_candidates)))
+        concurrent.futures.wait(future_candidates)
+        candidates: list[OptimizedCandidate] = []
+        for future_c in future_candidates:
+            candidate_result = future_c.result()
+            if not candidate_result:
+                continue
 
-                if isinstance(candidate_result, list):
-                    candidates.extend(candidate_result)
-                else:
-                    candidates.append(candidate_result)
+            if isinstance(candidate_result, list):
+                candidates.extend(candidate_result)
+            else:
+                candidates.append(candidate_result)
 
-            candidates = (
-                filter_candidates_func(candidates)
-                if filter_candidates_func
-                else candidates
-            )
-            for candidate in candidates:
-                self.forest.add(candidate)
-                self.candidate_queue.put(candidate)
-                self.candidate_len += 1
+        candidates = (
+            filter_candidates_func(candidates) if filter_candidates_func else candidates
+        )
+        for candidate in candidates:
+            self.forest.add(candidate)
+            self.candidate_queue.put(candidate)
+            self.candidate_len += 1
 
-            if len(candidates) > 0:
-                logger.info(success_msg.format(len(candidates), self.candidate_len))
+        if len(candidates) > 0:
+            logger.info(success_msg.format(len(candidates), self.candidate_len))
 
-            callback()
-            return self.get_next_candidate()
+        callback()
+        return self.get_next_candidate()
 
     def _filter_refined_candidates(
         self, candidates: list[OptimizedCandidate]
@@ -629,28 +622,26 @@ class FunctionOptimizer:
         print(code_context.read_writable_code.flat)
         rule()
 
-        with progress_bar(
-            f"Generating new tests and optimizations for function '{self.function_to_optimize.function_name}'",
-            transient=True,
-            revert_to_print=bool(get_pr_number()),
-        ):
-            rule()
-            # Generate tests and optimizations in parallel
-            future_tests = self.executor.submit(
-                self.generate_and_instrument_tests, code_context
-            )
-            future_optimizations = self.executor.submit(
-                self.generate_optimizations,
-                read_writable_code=code_context.read_writable_code,
-                read_only_context_code=code_context.read_only_context_code,
-                run_experiment=should_run_experiment,
-            )
+        logger.info(
+            f"Generating new tests and optimizations for function '{self.function_to_optimize.function_name}'"
+        )
+        rule()
+        # Generate tests and optimizations in parallel
+        future_tests = self.executor.submit(
+            self.generate_and_instrument_tests, code_context
+        )
+        future_optimizations = self.executor.submit(
+            self.generate_optimizations,
+            read_writable_code=code_context.read_writable_code,
+            read_only_context_code=code_context.read_only_context_code,
+            run_experiment=should_run_experiment,
+        )
 
-            concurrent.futures.wait([future_tests, future_optimizations])
+        concurrent.futures.wait([future_tests, future_optimizations])
 
-            test_setup_result = future_tests.result()
-            optimization_result = future_optimizations.result()
-            rule()
+        test_setup_result = future_tests.result()
+        optimization_result = future_optimizations.result()
+        rule()
 
         if not test_setup_result.is_ok():
             return test_setup_result
@@ -810,12 +801,12 @@ class FunctionOptimizer:
 
         Returns the BestOptimization and optional benchmark tree string.
         """
-        with progress_bar("Running line-by-line profiling"):
-            line_profile_test_results = self.line_profiler_step(
-                code_context=code_context,
-                original_helper_code=original_helper_code,
-                candidate_index=candidate_index,
-            )
+        logger.info("Running line-by-line profiling")
+        line_profile_test_results = self.line_profiler_step(
+            code_context=code_context,
+            original_helper_code=original_helper_code,
+            candidate_index=candidate_index,
+        )
 
         eval_ctx.record_line_profiler_result(
             candidate.optimization_id, line_profile_test_results["str_out"]
@@ -2190,31 +2181,31 @@ class FunctionOptimizer:
             )
 
         # Instrument codeflash capture
-        with progress_bar("Running tests to establish original code behavior..."):
-            try:
-                instrument_codeflash_capture(
-                    self.function_to_optimize,
-                    file_path_to_helper_classes,
-                    self.test_cfg.tests_root,
-                )
+        logger.info("Running tests to establish original code behavior...")
+        try:
+            instrument_codeflash_capture(
+                self.function_to_optimize,
+                file_path_to_helper_classes,
+                self.test_cfg.tests_root,
+            )
 
-                total_looping_time = TOTAL_LOOPING_TIME_EFFECTIVE
-                behavioral_results, coverage_results = self.run_and_parse_tests(
-                    testing_type=TestingMode.BEHAVIOR,
-                    test_env=test_env,
-                    test_files=self.test_files,
-                    optimization_iteration=0,
-                    testing_time=total_looping_time,
-                    enable_coverage=True,
-                    code_context=code_context,
-                )
-            finally:
-                # Remove codeflash capture
-                self.write_code_and_helpers(
-                    self.function_to_optimize_source_code,
-                    original_helper_code,
-                    self.function_to_optimize.file_path,
-                )
+            total_looping_time = TOTAL_LOOPING_TIME_EFFECTIVE
+            behavioral_results, coverage_results = self.run_and_parse_tests(
+                testing_type=TestingMode.BEHAVIOR,
+                test_env=test_env,
+                test_files=self.test_files,
+                optimization_iteration=0,
+                testing_time=total_looping_time,
+                enable_coverage=True,
+                code_context=code_context,
+            )
+        finally:
+            # Remove codeflash capture
+            self.write_code_and_helpers(
+                self.function_to_optimize_source_code,
+                original_helper_code,
+                self.function_to_optimize.file_path,
+            )
         if not behavioral_results:
             logger.warning(
                 f"Couldn't run any tests for original function {self.function_to_optimize.function_name}. Skipping optimization."
@@ -2231,44 +2222,42 @@ class FunctionOptimizer:
                 f"Test coverage is {coverage_results.coverage}%, which is below the required threshold of {COVERAGE_THRESHOLD}%."
             )
 
-        with progress_bar(
-            "Running line profiler to identify performance bottlenecks..."
-        ):
-            line_profile_results = self.line_profiler_step(
-                code_context=code_context,
-                original_helper_code=original_helper_code,
-                candidate_index=0,
-            )
+        logger.info("Running line profiler to identify performance bottlenecks...")
+        line_profile_results = self.line_profiler_step(
+            code_context=code_context,
+            original_helper_code=original_helper_code,
+            candidate_index=0,
+        )
         rule()
-        with progress_bar("Running performance benchmarks..."):
+        logger.info("Running performance benchmarks...")
+        if self.function_to_optimize.is_async:
+            from codeflash.code_utils.instrument_existing_tests import (
+                add_async_decorator_to_function,
+            )
+
+            add_async_decorator_to_function(
+                self.function_to_optimize.file_path,
+                self.function_to_optimize,
+                TestingMode.PERFORMANCE,
+            )
+
+        try:
+            benchmarking_results, _ = self.run_and_parse_tests(
+                testing_type=TestingMode.PERFORMANCE,
+                test_env=test_env,
+                test_files=self.test_files,
+                optimization_iteration=0,
+                testing_time=total_looping_time,
+                enable_coverage=False,
+                code_context=code_context,
+            )
+        finally:
             if self.function_to_optimize.is_async:
-                from codeflash.code_utils.instrument_existing_tests import (
-                    add_async_decorator_to_function,
-                )
-
-                add_async_decorator_to_function(
+                self.write_code_and_helpers(
+                    self.function_to_optimize_source_code,
+                    original_helper_code,
                     self.function_to_optimize.file_path,
-                    self.function_to_optimize,
-                    TestingMode.PERFORMANCE,
                 )
-
-            try:
-                benchmarking_results, _ = self.run_and_parse_tests(
-                    testing_type=TestingMode.PERFORMANCE,
-                    test_env=test_env,
-                    test_files=self.test_files,
-                    optimization_iteration=0,
-                    testing_time=total_looping_time,
-                    enable_coverage=False,
-                    code_context=code_context,
-                )
-            finally:
-                if self.function_to_optimize.is_async:
-                    self.write_code_and_helpers(
-                        self.function_to_optimize_source_code,
-                        original_helper_code,
-                        self.function_to_optimize.file_path,
-                    )
 
         print(
             TestResults.report_to_tree(
@@ -2433,182 +2422,182 @@ class FunctionOptimizer:
         candidate: OptimizedCandidate,
         exp_type: str,
     ) -> Result[OptimizedCandidateResult, str]:
-        with progress_bar("Testing optimization candidate"):
-            test_env = self.get_test_env(
-                codeflash_loop_index=0,
-                codeflash_test_iteration=optimization_candidate_index,
-                codeflash_tracer_disable=1,
-            )
+        logger.info("Testing optimization candidate")
+        test_env = self.get_test_env(
+            codeflash_loop_index=0,
+            codeflash_test_iteration=optimization_candidate_index,
+            codeflash_tracer_disable=1,
+        )
 
-            get_run_tmp_file(
-                Path(f"test_return_values_{optimization_candidate_index}.sqlite")
-            ).unlink(missing_ok=True)
-            # Instrument codeflash capture
-            candidate_fto_code = Path(self.function_to_optimize.file_path).read_text(
+        get_run_tmp_file(
+            Path(f"test_return_values_{optimization_candidate_index}.sqlite")
+        ).unlink(missing_ok=True)
+        # Instrument codeflash capture
+        candidate_fto_code = Path(self.function_to_optimize.file_path).read_text(
+            "utf-8"
+        )
+        candidate_helper_code = {}
+        for module_abspath in original_helper_code:
+            candidate_helper_code[module_abspath] = Path(module_abspath).read_text(
                 "utf-8"
             )
-            candidate_helper_code = {}
-            for module_abspath in original_helper_code:
-                candidate_helper_code[module_abspath] = Path(module_abspath).read_text(
-                    "utf-8"
-                )
+        if self.function_to_optimize.is_async:
+            from codeflash.code_utils.instrument_existing_tests import (
+                add_async_decorator_to_function,
+            )
+
+            add_async_decorator_to_function(
+                self.function_to_optimize.file_path,
+                self.function_to_optimize,
+                TestingMode.BEHAVIOR,
+            )
+
+        try:
+            instrument_codeflash_capture(
+                self.function_to_optimize,
+                file_path_to_helper_classes,
+                self.test_cfg.tests_root,
+            )
+
+            total_looping_time = TOTAL_LOOPING_TIME_EFFECTIVE
+            candidate_behavior_results, _ = self.run_and_parse_tests(
+                testing_type=TestingMode.BEHAVIOR,
+                test_env=test_env,
+                test_files=self.test_files,
+                optimization_iteration=optimization_candidate_index,
+                testing_time=total_looping_time,
+                enable_coverage=False,
+            )
+        # Remove instrumentation
+        finally:
+            self.write_code_and_helpers(
+                candidate_fto_code,
+                candidate_helper_code,
+                self.function_to_optimize.file_path,
+            )
+        print(
+            TestResults.report_to_tree(
+                candidate_behavior_results.get_test_pass_fail_report_by_type(),
+                title=f"Behavioral Test Results for candidate {optimization_candidate_index}",
+            )
+        )
+        rule()
+        match, diffs = compare_test_results(
+            baseline_results.behavior_test_results, candidate_behavior_results
+        )
+        if match:
+            logger.info("h3|Test results matched ✅")
+            rule()
+        else:
+            self.repair_if_possible(
+                candidate,
+                diffs,
+                eval_ctx,
+                code_context,
+                len(candidate_behavior_results),
+                exp_type,
+            )
+            return self.get_results_not_matched_error()
+
+        logger.info(
+            f"loading|Running performance tests for candidate {optimization_candidate_index}..."
+        )
+        rule()
+
+        # For async functions, instrument at definition site for performance benchmarking
+        if self.function_to_optimize.is_async:
+            from codeflash.code_utils.instrument_existing_tests import (
+                add_async_decorator_to_function,
+            )
+
+            add_async_decorator_to_function(
+                self.function_to_optimize.file_path,
+                self.function_to_optimize,
+                TestingMode.PERFORMANCE,
+            )
+
+        try:
+            candidate_benchmarking_results, _ = self.run_and_parse_tests(
+                testing_type=TestingMode.PERFORMANCE,
+                test_env=test_env,
+                test_files=self.test_files,
+                optimization_iteration=optimization_candidate_index,
+                testing_time=total_looping_time,
+                enable_coverage=False,
+            )
+        finally:
+            # Restore original source if we instrumented it
             if self.function_to_optimize.is_async:
-                from codeflash.code_utils.instrument_existing_tests import (
-                    add_async_decorator_to_function,
-                )
-
-                add_async_decorator_to_function(
-                    self.function_to_optimize.file_path,
-                    self.function_to_optimize,
-                    TestingMode.BEHAVIOR,
-                )
-
-            try:
-                instrument_codeflash_capture(
-                    self.function_to_optimize,
-                    file_path_to_helper_classes,
-                    self.test_cfg.tests_root,
-                )
-
-                total_looping_time = TOTAL_LOOPING_TIME_EFFECTIVE
-                candidate_behavior_results, _ = self.run_and_parse_tests(
-                    testing_type=TestingMode.BEHAVIOR,
-                    test_env=test_env,
-                    test_files=self.test_files,
-                    optimization_iteration=optimization_candidate_index,
-                    testing_time=total_looping_time,
-                    enable_coverage=False,
-                )
-            # Remove instrumentation
-            finally:
                 self.write_code_and_helpers(
                     candidate_fto_code,
                     candidate_helper_code,
                     self.function_to_optimize.file_path,
                 )
-            print(
-                TestResults.report_to_tree(
-                    candidate_behavior_results.get_test_pass_fail_report_by_type(),
-                    title=f"Behavioral Test Results for candidate {optimization_candidate_index}",
-                )
-            )
-            rule()
-            match, diffs = compare_test_results(
-                baseline_results.behavior_test_results, candidate_behavior_results
-            )
-            if match:
-                logger.info("h3|Test results matched ✅")
-                rule()
-            else:
-                self.repair_if_possible(
-                    candidate,
-                    diffs,
-                    eval_ctx,
-                    code_context,
-                    len(candidate_behavior_results),
-                    exp_type,
-                )
-                return self.get_results_not_matched_error()
-
-            logger.info(
-                f"loading|Running performance tests for candidate {optimization_candidate_index}..."
-            )
-            rule()
-
-            # For async functions, instrument at definition site for performance benchmarking
-            if self.function_to_optimize.is_async:
-                from codeflash.code_utils.instrument_existing_tests import (
-                    add_async_decorator_to_function,
-                )
-
-                add_async_decorator_to_function(
-                    self.function_to_optimize.file_path,
-                    self.function_to_optimize,
-                    TestingMode.PERFORMANCE,
-                )
-
-            try:
-                candidate_benchmarking_results, _ = self.run_and_parse_tests(
-                    testing_type=TestingMode.PERFORMANCE,
-                    test_env=test_env,
-                    test_files=self.test_files,
-                    optimization_iteration=optimization_candidate_index,
-                    testing_time=total_looping_time,
-                    enable_coverage=False,
-                )
-            finally:
-                # Restore original source if we instrumented it
-                if self.function_to_optimize.is_async:
-                    self.write_code_and_helpers(
-                        candidate_fto_code,
-                        candidate_helper_code,
-                        self.function_to_optimize.file_path,
-                    )
-            loop_count = (
-                max(all_loop_indices)
-                if (
-                    all_loop_indices := {
-                        result.loop_index
-                        for result in candidate_benchmarking_results.test_results
-                    }
-                )
-                else 0
-            )
-
+        loop_count = (
+            max(all_loop_indices)
             if (
-                total_candidate_timing
-                := candidate_benchmarking_results.total_passed_runtime()
-            ) == 0:
-                logger.warning(
-                    "The overall test runtime of the optimized function is 0, couldn't run tests."
-                )
-                rule()
+                all_loop_indices := {
+                    result.loop_index
+                    for result in candidate_benchmarking_results.test_results
+                }
+            )
+            else 0
+        )
 
+        if (
+            total_candidate_timing
+            := candidate_benchmarking_results.total_passed_runtime()
+        ) == 0:
+            logger.warning(
+                "The overall test runtime of the optimized function is 0, couldn't run tests."
+            )
+            rule()
+
+        logger.debug(
+            f"Total optimized code {optimization_candidate_index} runtime (ns): {total_candidate_timing}"
+        )
+
+        candidate_async_throughput = None
+        if self.function_to_optimize.is_async:
+            candidate_async_throughput = (
+                calculate_function_throughput_from_test_results(
+                    candidate_benchmarking_results,
+                    self.function_to_optimize.function_name,
+                )
+            )
             logger.debug(
-                f"Total optimized code {optimization_candidate_index} runtime (ns): {total_candidate_timing}"
+                f"Candidate async function throughput: {candidate_async_throughput} calls/second"
             )
 
-            candidate_async_throughput = None
-            if self.function_to_optimize.is_async:
-                candidate_async_throughput = (
-                    calculate_function_throughput_from_test_results(
-                        candidate_benchmarking_results,
-                        self.function_to_optimize.function_name,
-                    )
+        if self.config.benchmark:
+            candidate_replay_benchmarking_results = (
+                candidate_benchmarking_results.group_by_benchmarks(
+                    self.total_benchmark_timings.keys(),
+                    self.replay_tests_dir,
+                    self.project_root,
                 )
+            )
+            for (
+                benchmark_name,
+                benchmark_results,
+            ) in candidate_replay_benchmarking_results.items():
                 logger.debug(
-                    f"Candidate async function throughput: {candidate_async_throughput} calls/second"
+                    f"Benchmark {benchmark_name} runtime (ns): {humanize_runtime(benchmark_results.total_passed_runtime())}"
                 )
-
-            if self.config.benchmark:
-                candidate_replay_benchmarking_results = (
-                    candidate_benchmarking_results.group_by_benchmarks(
-                        self.total_benchmark_timings.keys(),
-                        self.replay_tests_dir,
-                        self.project_root,
-                    )
-                )
-                for (
-                    benchmark_name,
-                    benchmark_results,
-                ) in candidate_replay_benchmarking_results.items():
-                    logger.debug(
-                        f"Benchmark {benchmark_name} runtime (ns): {humanize_runtime(benchmark_results.total_passed_runtime())}"
-                    )
-            return Ok(
-                OptimizedCandidateResult(
-                    max_loop_count=loop_count,
-                    best_test_runtime=total_candidate_timing,
-                    behavior_test_results=candidate_behavior_results,
-                    benchmarking_test_results=candidate_benchmarking_results,
-                    replay_benchmarking_test_results=candidate_replay_benchmarking_results
-                    if self.config.benchmark
-                    else None,
-                    optimization_candidate_index=optimization_candidate_index,
-                    total_candidate_timing=total_candidate_timing,
-                    async_throughput=candidate_async_throughput,
-                )
+        return Ok(
+            OptimizedCandidateResult(
+                max_loop_count=loop_count,
+                best_test_runtime=total_candidate_timing,
+                behavior_test_results=candidate_behavior_results,
+                benchmarking_test_results=candidate_benchmarking_results,
+                replay_benchmarking_test_results=candidate_replay_benchmarking_results
+                if self.config.benchmark
+                else None,
+                optimization_candidate_index=optimization_candidate_index,
+                total_candidate_timing=total_candidate_timing,
+                async_throughput=candidate_async_throughput,
             )
+        )
 
     def run_and_parse_tests(
         self,

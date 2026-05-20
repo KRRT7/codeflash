@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 
 from codeflash.api.aiservice import AiServiceClient, LocalAiServiceClient
 from codeflash.api.cfapi import send_completion_email
-from codeflash.cli_cmds.logging_config import logger, progress_bar, rule
+from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils import env_utils
-from codeflash.code_utils.env_utils import get_pr_number, is_pr_draft
+from codeflash.code_utils.env_utils import is_pr_draft
 from codeflash.code_utils.git_utils import check_running_in_git_repo, git_root_dir
 from codeflash.code_utils.git_worktree_utils import (
     create_detached_worktree,
@@ -88,64 +88,58 @@ class Optimizer:
         )
 
         rule()
-        with progress_bar(
-            f"Running benchmarks in {self.config.benchmarks_root}",
-            transient=True,
-            revert_to_print=bool(get_pr_number()),
-        ):
-            # Insert decorator
-            file_path_to_source_code = defaultdict(str)
-            for file in file_to_funcs_to_optimize:
-                with file.open("r", encoding="utf8") as f:
-                    file_path_to_source_code[file] = f.read()
-            try:
-                instrument_codeflash_trace_decorator(file_to_funcs_to_optimize)
-                self.trace_file = Path(self.config.benchmarks_root) / "benchmarks.trace"
-                if self.trace_file.exists():
-                    self.trace_file.unlink()
+        logger.info(f"Running benchmarks in {self.config.benchmarks_root}")
+        # Insert decorator
+        file_path_to_source_code = defaultdict(str)
+        for file in file_to_funcs_to_optimize:
+            with file.open("r", encoding="utf8") as f:
+                file_path_to_source_code[file] = f.read()
+        try:
+            instrument_codeflash_trace_decorator(file_to_funcs_to_optimize)
+            self.trace_file = Path(self.config.benchmarks_root) / "benchmarks.trace"
+            if self.trace_file.exists():
+                self.trace_file.unlink()
 
-                self.replay_tests_dir = Path(
-                    tempfile.mkdtemp(
-                        prefix="codeflash_replay_tests_",
-                        dir=self.config.benchmarks_root,
-                    )
+            self.replay_tests_dir = Path(
+                tempfile.mkdtemp(
+                    prefix="codeflash_replay_tests_",
+                    dir=self.config.benchmarks_root,
                 )
-                trace_benchmarks_pytest(
-                    self.config.benchmarks_root,
-                    self.config.tests_root,
-                    self.config.project_root,
-                    self.trace_file,
-                )  # Run all tests that use pytest-benchmark
-                replay_count = generate_replay_test(
-                    self.trace_file, self.replay_tests_dir
-                )
-                if replay_count == 0:
-                    logger.info(
-                        f"No valid benchmarks found in {self.config.benchmarks_root} for functions to optimize, continuing optimization"
-                    )
-                else:
-                    function_benchmark_timings = (
-                        CodeFlashBenchmarkPlugin.get_function_benchmark_timings(
-                            self.trace_file
-                        )
-                    )
-                    total_benchmark_timings = (
-                        CodeFlashBenchmarkPlugin.get_benchmark_timings(self.trace_file)
-                    )
-                    function_to_results = validate_and_format_benchmark_table(
-                        function_benchmark_timings, total_benchmark_timings
-                    )
-                    print_benchmark_table(function_to_results)
-            except Exception as e:
-                logger.info(f"Error while tracing existing benchmarks: {e}")
+            )
+            trace_benchmarks_pytest(
+                self.config.benchmarks_root,
+                self.config.tests_root,
+                self.config.project_root,
+                self.trace_file,
+            )  # Run all tests that use pytest-benchmark
+            replay_count = generate_replay_test(self.trace_file, self.replay_tests_dir)
+            if replay_count == 0:
                 logger.info(
-                    "Information on existing benchmarks will not be available for this run."
+                    f"No valid benchmarks found in {self.config.benchmarks_root} for functions to optimize, continuing optimization"
                 )
-            finally:
-                # Restore original source code
-                for file in file_path_to_source_code:
-                    with file.open("w", encoding="utf8") as f:
-                        f.write(file_path_to_source_code[file])
+            else:
+                function_benchmark_timings = (
+                    CodeFlashBenchmarkPlugin.get_function_benchmark_timings(
+                        self.trace_file
+                    )
+                )
+                total_benchmark_timings = (
+                    CodeFlashBenchmarkPlugin.get_benchmark_timings(self.trace_file)
+                )
+                function_to_results = validate_and_format_benchmark_table(
+                    function_benchmark_timings, total_benchmark_timings
+                )
+                print_benchmark_table(function_to_results)
+        except Exception as e:
+            logger.info(f"Error while tracing existing benchmarks: {e}")
+            logger.info(
+                "Information on existing benchmarks will not be available for this run."
+            )
+        finally:
+            # Restore original source code
+            for file in file_path_to_source_code:
+                with file.open("w", encoding="utf8") as f:
+                    f.write(file_path_to_source_code[file])
         rule()
         return function_benchmark_timings, total_benchmark_timings
 
