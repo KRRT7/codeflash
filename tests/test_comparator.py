@@ -27,10 +27,12 @@ import pytest
 
 from codeflash.danom import Err, Ok
 from codeflash.models.domain import (
-    FunctionTestInvocation,
-    InvocationId,
     TestResults,
     TestType,
+)
+from codeflash.models.invocation_id import (
+    FunctionTestInvocation,
+    InvocationId,
 )
 from codeflash.verification.comparator import comparator
 from codeflash.verification.equivalence import compare_test_results

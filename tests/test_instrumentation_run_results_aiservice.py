@@ -16,8 +16,8 @@ from codeflash.models.domain import (
     TestFile,
     TestFiles,
     TestType,
-    VerificationType,
 )
+from codeflash._constants import VerificationType
 from codeflash.optimization.optimizer import Optimizer
 from codeflash.verification.equivalence import compare_test_results
 from codeflash.verification.instrument_codeflash_capture import (

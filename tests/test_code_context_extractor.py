@@ -14,10 +14,8 @@ from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.domain import FunctionParent
 from codeflash.optimization.optimizer import Optimizer
 from codeflash.code_utils.code_replacer import replace_functions_and_add_imports
-from codeflash.code_utils.code_extractor import (
-    add_global_assignments,
-    GlobalAssignmentCollector,
-)
+from codeflash.code_utils.import_merger import add_global_assignments
+from codeflash.code_utils.global_assignment_utils import GlobalAssignmentCollector
 
 
 class HelperClass:

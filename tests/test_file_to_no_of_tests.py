@@ -5,10 +5,12 @@ from pathlib import Path
 
 
 from codeflash.models.domain import (
-    FunctionTestInvocation,
-    InvocationId,
     TestResults,
     TestType,
+)
+from codeflash.models.invocation_id import (
+    FunctionTestInvocation,
+    InvocationId,
 )
 
 

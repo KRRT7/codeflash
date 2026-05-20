@@ -10,12 +10,14 @@ from codeflash.code_utils.edit_generated_tests import (
 from codeflash.models.domain import (
     GeneratedTests,
     GeneratedTestsList,
-    InvocationId,
-    FunctionTestInvocation,
-    TestType,
-    VerificationType,
     TestResults,
+    TestType,
 )
+from codeflash.models.invocation_id import (
+    FunctionTestInvocation,
+    InvocationId,
+)
+from codeflash._constants import VerificationType
 from codeflash.verification.verification_utils import TestConfig
 
 
