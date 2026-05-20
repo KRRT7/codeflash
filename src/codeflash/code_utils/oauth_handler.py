@@ -5,10 +5,8 @@ import contextlib
 import hashlib
 import http.server
 import json
-import os
 import secrets
 import socket
-import sys
 import threading
 import time
 import urllib.parse
@@ -17,6 +15,7 @@ import webbrowser
 import requests
 
 from codeflash.api.cfapi import get_cfapi_base_urls
+from codeflash.code_utils.browser_utils import should_attempt_browser_launch
 
 
 class OAuthHandler:
@@ -657,52 +656,6 @@ class OAuthHandler:
             return None
         else:
             return api_key
-
-
-def get_browser_name_fallback() -> str | None:
-    try:
-        controller = webbrowser.get()
-        # controller.name exists for most browser controllers
-        return getattr(controller, "name", None)
-    except Exception:
-        return None
-
-
-def should_attempt_browser_launch() -> bool:
-    # A list of browser names that indicate we should not attempt to open a
-    # web browser for the user.
-    browser_blocklist = ["www-browser", "lynx", "links", "w3m", "elinks", "links2"]
-    browser_env = os.environ.get("BROWSER") or get_browser_name_fallback()
-    if browser_env and browser_env in browser_blocklist:
-        return False
-
-    # Common environment variables used in CI/CD or other non-interactive shells.
-    if os.environ.get("CI") or os.environ.get("DEBIAN_FRONTEND") == "noninteractive":
-        return False
-
-    # The presence of SSH_CONNECTION indicates a remote session.
-    # We should not attempt to launch a browser unless a display is explicitly available
-    # (checked below for Linux).
-    is_ssh = bool(os.environ.get("SSH_CONNECTION"))
-
-    # On Linux, the presence of a display server is a strong indicator of a GUI.
-    if sys.platform == "linux":
-        # These are environment variables that can indicate a running compositor on
-        # Linux.
-        display_variables = ["DISPLAY", "WAYLAND_DISPLAY", "MIR_SOCKET"]
-        has_display = any(os.environ.get(v) for v in display_variables)
-        if not has_display:
-            return False
-
-    # If in an SSH session on a non-Linux OS (e.g., macOS), don't launch browser.
-    # The Linux case is handled above (it's allowed if DISPLAY is set).
-    if is_ssh and sys.platform != "linux":
-        return False
-
-    # For non-Linux OSes, we generally assume a GUI is available
-    # unless other signals (like SSH) suggest otherwise.
-    # The `open` command's error handling will catch final edge cases.
-    return True
 
 
 def _wait_for_manual_code_input(oauth: OAuthHandler) -> None:

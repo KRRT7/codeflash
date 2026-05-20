@@ -3,10 +3,10 @@
 from unittest.mock import patch
 
 
-from codeflash.code_utils.call_finder import is_numerical_code
+from codeflash.code_utils.numerical_code_utils import is_numerical_code
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestBasicNumpyUsage:
     """Test basic numpy library detection (with numba available)."""
 
@@ -51,7 +51,7 @@ def func(x):
         assert is_numerical_code(code, "func") is True
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestNumpySubmodules:
     """Test numpy submodule imports (with numba available)."""
 
@@ -266,7 +266,7 @@ def func(x):
         assert is_numerical_code(code, "func") is True
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestScipyUsage:
     """Test SciPy library detection (with numba available)."""
 
@@ -303,7 +303,7 @@ def func(f, x0):
         assert is_numerical_code(code, "func") is True
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestMathUsage:
     """Test math standard library detection (with numba available)."""
 
@@ -332,7 +332,7 @@ def calculate(x):
         assert is_numerical_code(code, "calculate") is True
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestClassMethods:
     """Test detection in class methods, staticmethods, and classmethods (with numba available)."""
 
@@ -473,7 +473,7 @@ def func():
         assert is_numerical_code(code, "func") is False
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestEdgeCases:
     """Test edge cases and special scenarios (with numba available)."""
 
@@ -536,7 +536,7 @@ async def async_process(x):
         assert is_numerical_code(code, "async_process") is False
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestStarImports:
     """Test handling of star imports (with numba available).
 
@@ -576,7 +576,7 @@ def func(x):
         assert is_numerical_code(code, "func") is False
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestNestedUsage:
     """Test nested numerical library usage patterns (with numba available)."""
 
@@ -619,7 +619,7 @@ def func(x):
         assert is_numerical_code(code, "func") is True
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestMultipleLibraries:
     """Test code using multiple numerical libraries (with numba available)."""
 
@@ -644,7 +644,7 @@ def analyze(data):
         assert is_numerical_code(code, "analyze") is True
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", True)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", True)
 class TestQualifiedNames:
     """Test various qualified name patterns (with numba available)."""
 
@@ -690,7 +690,7 @@ class ClassB:
         assert is_numerical_code(code, "ClassB.method") is False
 
 
-@patch("codeflash.code_utils.code_extractor.has_numba", False)
+@patch("codeflash.code_utils.numerical_code_utils.has_numba", False)
 class TestNumbaNotAvailable:
     """Test behavior when numba is NOT available in the environment.
 

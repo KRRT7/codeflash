@@ -3,9 +3,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 
+from codeflash.code_utils.jit_detector import contains_jit_decorator
 from codeflash.code_utils.line_profile_utils import (
     add_decorator_imports,
-    contains_jit_decorator,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.domain import CodeOptimizationContext
