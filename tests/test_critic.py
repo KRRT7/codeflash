@@ -3,17 +3,15 @@ from pathlib import Path
 from unittest.mock import Mock
 
 from codeflash.code_utils.env_utils import get_pr_number
+from codeflash.models.coverage import CoverageData, CoverageStatus, FunctionCoverage
 from codeflash.models.domain import (
     CodeOptimizationContext,
-    CoverageData,
-    CoverageStatus,
-    FunctionCoverage,
     FunctionTestInvocation,
     InvocationId,
     OptimizedCandidateResult,
     TestResults,
-    TestType,
 )
+from codeflash.models.test_type import TestType
 from codeflash.result.critic import (
     coverage_critic,
     performance_gain,

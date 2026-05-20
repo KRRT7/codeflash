@@ -95,28 +95,35 @@ from codeflash.context.unused_definition_remover import (
 )
 from codeflash.discovery.functions_to_optimize import was_function_previously_optimized
 from codeflash.danom import Err, Ok
+from codeflash.models.api import OptimizationReviewResult
 from codeflash.models.domain import ExperimentMetadata
-from codeflash.models.domain import (
+from codeflash.models.api import (
     AdaptiveOptimizedCandidate,
     AIServiceAdaptiveOptimizeRequest,
     AIServiceCodeRepairRequest,
+    OptimizedCandidateSource,
+)
+from codeflash.models.coverage import (
+    BenchmarkKey,
+    CoverageData,
+    TestingMode,
+)
+from codeflash.models.coverage import TestingMode
+from codeflash.models.domain import (
     BestOptimization,
     CandidateEvaluationContext,
     CodeOptimizationContext,
     GeneratedTests,
     GeneratedTestsList,
-    OptimizationReviewResult,
     OptimizationSet,
     OptimizedCandidate,
     OptimizedCandidateResult,
-    OptimizedCandidateSource,
     OriginalCodeBaseline,
     TestFile,
     TestFiles,
-    TestingMode,
     TestResults,
-    TestType,
 )
+from codeflash.models.test_type import TestType
 from codeflash.result.create_pr import check_create_pr, existing_tests_source_for
 from codeflash.result.critic import (
     coverage_critic,
@@ -146,13 +153,12 @@ if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
     from codeflash.danom import Result
     from codeflash.models.config import AppConfig
+    from codeflash.models.api import TestDiff
+    from codeflash.models.coverage import BenchmarkKey, CoverageData
     from codeflash.models.domain import (
-        BenchmarkKey,
         CodeStringsMarkdown,
-        CoverageData,
         FunctionCalledInTest,
         FunctionSource,
-        TestDiff,
     )
     from codeflash.verification.verification_utils import TestConfig
 

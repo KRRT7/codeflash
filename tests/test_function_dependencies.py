@@ -3,7 +3,7 @@ import pathlib
 import pytest
 
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.either import is_successful
+
 from codeflash.models.domain import FunctionParent
 from codeflash.optimization.function_optimizer import FunctionOptimizer
 from codeflash.verification.verification_utils import TestConfig
@@ -145,7 +145,7 @@ def test_class_method_dependencies() -> None:
     with open(file_path) as f:
         f.read()
     ctx_result = func_optimizer.get_code_optimization_context()
-    if not is_successful(ctx_result):
+    if not ctx_result.is_ok():
         pytest.fail()
     code_context = ctx_result.unwrap()
     # The code_context above should have the topologicalSortUtil function in it
@@ -220,7 +220,7 @@ def test_recursive_function_context() -> None:
         f.read()
 
     ctx_result = func_optimizer.get_code_optimization_context()
-    if not is_successful(ctx_result):
+    if not ctx_result.is_ok():
         pytest.fail()
     code_context = ctx_result.unwrap()
     assert len(code_context.helper_functions) == 2

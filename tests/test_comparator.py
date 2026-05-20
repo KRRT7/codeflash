@@ -25,7 +25,7 @@ import array  # Add import for array
 import pydantic
 import pytest
 
-from codeflash.either import Failure, Success
+from codeflash.danom import Err, Ok
 from codeflash.models.domain import (
     FunctionTestInvocation,
     InvocationId,
@@ -1105,21 +1105,21 @@ def test_xarray():
 
 
 def test_returns():
-    a = Success(5)
-    b = Success(5)
-    c = Success(6)
-    d = Failure(5)
-    e = Success((5, 5))
-    f = Success((5, 6))
+    a = Ok(5)
+    b = Ok(5)
+    c = Ok(6)
+    d = Err(5)
+    e = Ok((5, 5))
+    f = Ok((5, 6))
     assert comparator(a, b)
     assert not comparator(a, c)
     assert not comparator(a, d)
     assert not comparator(a, e)
     assert not comparator(e, f)
 
-    g = Success((5, 5))
-    h = Success((5, 5))
-    i = Success((5, 6))
+    g = Ok((5, 5))
+    h = Ok((5, 5))
+    i = Ok((5, 6))
     assert comparator(g, h)
     assert not comparator(g, i)
 

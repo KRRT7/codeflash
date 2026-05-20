@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.either import is_successful
+
 from codeflash.models.domain import FunctionParent, get_code_block_splitter
 from codeflash.optimization.function_optimizer import FunctionOptimizer
 from codeflash.optimization.optimizer import Optimizer
@@ -46,7 +46,7 @@ def test_get_outside_method_helper() -> None:
     ctx_result = opt.get_code_optimization_context(
         function_to_optimize, opt.args.project_root, original_code
     )
-    if not is_successful(ctx_result):
+    if not ctx_result.is_ok():
         pytest.fail()
     ctx_result.unwrap()
     print("hi")
@@ -244,7 +244,7 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
         with open(file_path) as f:
             f.read()
         ctx_result = func_optimizer.get_code_optimization_context()
-        if not is_successful(ctx_result):
+        if not ctx_result.is_ok():
             pytest.fail()
         code_context = ctx_result.unwrap()
         assert (
@@ -428,7 +428,7 @@ def test_bubble_sort_deps() -> None:
     with open(file_path) as f:
         f.read()
     ctx_result = func_optimizer.get_code_optimization_context()
-    if not is_successful(ctx_result):
+    if not ctx_result.is_ok():
         pytest.fail()
     code_context = ctx_result.unwrap()
     assert (

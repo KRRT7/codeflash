@@ -17,13 +17,17 @@ from codeflash.code_utils.git_utils import (
     get_repo_owner_and_name,
 )
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.models.domain import ExperimentMetadata
-from codeflash.models.domain import (
+from codeflash.models.api import (
+    AIServiceAdaptiveOptimizeRequest,
+    AIServiceCodeRepairRequest,
     AIServiceRefinerRequest,
-    CodeStringsMarkdown,
     OptimizationReviewResult,
-    OptimizedCandidate,
     OptimizedCandidateSource,
+)
+from codeflash.models.domain import (
+    CodeStringsMarkdown,
+    ExperimentMetadata,
+    OptimizedCandidate,
 )
 from codeflash.version import __version__ as codeflash_version
 
@@ -31,10 +35,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.domain import (
-    AIServiceAdaptiveOptimizeRequest,
-    AIServiceCodeRepairRequest,
-)
 from codeflash.result.explanation import Explanation
 
 

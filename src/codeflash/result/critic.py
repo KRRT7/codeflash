@@ -9,11 +9,11 @@ from codeflash.code_utils.config_consts import (
     MIN_TESTCASE_PASSED_THRESHOLD,
     MIN_THROUGHPUT_IMPROVEMENT_THRESHOLD,
 )
-from codeflash.models import models
+from codeflash.models.test_type import TestType
 
 if TYPE_CHECKING:
+    from codeflash.models.coverage import CoverageData
     from codeflash.models.domain import (
-        CoverageData,
         OptimizedCandidateResult,
         OriginalCodeBaseline,
     )
@@ -129,7 +129,7 @@ def quantity_of_tests_critic(
     if pass_count >= MIN_TESTCASE_PASSED_THRESHOLD:
         return True
     # If one or more tests passed, check if least one of them was a successful REPLAY_TEST
-    return bool(pass_count >= 1 and report[models.TestType.REPLAY_TEST]["passed"] >= 1)  # type: ignore  # noqa: PGH003
+    return bool(pass_count >= 1 and report[TestType.REPLAY_TEST]["passed"] >= 1)  # type: ignore  # noqa: PGH003
 
 
 def coverage_critic(original_code_coverage: CoverageData | None) -> bool:

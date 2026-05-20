@@ -41,7 +41,7 @@ def multiple_existing_and_non_existing_files(tmp_path: Path) -> list[Path]:
 
 @pytest.fixture
 def mock_get_run_tmp_file() -> Generator[MagicMock, None, None]:
-    with patch("codeflash.code_utils.coverage_utils.get_run_tmp_file") as mock:
+    with patch("codeflash.verification.coverage_utils.get_run_tmp_file") as mock:
         yield mock
 
 

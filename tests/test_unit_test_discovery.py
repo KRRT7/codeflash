@@ -9,10 +9,10 @@ from codeflash.discovery.discover_unit_tests import (
     filter_test_files_by_imports,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.domain import TestsInFile, TestType, FunctionParent
+from codeflash.models.domain import TestsInFile
+from codeflash.models.domain import FunctionParent
+from codeflash.models.test_type import TestType
 from codeflash.verification.verification_utils import TestConfig
-
-
 
 
 def test_unit_test_discovery_pytest():

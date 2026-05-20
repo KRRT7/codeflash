@@ -14,16 +14,16 @@ from codeflash.code_utils.instrument_existing_tests import (
 )
 from codeflash.code_utils.line_profile_utils import add_decorator_imports
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
+from codeflash.models.coverage import TestingMode
 from codeflash.models.domain import (
     CodeOptimizationContext,
     CodePosition,
     FunctionParent,
     TestFile,
     TestFiles,
-    TestingMode,
     TestsInFile,
-    TestType,
 )
+from codeflash.models.test_type import TestType
 import platform
 
 from codeflash.optimization.function_optimizer import FunctionOptimizer

@@ -17,14 +17,14 @@ from codeflash.code_utils.instrument_existing_tests import (
     inject_profiling_into_existing_test,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
+from codeflash.models.coverage import TestingMode
 from codeflash.models.domain import (
     CodePosition,
     TestFile,
     TestFiles,
-    TestingMode,
     TestsInFile,
-    TestType,
 )
+from codeflash.models.test_type import TestType
 from codeflash.optimization.optimizer import Optimizer
 from codeflash.verification.equivalence import compare_test_results
 import time

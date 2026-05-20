@@ -6,13 +6,10 @@ import sys
 from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.models.domain import (
-    TestDiff,
-    TestDiffScope,
-    TestResults,
-    TestType,
-    VerificationType,
-)
+from codeflash._constants import VerificationType
+from codeflash.models.api import TestDiff, TestDiffScope
+from codeflash.models.domain import TestResults
+from codeflash.models.test_type import TestType
 from codeflash.verification.comparator import comparator
 
 if TYPE_CHECKING:

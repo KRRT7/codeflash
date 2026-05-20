@@ -7,7 +7,7 @@ from codeflash.code_utils.shell_utils import (
     read_api_key_from_shell_config,
     save_api_key_to_rc,
 )
-from codeflash.either import Failure, Success
+from codeflash.danom import Err, Ok
 
 
 class TestShellUtils(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestShellUtils(unittest.TestCase):
         mock_get_shell_rc_path.return_value = "/fake/path/.bashrc"
         api_key = "cf-12345"
         result = save_api_key_to_rc(api_key)
-        self.assertTrue(isinstance(result, Success))
+        self.assertTrue(isinstance(result, Ok))
         mock_file.assert_called_with("/fake/path/.bashrc", "r+", encoding="utf8")
         handle = mock_file()
         handle.write.assert_called_once()
@@ -38,7 +38,7 @@ class TestShellUtils(unittest.TestCase):
         mock_file.side_effect = PermissionError
         api_key = "cf-12345"
         result = save_api_key_to_rc(api_key)
-        self.assertTrue(isinstance(result, Failure))
+        self.assertTrue(isinstance(result, Err))
         mock_file.assert_called_with("/fake/path/.bashrc", "r+", encoding="utf8")
 
 

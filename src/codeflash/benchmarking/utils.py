@@ -8,7 +8,7 @@ from codeflash.models.coverage import BenchmarkDetail, ProcessedBenchmarkInfo
 from codeflash.result.critic import performance_gain
 
 if TYPE_CHECKING:
-    from codeflash.models.domain import BenchmarkKey
+    from codeflash.models.coverage import BenchmarkKey
 
 
 def validate_and_format_benchmark_table(
