@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from pydantic.dataclasses import dataclass
 
-from codeflash.cli_cmds.logging_config import logger, test_files_progress_bar, rule
+from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE, codeflash_cache_db
 from codeflash.code_utils.shell_utils import get_cross_platform_subprocess_run_args
 from codeflash.models.domain import (
@@ -790,13 +790,7 @@ def process_test_files(
     tests_cache = TestsCache(project_root_path)
     logger.info("Discovering tests and processing unit tests")
     rule()
-    with test_files_progress_bar(
-        total=len(file_to_test_map), description="Processing test files"
-    ) as (
-        progress,
-        task_id,
-    ):
-        for test_file, functions in file_to_test_map.items():
+    for test_file, functions in file_to_test_map.items():
             file_hash = TestsCache.compute_file_hash(test_file)
 
             cached_function_to_test_map = tests_cache.get_function_to_test_map_for_file(
@@ -815,7 +809,6 @@ def process_test_files(
                             num_discovered_replay_tests += 1
                         num_discovered_tests += 1
 
-                progress.advance(task_id)
                 continue
             try:
                 script = jedi.Script(path=test_file, project=jedi_project)
@@ -834,7 +827,6 @@ def process_test_files(
 
             except Exception as e:
                 logger.debug(f"Failed to get jedi script for {test_file}: {e}")
-                progress.advance(task_id)
                 continue
 
             if test_framework == "pytest":
@@ -1058,7 +1050,6 @@ def process_test_files(
                     logger.debug(str(e))
                     continue
 
-            progress.advance(task_id)
 
     tests_cache.close()
 
