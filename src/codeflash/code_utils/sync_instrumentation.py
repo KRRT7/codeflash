@@ -5,6 +5,9 @@ from pathlib import Path
 
 from codeflash.models.domain import CodePosition, FunctionToOptimize
 from codeflash.models.coverage import TestingMode
+from collections.abc import Iterable
+from codeflash.code_utils.cleanup import get_run_tmp_file
+from codeflash._constants import TEST_RESULTS_TABLE_SCHEMA
 
 class FunctionCallNodeArguments:
     args: list[ast.expr]

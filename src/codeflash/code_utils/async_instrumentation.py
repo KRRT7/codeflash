@@ -10,6 +10,9 @@ from codeflash.code_utils.formatter import sort_imports
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.domain import CodePosition
 from codeflash.models.coverage import TestingMode
+from codeflash.code_utils.sync_instrumentation import node_in_call_position
+from codeflash.models.domain import FunctionParent
+from codeflash.code_utils.path_utils import module_name_from_file_path
 
 class AsyncCallInstrumenter(ast.NodeTransformer):
     def __init__(

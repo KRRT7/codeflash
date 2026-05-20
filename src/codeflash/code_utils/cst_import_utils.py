@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import libcst as cst
 from typing import TYPE_CHECKING
+from itertools import chain
 
 if TYPE_CHECKING:
     pass

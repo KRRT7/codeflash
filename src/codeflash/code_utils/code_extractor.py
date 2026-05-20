@@ -29,6 +29,7 @@ from codeflash.code_utils.call_finder import (
     find_occurances,
     get_fn_references_jedi,
 )
+from codeflash.code_utils.cst_import_utils import extract_global_statements, find_last_import_line
 
 if TYPE_CHECKING:
     from libcst.helpers import ModuleNameAndPackage
