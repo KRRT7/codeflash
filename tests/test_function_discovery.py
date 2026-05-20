@@ -2,12 +2,14 @@ import tempfile
 from pathlib import Path
 import unittest.mock
 
-from codeflash.discovery.functions_to_optimize import (
+from codeflash.discovery.function_filter import (
     filter_files_optimized,
+    filter_functions,
+)
+from codeflash.discovery.functions_to_optimize import (
     find_all_functions_in_file,
     get_functions_to_optimize,
     inspect_top_level_functions_or_methods,
-    filter_functions,
     get_all_files_and_functions,
 )
 from codeflash.verification.verification_utils import TestConfig
@@ -446,7 +448,7 @@ def not_in_checkpoint_function():
         # This avoids path resolution issues in CI where the working directory might differ
         tests_root_absolute = (temp_dir.parent / "nonexistent_tests_dir").resolve()
         with unittest.mock.patch(
-            "codeflash.discovery.functions_to_optimize.get_blocklisted_functions",
+            "codeflash.discovery.function_filter.get_blocklisted_functions",
             return_value={},
         ):
             filtered, count = filter_functions(
@@ -513,7 +515,7 @@ def test_function_in_tests_dir():
 
         # Test submodule paths
         with unittest.mock.patch(
-            "codeflash.discovery.functions_to_optimize.ignored_submodule_paths",
+            "codeflash.discovery.function_filter.ignored_submodule_paths",
             return_value=[str(temp_dir.joinpath("submodule_dir"))],
         ):
             submodule_dir = temp_dir.joinpath("submodule_dir")
@@ -539,7 +541,7 @@ def test_function_in_tests_dir():
 
         # Test site packages
         with unittest.mock.patch(
-            "codeflash.discovery.functions_to_optimize.path_belongs_to_site_packages",
+            "codeflash.discovery.function_filter.path_belongs_to_site_packages",
             return_value=True,
         ):
             site_package_file_path = temp_dir.joinpath("site_package_file.py")
@@ -615,7 +617,7 @@ def test_function_in_tests_dir():
 
         original_file_path = temp_dir.joinpath("test_get_functions_to_optimize.py")
         with unittest.mock.patch(
-            "codeflash.discovery.functions_to_optimize.get_blocklisted_functions",
+            "codeflash.discovery.function_filter.get_blocklisted_functions",
             return_value={
                 original_file_path.name: {
                     "propagate_attributes",

@@ -2,40 +2,30 @@ from __future__ import annotations
 from codeflash.code_utils.validation import is_class_defined_in_file
 from codeflash.code_utils.path_utils import (
     module_name_from_file_path,
-    path_belongs_to_site_packages,
 )
 
 import ast
-import os
 import random
 import warnings
 from _ast import AsyncFunctionDef, ClassDef, FunctionDef
 from collections import defaultdict
-from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import git
 import libcst as cst
 from pydantic.dataclasses import dataclass
 
-from codeflash.api.cfapi import (
-    get_blocklisted_functions,
-    is_function_being_optimized_again,
-)
 from codeflash.cli_cmds.logging_config import DEBUG_MODE, logger, rule
 from codeflash.code_utils.code_utils import exit_with_message
-from codeflash.code_utils.env_utils import get_pr_number
-from codeflash.models.config import AppConfig
-from codeflash.code_utils.git_utils import get_git_diff, get_repo_owner_and_name
+from codeflash.code_utils.git_utils import get_git_diff
 from codeflash.discovery.discover_unit_tests import discover_unit_tests
+from codeflash.discovery.function_filter import filter_functions
 from codeflash.models.domain import FunctionParent
 
 if TYPE_CHECKING:
     from libcst import CSTNode
     from libcst.metadata import CodeRange
 
-    from codeflash.models.domain import CodeOptimizationContext
     from codeflash.verification.verification_utils import TestConfig
 
 _property_id = "property"
@@ -503,28 +493,6 @@ def get_all_replay_test_functions(
     return filtered_valid_functions, trace_file_path
 
 
-def is_git_repo(file_path: str) -> bool:
-    try:
-        git.Repo(file_path, search_parent_directories=True)
-        return True  # noqa: TRY300
-    except git.InvalidGitRepositoryError:
-        return False
-
-
-@cache
-def ignored_submodule_paths(module_root: str) -> list[str]:
-    if is_git_repo(module_root):
-        git_repo = git.Repo(module_root, search_parent_directories=True)
-        try:
-            return [
-                Path(git_repo.working_tree_dir, submodule.path).resolve()
-                for submodule in git_repo.submodules
-            ]
-        except Exception as e:
-            logger.warning(f"Error getting submodule paths: {e}")
-    return []
-
-
 class TopLevelFunctionOrMethodVisitor(ast.NodeVisitor):
     def __init__(
         self,
@@ -637,207 +605,6 @@ def inspect_top_level_functions_or_methods(
         is_staticmethod=visitor.is_staticmethod,
         is_classmethod=visitor.is_classmethod,
         staticmethod_class_name=staticmethod_class_name,
-    )
-
-
-def was_function_previously_optimized(
-    function_to_optimize: FunctionToOptimize,
-    code_context: CodeOptimizationContext,
-    config: AppConfig,
-) -> bool:
-    """Check which functions have already been optimized and filter them out.
-
-    This function calls the optimization API to:
-    1. Check which functions are already optimized
-    2. Log new function hashes to the database
-    3. Return only functions that need optimization
-
-    Returns:
-        Tuple of (filtered_functions_dict, remaining_count)
-
-    """
-    # Check optimization status if repository info is provided
-    # already_optimized_count = 0
-    try:
-        owner, repo = get_repo_owner_and_name()
-    except git.exc.InvalidGitRepositoryError:
-        logger.warning("No git repository found")
-        owner, repo = None, None
-    pr_number = get_pr_number()
-
-    if not owner or not repo or pr_number is None or config.no_pr:
-        return False
-
-    code_contexts = []
-
-    func_hash = code_context.hashing_code_context_hash
-    # Use a unique path identifier that includes function info
-
-    code_contexts.append(
-        {
-            "file_path": function_to_optimize.file_path,
-            "function_name": function_to_optimize.qualified_name,
-            "code_hash": func_hash,
-        }
-    )
-
-    if not code_contexts:
-        return False
-
-    try:
-        result = is_function_being_optimized_again(
-            owner, repo, pr_number, code_contexts
-        )
-        already_optimized_paths: list[tuple[str, str]] = result.get(
-            "already_optimized_tuples", []
-        )
-        return len(already_optimized_paths) > 0
-
-    except Exception as e:
-        logger.warning(f"Failed to check optimization status: {e}")
-        # Return all functions if API call fails
-        return False
-
-
-def filter_functions(
-    modified_functions: dict[Path, list[FunctionToOptimize]],
-    tests_root: Path,
-    ignore_paths: list[Path],
-    project_root: Path,
-    module_root: Path,
-    *,
-    disable_logs: bool = False,
-) -> tuple[dict[Path, list[FunctionToOptimize]], int]:
-    filtered_modified_functions: dict[str, list[FunctionToOptimize]] = {}
-    blocklist_funcs = get_blocklisted_functions()
-    logger.debug(f"Blocklisted functions: {blocklist_funcs}")
-    # Remove any function that we don't want to optimize
-    # already_optimized_paths = check_optimization_status(modified_functions, project_root)
-
-    # Ignore files with submodule path, cache the submodule paths
-    submodule_paths = ignored_submodule_paths(module_root)
-
-    functions_count: int = 0
-    test_functions_removed_count: int = 0
-    non_modules_removed_count: int = 0
-    site_packages_removed_count: int = 0
-    ignore_paths_removed_count: int = 0
-    malformed_paths_count: int = 0
-    submodule_ignored_paths_count: int = 0
-    blocklist_funcs_removed_count: int = 0
-    # Normalize paths for case-insensitive comparison on Windows
-    tests_root_str = os.path.normcase(str(tests_root))
-    module_root_str = os.path.normcase(str(module_root))
-
-    # We desperately need Python 3.10+ only support to make this code readable with structural pattern matching
-    for file_path_path, functions in modified_functions.items():
-        _functions = functions
-        file_path = str(file_path_path)
-        file_path_normalized = os.path.normcase(file_path)
-        if file_path_normalized.startswith(tests_root_str + os.sep):
-            test_functions_removed_count += len(_functions)
-            continue
-        if file_path in ignore_paths or any(
-            file_path_normalized.startswith(os.path.normcase(str(ignore_path)) + os.sep)
-            for ignore_path in ignore_paths
-        ):
-            ignore_paths_removed_count += 1
-            continue
-        if file_path in submodule_paths or any(
-            file_path_normalized.startswith(
-                os.path.normcase(str(submodule_path)) + os.sep
-            )
-            for submodule_path in submodule_paths
-        ):
-            submodule_ignored_paths_count += 1
-            continue
-        if path_belongs_to_site_packages(Path(file_path)):
-            site_packages_removed_count += len(_functions)
-            continue
-        if not file_path_normalized.startswith(module_root_str + os.sep):
-            non_modules_removed_count += len(_functions)
-            continue
-        try:
-            ast.parse(
-                f"import {module_name_from_file_path(Path(file_path), project_root)}"
-            )
-        except SyntaxError:
-            malformed_paths_count += 1
-            continue
-
-        if blocklist_funcs:
-            functions_tmp = []
-            for function in _functions:
-                if (
-                    function.file_path.name in blocklist_funcs
-                    and function.qualified_name
-                    in blocklist_funcs[function.file_path.name]
-                ):
-                    # This function is in blocklist, we can skip it
-                    blocklist_funcs_removed_count += 1
-                    continue
-                # This function is NOT in blocklist. we can keep it
-                functions_tmp.append(function)
-            _functions = functions_tmp
-
-        filtered_modified_functions[file_path] = _functions
-        functions_count += len(_functions)
-
-    if not disable_logs:
-        log_info = {
-            "Test functions removed": (test_functions_removed_count, "yellow"),
-            "Site-package functions removed": (site_packages_removed_count, "magenta"),
-            "Non-importable file paths": (malformed_paths_count, "red"),
-            "Functions outside module-root": (non_modules_removed_count, "cyan"),
-            "Files from ignored paths": (ignore_paths_removed_count, "blue"),
-            "Files from ignored submodules": (
-                submodule_ignored_paths_count,
-                "bright_black",
-            ),
-            "Blocklisted functions removed": (
-                blocklist_funcs_removed_count,
-                "bright_red",
-            ),
-        }
-        ignored_items = [
-            (label, count) for label, (count, _) in log_info.items() if count > 0
-        ]
-        if ignored_items:
-            print("Ignored functions and files:")
-            for label, count in ignored_items:
-                print(f"  {label}: {count}")
-            rule()
-    return {
-        Path(k): v for k, v in filtered_modified_functions.items() if v
-    }, functions_count
-
-
-def filter_files_optimized(
-    file_path: Path, tests_root: Path, ignore_paths: list[Path], module_root: Path
-) -> bool:
-    """Optimized version of the filter_functions function above.
-
-    Takes in file paths and returns the count of files that are to be optimized.
-    """
-    submodule_paths = None
-    if file_path.is_relative_to(tests_root):
-        return False
-    if file_path in ignore_paths or any(
-        file_path.is_relative_to(ignore_path) for ignore_path in ignore_paths
-    ):
-        return False
-    if path_belongs_to_site_packages(file_path):
-        return False
-    if not file_path.is_relative_to(module_root):
-        return False
-    if submodule_paths is None:
-        submodule_paths = ignored_submodule_paths(module_root)
-    return not (
-        file_path in submodule_paths
-        or any(
-            file_path.is_relative_to(submodule_path)
-            for submodule_path in submodule_paths
-        )
     )
 
 

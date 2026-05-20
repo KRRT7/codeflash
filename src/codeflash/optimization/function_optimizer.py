@@ -92,7 +92,7 @@ from codeflash.context.unused_definition_remover import (
     detect_unused_helper_functions,
     revert_unused_helper_functions,
 )
-from codeflash.discovery.functions_to_optimize import was_function_previously_optimized
+from codeflash.discovery.function_filter import was_function_previously_optimized
 from codeflash.danom import Err, Ok
 from codeflash.optimization.baseline_manager import setup_and_establish_baseline
 from codeflash.optimization.candidate_evaluator import determine_best_candidate
