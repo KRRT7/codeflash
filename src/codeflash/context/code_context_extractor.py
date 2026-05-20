@@ -11,7 +11,7 @@ import libcst as cst
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_extractor import add_needed_imports_from_module
-from codeflash.context.unused_definition_remover import (
+from codeflash.context.libcst_definition_remover import (
     collect_top_level_defs_with_usages,
     extract_names_from_targets,
     remove_unused_definitions_by_function_names,
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from jedi.api.classes import Name
     from libcst import CSTNode
 
-    from codeflash.context.unused_definition_remover import UsageInfo
+    from codeflash.context.libcst_definition_remover import UsageInfo
 
 
 def extract_code_string_context_from_files(

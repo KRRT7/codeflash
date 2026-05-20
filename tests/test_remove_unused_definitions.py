@@ -1,4 +1,4 @@
-from codeflash.context.unused_definition_remover import (
+from codeflash.context.libcst_definition_remover import (
     remove_unused_definitions_by_function_names,
 )
 
