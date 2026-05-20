@@ -113,7 +113,6 @@ from codeflash.models.coverage import (
     CoverageData,
     TestingMode,
 )
-from codeflash.models.coverage import TestingMode
 from codeflash.models.domain import (
     BestOptimization,
     CandidateEvaluationContext,

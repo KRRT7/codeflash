@@ -3,22 +3,15 @@ from __future__ import annotations
 import concurrent.futures
 import queue
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.logging_config import logger, progress_bar
 from codeflash.code_utils.config_consts import EffortKeys, get_effort_value
 from codeflash.code_utils.env_utils import get_pr_number
-from codeflash.danom import Ok, Result
-from codeflash.models.api import OptimizedCandidateSource
 from codeflash.models.domain import (
     CandidateEvaluationContext,
-    CodeOptimizationContext,
     OptimizedCandidate,
-    TestResults,
 )
 
-if TYPE_CHECKING:
-    from codeflash.models.domain import FunctionTestInvocation
 
 MIN_CORRECT_CANDIDATES = 1
 
