@@ -153,7 +153,7 @@ def git_root_dir(repo: Repo | None = None) -> Path:
     return Path(repository.working_dir)
 
 
-def check_running_in_git_repo(module_root: str) -> bool:
+def check_running_in_git_repo(module_root: str | Path) -> bool:
     try:
         _ = git.Repo(module_root, search_parent_directories=True).git_dir
     except git.InvalidGitRepositoryError:
