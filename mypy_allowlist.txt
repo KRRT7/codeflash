@@ -52,3 +52,9 @@ src/codeflash/code_utils/global_assignment_utils.py
 src/codeflash/code_utils/autouse_fixture_utils.py
 src/codeflash/code_utils/oauth_handler.py
 src/codeflash/code_utils/import_merger.py
+src/codeflash/api/pr_api.py
+src/codeflash/benchmarking/function_ranker.py
+src/codeflash/benchmarking/instrument_codeflash_trace.py
+src/codeflash/benchmarking/replay_test.py
+src/codeflash/benchmarking/utils.py
+src/codeflash/cli_cmds/install_github_actions.py

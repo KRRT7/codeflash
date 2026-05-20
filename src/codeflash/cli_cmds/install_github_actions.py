@@ -84,7 +84,10 @@ def install_github_actions(override_formatter_check: bool = False) -> None:
             .read_text(encoding="utf-8")
         )
         materialized_optimize_yml_content = generate_dynamic_workflow_content(
-            optimize_yml_content, config, git_root, benchmark_mode
+            optimize_yml_content,
+            config,  # type: ignore[arg-type]
+            git_root,
+            benchmark_mode,  # type: ignore[arg-type]
         )
 
         workflows_path.mkdir(parents=True, exist_ok=True)
