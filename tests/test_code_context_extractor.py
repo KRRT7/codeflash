@@ -1049,9 +1049,7 @@ class HelperClass:
     with pytest.raises(
         ValueError, match="Read-writable code has exceeded token limit, cannot proceed"
     ):
-        get_code_optimization_context(
-            function_to_optimize, opt.args.project_root
-        )
+        get_code_optimization_context(function_to_optimize, opt.args.project_root)
 
 
 def test_example_class_token_limit_4(tmp_path: Path) -> None:
@@ -1108,9 +1106,7 @@ class HelperClass:
     with pytest.raises(
         ValueError, match="Read-writable code has exceeded token limit, cannot proceed"
     ):
-        get_code_optimization_context(
-            function_to_optimize, opt.args.project_root
-        )
+        get_code_optimization_context(function_to_optimize, opt.args.project_root)
 
 
 def test_example_class_token_limit_5(tmp_path: Path) -> None:

@@ -422,6 +422,7 @@ ignore-paths = []
 
         expected_dict = {"key": "value", "nested": {"inner": "data"}}
         expected_list = [[1, 2], [3, 4], [5, 6]]
+
         def expected_func(x):
             return x * 2
 

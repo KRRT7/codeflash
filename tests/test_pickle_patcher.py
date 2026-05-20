@@ -29,13 +29,13 @@ from codeflash.optimization.optimizer import Optimizer
 from codeflash.verification.equivalence import compare_test_results
 import time
 
-HAS_SQLALCHEMY = True
-
 from codeflash.picklepatch.pickle_patcher import PicklePatcher
 from codeflash.picklepatch.pickle_placeholder import (
     PicklePlaceholder,
     PicklePlaceholderAccessError,
 )
+
+HAS_SQLALCHEMY = True
 
 
 def test_picklepatch_simple_nested():

@@ -1,5 +1,3 @@
-
-
 from codeflash.context.unused_definition_remover import (
     remove_unused_definitions_by_function_names,
 )
@@ -358,7 +356,6 @@ def test_function():
     dumper = ObjectDetectionLayoutDumper({})
     return dumper.dump()
 """
-
 
     qualified_functions = {"test_function"}
     result = remove_unused_definitions_by_function_names(code, qualified_functions)

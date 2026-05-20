@@ -1,4 +1,5 @@
 import pathlib
+from collections import defaultdict
 
 import pytest
 
@@ -88,9 +89,6 @@ def recursive_dependency_1(num):
         return 0
     num_1 = calculate_something(num)
     return recursive_dependency_1(num) + num_1
-
-
-from collections import defaultdict
 
 
 class Graph:

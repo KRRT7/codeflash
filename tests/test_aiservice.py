@@ -13,7 +13,6 @@ from codeflash.models.api import (
     AdaptiveOptimizedCandidate,
     OptimizedCandidateSource,
 )
-from codeflash.models.domain import ExperimentMetadata
 
 OPTIMIZATIONS_RESPONSE = {
     "optimizations": [

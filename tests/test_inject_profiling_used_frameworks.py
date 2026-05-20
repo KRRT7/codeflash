@@ -1,15 +1,13 @@
-from __future__ import annotations
-
 """Unit tests for inject_profiling_into_existing_test with different used_frameworks values.
 
 These tests verify that the wrapper function is correctly generated with GPU device
 synchronization code for different framework imports (torch, tensorflow, jax).
 """
 
+from __future__ import annotations
 
 import re
 from pathlib import Path
-
 
 from codeflash.code_utils.instrument_existing_tests import (
     detect_frameworks_from_code,
