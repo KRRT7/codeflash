@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, cast
 import libcst as cst
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.code_utils.code_extractor import add_needed_imports_from_module
+from codeflash.code_utils.import_merger import add_needed_imports_from_module
 from codeflash.context.libcst_definition_remover import (
     collect_top_level_defs_with_usages,
     extract_names_from_targets,

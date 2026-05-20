@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from codeflash.result.create_pr import existing_tests_source_for
+from codeflash.result.test_performance_table import existing_tests_source_for
 
 
 class TestExistingTestsSourceFor:

@@ -128,7 +128,8 @@ from codeflash.models.domain import (
 )
 from codeflash.models.test_results import TestResults
 from codeflash.models.test_type import TestType
-from codeflash.result.create_pr import check_create_pr, existing_tests_source_for
+from codeflash.result.create_pr import check_create_pr
+from codeflash.result.test_performance_table import existing_tests_source_for
 from codeflash.result.critic import (
     coverage_critic,
     performance_gain,

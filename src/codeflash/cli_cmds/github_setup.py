@@ -15,7 +15,7 @@ from codeflash.code_utils.compat import LF
 from codeflash.code_utils.env_utils import get_codeflash_api_key
 from codeflash.code_utils.git_utils import get_git_remotes, get_repo_owner_and_name
 from codeflash.code_utils.oauth_handler import perform_oauth_signin
-from codeflash.code_utils.shell_utils import get_shell_rc_path, save_api_key_to_rc
+from codeflash.code_utils.api_key_storage import get_shell_rc_path, save_api_key_to_rc
 
 
 def install_github_app(git_remote: str) -> None:

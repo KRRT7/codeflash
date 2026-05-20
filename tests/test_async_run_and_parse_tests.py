@@ -20,7 +20,7 @@ from codeflash.optimization.optimizer import Optimizer
 from codeflash.verification.instrument_codeflash_capture import (
     instrument_codeflash_capture,
 )
-from codeflash.code_utils.async_instrumentation import add_async_decorator_to_function
+from codeflash.code_utils.async_decorator_utils import add_async_decorator_to_function
 from codeflash.code_utils.instrument_existing_tests import (
     inject_profiling_into_existing_test,
 )

@@ -1,16 +1,12 @@
 from pathlib import Path
 
-from codeflash.code_utils.code_extractor import (
-    add_needed_imports_from_module,
-    find_preexisting_objects,
-)
+from codeflash.code_utils.code_extractor import find_preexisting_objects
+from codeflash.code_utils.import_merger import add_needed_imports_from_module
 from codeflash.code_utils.code_replacer import replace_functions_and_add_imports
 
 import tempfile
-from codeflash.code_utils.code_extractor import (
-    resolve_star_import,
-    DottedImportCollector,
-)
+from codeflash.code_utils.cst_import_utils import DottedImportCollector
+from codeflash.code_utils.import_merger import resolve_star_import
 import libcst as cst
 from codeflash.models.domain import FunctionParent
 

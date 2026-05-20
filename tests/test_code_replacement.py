@@ -11,10 +11,8 @@ import os
 from collections import defaultdict
 from pathlib import Path
 
-from codeflash.code_utils.code_extractor import (
-    delete___future___aliased_imports,
-    find_preexisting_objects,
-)
+from codeflash.code_utils.code_extractor import find_preexisting_objects
+from codeflash.code_utils.import_merger import delete___future___aliased_imports
 from codeflash.code_utils.code_replacer import (
     is_zero_diff,
     replace_functions_and_add_imports,

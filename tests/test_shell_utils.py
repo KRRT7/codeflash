@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-from codeflash.code_utils.shell_utils import (
+from codeflash.code_utils.api_key_storage import (
     read_api_key_from_shell_config,
     save_api_key_to_rc,
 )
@@ -12,11 +12,11 @@ from codeflash.danom import Err, Ok
 
 class TestShellUtils(unittest.TestCase):
     @patch(
-        "codeflash.code_utils.shell_utils.open",
+        "codeflash.code_utils.api_key_storage.open",
         new_callable=mock_open,
         read_data="existing content",
     )
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_save_api_key_to_rc_success(self, mock_get_shell_rc_path, mock_file):
         mock_get_shell_rc_path.return_value = "/fake/path/.bashrc"
         api_key = "cf-12345"
@@ -28,11 +28,11 @@ class TestShellUtils(unittest.TestCase):
         handle.truncate.assert_called_once()
 
     @patch(
-        "codeflash.code_utils.shell_utils.open",
+        "codeflash.code_utils.api_key_storage.open",
         new_callable=mock_open,
         read_data="existing content",
     )
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_save_api_key_to_rc_failure(self, mock_get_shell_rc_path, mock_file):
         mock_get_shell_rc_path.return_value = "/fake/path/.bashrc"
         mock_file.side_effect = PermissionError
@@ -65,7 +65,7 @@ class TestReadApiKeyFromShellConfig(unittest.TestCase):
 
     def test_valid_api_key(self):
         with patch(
-            "codeflash.code_utils.shell_utils.get_shell_rc_path"
+            "codeflash.code_utils.api_key_storage.get_shell_rc_path"
         ) as mock_get_shell_rc_path:
             mock_get_shell_rc_path.return_value = self.test_rc_path
             with patch(
@@ -118,7 +118,7 @@ class TestReadApiKeyFromShellConfig(unittest.TestCase):
                         self.test_rc_path, encoding="utf8"
                     )
 
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_no_api_key(self, mock_get_shell_rc_path):
         """Test with no API key export."""
         mock_get_shell_rc_path.return_value = self.test_rc_path
@@ -128,7 +128,7 @@ class TestReadApiKeyFromShellConfig(unittest.TestCase):
             self.assertIsNone(read_api_key_from_shell_config())
             mock_file.assert_called_once_with(self.test_rc_path, encoding="utf8")
 
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_malformed_api_key_export(self, mock_get_shell_rc_path):
         """Test with a malformed API key export."""
         mock_get_shell_rc_path.return_value = self.test_rc_path
@@ -170,7 +170,7 @@ class TestReadApiKeyFromShellConfig(unittest.TestCase):
                 result = read_api_key_from_shell_config()
                 self.assertIsNone(result)
 
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_multiple_api_key_exports(self, mock_get_shell_rc_path):
         """Test with multiple API key exports."""
         mock_get_shell_rc_path.return_value = self.test_rc_path
@@ -186,7 +186,7 @@ class TestReadApiKeyFromShellConfig(unittest.TestCase):
         ):
             self.assertEqual(read_api_key_from_shell_config(), self.api_key)
 
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_api_key_export_with_extra_text(self, mock_get_shell_rc_path):
         """Test with extra text around API key export."""
         mock_get_shell_rc_path.return_value = self.test_rc_path
@@ -196,21 +196,21 @@ class TestReadApiKeyFromShellConfig(unittest.TestCase):
         ):
             self.assertEqual(read_api_key_from_shell_config(), self.api_key)
 
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_api_key_in_comment(self, mock_get_shell_rc_path):
         """Test with API key export in a comment."""
         mock_get_shell_rc_path.return_value = self.test_rc_path
         with patch("builtins.open", mock_open(read_data=f"# {self.api_key_export}\n")):
             self.assertIsNone(read_api_key_from_shell_config())
 
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_file_does_not_exist(self, mock_get_shell_rc_path):
         """Test when the shell configuration file does not exist."""
         mock_get_shell_rc_path.return_value = self.test_rc_path
         with patch("builtins.open", side_effect=FileNotFoundError):
             self.assertIsNone(read_api_key_from_shell_config())
 
-    @patch("codeflash.code_utils.shell_utils.get_shell_rc_path")
+    @patch("codeflash.code_utils.api_key_storage.get_shell_rc_path")
     def test_file_not_readable(self, mock_get_shell_rc_path):
         """Test when the shell configuration file is not readable."""
         mock_get_shell_rc_path.return_value = self.test_rc_path

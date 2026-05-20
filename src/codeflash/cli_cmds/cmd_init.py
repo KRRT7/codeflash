@@ -106,7 +106,7 @@ def init_codeflash() -> None:
         if did_add_new_key:
             completion_message += "\n\n🐚 Don't forget to restart your shell to load the CODEFLASH_API_KEY environment variable!"
             if os.name == "nt":
-                from codeflash.code_utils.shell_utils import (
+                from codeflash.code_utils.api_key_storage import (
                     get_shell_rc_path,
                     is_powershell,
                 )
@@ -117,7 +117,7 @@ def init_codeflash() -> None:
                     else f"call {get_shell_rc_path()}"
                 )
             else:
-                from codeflash.code_utils.shell_utils import get_shell_rc_path
+                from codeflash.code_utils.api_key_storage import get_shell_rc_path
 
                 reload_cmd = f"source {get_shell_rc_path()}"
             completion_message += f"\nOr run: {reload_cmd}"

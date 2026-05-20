@@ -12,7 +12,7 @@ from typing import Any
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.formatter import format_code
-from codeflash.code_utils.shell_utils import (
+from codeflash.code_utils.api_key_storage import (
     read_api_key_from_shell_config,
     save_api_key_to_rc,
 )

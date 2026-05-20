@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from codeflash.code_utils.async_instrumentation import add_async_decorator_to_function
+from codeflash.code_utils.async_decorator_utils import add_async_decorator_to_function
 from codeflash.code_utils.instrument_existing_tests import (
     inject_profiling_into_existing_test
 )
@@ -271,7 +271,7 @@ async def test_async_function():
     )
 
     # First instrument the source module
-    from codeflash.code_utils.async_instrumentation import (
+    from codeflash.code_utils.async_decorator_utils import (
         add_async_decorator_to_function,
     )
 
@@ -344,7 +344,7 @@ async def test_async_function():
     )
 
     # First instrument the source module
-    from codeflash.code_utils.async_instrumentation import (
+    from codeflash.code_utils.async_decorator_utils import (
         add_async_decorator_to_function,
     )
 
@@ -420,7 +420,7 @@ async def test_mixed_functions():
         is_async=True,
     )
 
-    from codeflash.code_utils.async_instrumentation import (
+    from codeflash.code_utils.async_decorator_utils import (
         add_async_decorator_to_function,
     )
 
@@ -628,7 +628,7 @@ async def test_multiple_calls():
     )
 
     # First instrument the source module with async decorators
-    from codeflash.code_utils.async_instrumentation import (
+    from codeflash.code_utils.async_decorator_utils import (
         add_async_decorator_to_function,
     )
 
