@@ -30,6 +30,6 @@ def test_with_pytest_approx():
     a, b, N = 0, 1, 1000
     result = integrate_f(a, b, N)
     expected = -1 / 6
-    assert result == pytest.approx(
-        expected, rel=1e-5
-    ), "Test failed with pytest's approx."
+    assert result == pytest.approx(expected, rel=1e-5), (
+        "Test failed with pytest's approx."
+    )

@@ -73,7 +73,9 @@ def is_new_type(type_: type[Any]) -> bool:
     """Check whether type_ was created using typing.NewType.
     Can't use isinstance because it fails <3.10.
     """
-    return isinstance(type_, test_new_type.__class__) and hasattr(type_, "__supertype__")  # type: ignore[arg-type]
+    return isinstance(type_, test_new_type.__class__) and hasattr(
+        type_, "__supertype__"
+    )  # type: ignore[arg-type]
 
 
 def is_new_type2(type_: type[Any]) -> bool:
@@ -225,7 +227,9 @@ def find_common_tags2_4(articles: list[dict[str, list[str]]]) -> set[str]:
     common_tags = set(articles[0]["tags"])
     for article in articles[1:]:
         if common_tags:
-            article_tags = article["tags"]  # Access 'tags' only if common_tags is not empty
+            article_tags = article[
+                "tags"
+            ]  # Access 'tags' only if common_tags is not empty
             common_tags.intersection_update(article_tags)
         else:
             # Do not access article["tags"]; no KeyError is raised
@@ -375,8 +379,8 @@ def with_pattern(pattern: str, regex_group_count: int | None = None) -> Callable
 
 
 def with_pattern2(pattern: str, regex_group_count: int | None = None) -> Callable:
-    return (
-        lambda func: setattr(func, "pattern", pattern)
+    return lambda func: (
+        setattr(func, "pattern", pattern)
         or setattr(func, "regex_group_count", regex_group_count)
         or func
     )

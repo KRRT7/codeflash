@@ -27,7 +27,7 @@ from codeflash.cli_cmds.logging_config import DEBUG_MODE, logger
 from codeflash.code_utils.diff_utils import diff_length
 from codeflash.code_utils.path_utils import module_name_from_file_path
 from codeflash.code_utils.validation import validate_python_code
-from codeflash.models.api import OptimizedCandidateSource, CoverReturnCode
+from codeflash.models.api import OptimizedCandidateSource
 from codeflash.models.coverage import (
     BenchmarkKey,
     CoverageData,

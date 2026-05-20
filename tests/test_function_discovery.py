@@ -1,6 +1,5 @@
 import tempfile
 from pathlib import Path
-import os
 import unittest.mock
 
 from codeflash.discovery.functions_to_optimize import (

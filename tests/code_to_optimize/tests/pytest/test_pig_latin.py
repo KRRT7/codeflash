@@ -4,7 +4,7 @@ from tests.code_to_optimize.pig_latin import pig_latin
 
 
 def log_test_values(values, test_name):
-    with open(f"/tmp/test_return_values.bin", "ab") as f:
+    with open("/tmp/test_return_values.bin", "ab") as f:
         return_bytes = pickle.dumps(values)
         _test_name = f"{test_name}".encode("ascii")
         f.write(len(_test_name).to_bytes(4, byteorder="big"))

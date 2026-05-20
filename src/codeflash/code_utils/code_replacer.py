@@ -18,13 +18,13 @@ from codeflash.code_utils.code_extractor import (
 from codeflash.code_utils.config_parser import find_conftest_files
 from codeflash.code_utils.formatter import sort_imports
 from codeflash.code_utils.line_profile_utils import ImportAdder
-from codeflash.models.models import FunctionParent
+from codeflash.models.domain import FunctionParent
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.models.models import (
+    from codeflash.models.domain import (
         CodeOptimizationContext,
         CodeStringsMarkdown,
         OptimizedCandidate,

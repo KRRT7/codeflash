@@ -9,12 +9,12 @@ from typing import TYPE_CHECKING, Any, Literal, Union
 from coverage.exceptions import NoDataError
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.models.models import CoverageData, CoverageStatus, FunctionCoverage
+from codeflash.models.coverage import CoverageData, CoverageStatus, FunctionCoverage
 
 if TYPE_CHECKING:
     from collections.abc import Collection
 
-    from codeflash.models.models import CodeOptimizationContext
+    from codeflash.models.domain import CodeOptimizationContext
 
 
 def extract_dependent_function(

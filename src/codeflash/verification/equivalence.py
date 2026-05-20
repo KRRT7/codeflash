@@ -6,7 +6,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.models.models import (
+from codeflash.models.domain import (
     TestDiff,
     TestDiffScope,
     TestResults,
@@ -16,7 +16,7 @@ from codeflash.models.models import (
 from codeflash.verification.comparator import comparator
 
 if TYPE_CHECKING:
-    from codeflash.models.models import TestResults
+    from codeflash.models.domain import TestResults
 
 INCREASED_RECURSION_LIMIT = 5000
 

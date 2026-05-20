@@ -14,7 +14,7 @@ from codeflash.code_utils.formatter import sort_imports
 
 if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.models.models import CodeOptimizationContext
+    from codeflash.models.domain import CodeOptimizationContext
 
 # Known JIT decorators organized by module
 # Format: {module_path: {decorator_name, ...}}

@@ -29,13 +29,13 @@ from codeflash.code_utils.env_utils import get_pr_number
 from codeflash.models.config import AppConfig
 from codeflash.code_utils.git_utils import get_git_diff, get_repo_owner_and_name
 from codeflash.discovery.discover_unit_tests import discover_unit_tests
-from codeflash.models.models import FunctionParent
+from codeflash.models.domain import FunctionParent
 
 if TYPE_CHECKING:
     from libcst import CSTNode
     from libcst.metadata import CodeRange
 
-    from codeflash.models.models import CodeOptimizationContext
+    from codeflash.models.domain import CodeOptimizationContext
     from codeflash.verification.verification_utils import TestConfig
 
 _property_id = "property"

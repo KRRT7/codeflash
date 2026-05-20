@@ -8,7 +8,7 @@ from codeflash.code_utils.static_analysis import (
     function_kind,
     has_typed_parameters,
 )
-from codeflash.models.models import FunctionParent
+from codeflash.models.domain import FunctionParent
 
 
 def test_analyze_imported_modules() -> None:
@@ -38,14 +38,21 @@ def a_function():
         ImportedInternalModuleAnalysis(
             name="static_analysis",
             full_name="codeflash.code_utils.static_analysis",
-            file_path=project_root / Path("src/codeflash/code_utils/static_analysis.py"),
+            file_path=project_root
+            / Path("src/codeflash/code_utils/static_analysis.py"),
         ),
         ImportedInternalModuleAnalysis(
-            name="mymodule", full_name="tests.mymodule", file_path=project_root / Path("tests/mymodule.py")
+            name="mymodule",
+            full_name="tests.mymodule",
+            file_path=project_root / Path("tests/mymodule.py"),
         ),
     ]
-    actual_imported_module_analysis = analyze_imported_modules(code_str, module_file_path, project_root)
-    assert set(actual_imported_module_analysis) == set(expected_imported_module_analysis)
+    actual_imported_module_analysis = analyze_imported_modules(
+        code_str, module_file_path, project_root
+    )
+    assert set(actual_imported_module_analysis) == set(
+        expected_imported_module_analysis
+    )
 
 
 def test_function_kind_typed() -> None:

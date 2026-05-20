@@ -1,4 +1,9 @@
-from codeflash.models.models import FunctionTestInvocation, InvocationId, TestResults, TestType
+from codeflash.models.domain import (
+    FunctionTestInvocation,
+    InvocationId,
+    TestResults,
+    TestType,
+)
 from codeflash.verification.parse_test_output import merge_test_results
 
 
@@ -63,7 +68,7 @@ def run_merge_benchmark(count=100):
     merge_test_results(
         xml_test_results=test_results_xml,
         bin_test_results=test_results_bin,
-        test_framework="unittest"
+        test_framework="unittest",
     )
 
 

@@ -10,10 +10,19 @@ import isort
 from tests.code_to_optimize.bubble_sort_method import BubbleSorter
 from codeflash.code_utils.formatter import sort_imports
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import FunctionParent, TestFile, TestFiles, TestingMode, TestType, VerificationType
+from codeflash.models.coverage import TestingMode
+from codeflash.models.domain import (
+    FunctionParent,
+    TestFile,
+    TestFiles,
+    TestType,
+    VerificationType,
+)
 from codeflash.optimization.optimizer import Optimizer
 from codeflash.verification.equivalence import compare_test_results
-from codeflash.verification.instrument_codeflash_capture import instrument_codeflash_capture
+from codeflash.verification.instrument_codeflash_capture import (
+    instrument_codeflash_capture,
+)
 
 # Used by aiservice instrumentation
 behavior_logging_code = """
@@ -122,7 +131,8 @@ def test_single_element_list():
 
     # Init paths
     test_path = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_aiservice_behavior_results_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_aiservice_behavior_results_temp.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
@@ -132,7 +142,9 @@ def test_single_element_list():
     project_root_path = (Path(__file__).parent / "..").resolve()
     run_cwd = Path(__file__).parent.parent.resolve()
     os.chdir(run_cwd)
-    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py").resolve()
+    fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py"
+    ).resolve()
     original_code = fto_path.read_text("utf-8")
 
     try:
@@ -168,7 +180,9 @@ def test_single_element_list():
             ]
         )
         a = BubbleSorter()
-        function_to_optimize = FunctionToOptimize("sorter", fto_path, [FunctionParent("BubbleSorter", "ClassDef")])
+        function_to_optimize = FunctionToOptimize(
+            "sorter", fto_path, [FunctionParent("BubbleSorter", "ClassDef")]
+        )
         func_opt = opt.create_function_optimizer(function_to_optimize)
         test_results, coverage_data = func_opt.run_and_parse_tests(
             testing_type=TestingMode.BEHAVIOR,
@@ -180,7 +194,10 @@ def test_single_element_list():
             testing_time=0.1,
         )
         assert test_results[0].id.function_getting_tested == "sorter"
-        assert test_results[0].stdout == "codeflash stdout : BubbleSorter.sorter() called\n"
+        assert (
+            test_results[0].stdout
+            == "codeflash stdout : BubbleSorter.sorter() called\n"
+        )
         assert test_results[0].id.test_function_name == "test_single_element_list"
         assert test_results[0].did_pass
         assert test_results[0].return_value[1]["arr"] == [42]
@@ -224,7 +241,10 @@ class BubbleSorter:
             test_results, test_results_mutated_attr
         )  # Without codeflash capture, the init state was not verified, and the results are verified as correct even with the attribute mutated
         assert match
-        assert test_results_mutated_attr[0].stdout == "codeflash stdout : BubbleSorter.sorter() called\n"
+        assert (
+            test_results_mutated_attr[0].stdout
+            == "codeflash stdout : BubbleSorter.sorter() called\n"
+        )
     finally:
         fto_path.write_text(original_code, "utf-8")
         test_path.unlink(missing_ok=True)
@@ -263,7 +283,8 @@ def test_single_element_list():
 
     # Init paths
     test_path = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_aiservice_behavior_results_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_aiservice_behavior_results_temp.py"
     ).resolve()
     test_path_perf = (
         Path(__file__).parent.resolve()
@@ -272,9 +293,13 @@ def test_single_element_list():
     tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
     project_root_path = (Path(__file__).parent / "..").resolve()
 
-    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py").resolve()
+    fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort_method.py"
+    ).resolve()
     original_code = fto_path.read_text("utf-8")
-    function_to_optimize = FunctionToOptimize("sorter", fto_path, [FunctionParent("BubbleSorter", "ClassDef")])
+    function_to_optimize = FunctionToOptimize(
+        "sorter", fto_path, [FunctionParent("BubbleSorter", "ClassDef")]
+    )
 
     try:
         temp_run_dir = get_run_tmp_file(Path()).as_posix()
@@ -396,11 +421,17 @@ class BubbleSorter:
             testing_time=0.1,
         )
         # assert test_results_mutated_attr[0].return_value[0]["self"].x == 1 TODO: add self as input
-        assert test_results_mutated_attr[0].id.function_getting_tested == "BubbleSorter.__init__"
+        assert (
+            test_results_mutated_attr[0].id.function_getting_tested
+            == "BubbleSorter.__init__"
+        )
         assert test_results_mutated_attr[0].return_value[0] == {"x": 1}
-        assert test_results_mutated_attr[0].verification_type == VerificationType.INIT_STATE_FTO
+        assert (
+            test_results_mutated_attr[0].verification_type
+            == VerificationType.INIT_STATE_FTO
+        )
         assert test_results_mutated_attr[0].stdout == ""
-        match,_ = compare_test_results(
+        match, _ = compare_test_results(
             test_results, test_results_mutated_attr
         )  # The test should fail because the instance attribute was mutated
         assert not match
@@ -448,13 +479,19 @@ class BubbleSorter:
             pytest_max_loops=1,
             testing_time=0.1,
         )
-        assert test_results_new_attr[0].id.function_getting_tested == "BubbleSorter.__init__"
+        assert (
+            test_results_new_attr[0].id.function_getting_tested
+            == "BubbleSorter.__init__"
+        )
         assert test_results_new_attr[0].return_value[0] == {"x": 0, "y": 2}
-        assert test_results_new_attr[0].verification_type == VerificationType.INIT_STATE_FTO
+        assert (
+            test_results_new_attr[0].verification_type
+            == VerificationType.INIT_STATE_FTO
+        )
         assert test_results_new_attr[0].stdout == ""
         # assert test_results_new_attr[1].return_value[1]["self"].x == 0 TODO: add self as input
         # assert test_results_new_attr[1].return_value[1]["self"].y == 2 TODO: add self as input
-        match,_ = compare_test_results(
+        match, _ = compare_test_results(
             test_results, test_results_new_attr
         )  # The test should pass because the instance attribute was not mutated, only a new one was added
         assert match

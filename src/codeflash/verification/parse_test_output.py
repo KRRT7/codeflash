@@ -20,7 +20,7 @@ from lxml.etree import XMLParser, parse
 
 from codeflash.cli_cmds.logging_config import DEBUG_MODE, logger, rule
 from codeflash.discovery.discover_unit_tests import discover_parameters_unittest
-from codeflash.models.models import (
+from codeflash.models.domain import (
     FunctionTestInvocation,
     InvocationId,
     TestResults,
@@ -32,7 +32,8 @@ from codeflash.verification.coverage_utils import CoverageUtils
 if TYPE_CHECKING:
     import subprocess
 
-    from codeflash.models.models import CodeOptimizationContext, CoverageData, TestFiles
+    from codeflash.models.coverage import CoverageData
+    from codeflash.models.domain import CodeOptimizationContext, TestFiles
     from codeflash.verification.verification_utils import TestConfig
 
 

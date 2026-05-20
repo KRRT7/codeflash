@@ -3,8 +3,10 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from codeflash.benchmarking.instrument_codeflash_trace import add_codeflash_decorator_to_code, \
-    instrument_codeflash_trace_decorator
+from codeflash.benchmarking.instrument_codeflash_trace import (
+    add_codeflash_decorator_to_code,
+    instrument_codeflash_trace_decorator,
+)
 from codeflash.discovery.functions_to_optimize import FunctionParent, FunctionToOptimize
 
 
@@ -16,14 +18,11 @@ def normal_function():
 """
 
     fto = FunctionToOptimize(
-        function_name="normal_function",
-        file_path=Path("dummy_path.py"),
-        parents=[]
+        function_name="normal_function", file_path=Path("dummy_path.py"), parents=[]
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """
@@ -47,12 +46,11 @@ class TestClass:
     fto = FunctionToOptimize(
         function_name="normal_method",
         file_path=Path("dummy_path.py"),
-        parents=[FunctionParent(name="TestClass", type="ClassDef")]
+        parents=[FunctionParent(name="TestClass", type="ClassDef")],
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """
@@ -78,12 +76,11 @@ class TestClass:
     fto = FunctionToOptimize(
         function_name="class_method",
         file_path=Path("dummy_path.py"),
-        parents=[FunctionParent(name="TestClass", type="ClassDef")]
+        parents=[FunctionParent(name="TestClass", type="ClassDef")],
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """
@@ -110,12 +107,11 @@ class TestClass:
     fto = FunctionToOptimize(
         function_name="static_method",
         file_path=Path("dummy_path.py"),
-        parents=[FunctionParent(name="TestClass", type="ClassDef")]
+        parents=[FunctionParent(name="TestClass", type="ClassDef")],
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """
@@ -141,12 +137,11 @@ class TestClass:
     fto = FunctionToOptimize(
         function_name="__init__",
         file_path=Path("dummy_path.py"),
-        parents=[FunctionParent(name="TestClass", type="ClassDef")]
+        parents=[FunctionParent(name="TestClass", type="ClassDef")],
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """
@@ -173,12 +168,11 @@ class TestClass:
     fto = FunctionToOptimize(
         function_name="property_method",
         file_path=Path("dummy_path.py"),
-        parents=[FunctionParent(name="TestClass", type="ClassDef")]
+        parents=[FunctionParent(name="TestClass", type="ClassDef")],
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """
@@ -209,12 +203,11 @@ class OtherClass:
     fto = FunctionToOptimize(
         function_name="test_method",
         file_path=Path("dummy_path.py"),
-        parents=[FunctionParent(name="TestClass", type="ClassDef")]
+        parents=[FunctionParent(name="TestClass", type="ClassDef")],
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """
@@ -242,12 +235,11 @@ def existing_function():
     fto = FunctionToOptimize(
         function_name="nonexistent_function",
         file_path=Path("dummy_path.py"),
-        parents=[]
+        parents=[],
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     # Code should remain unchanged
@@ -273,25 +265,20 @@ def function_two():
 
     functions_to_optimize = [
         FunctionToOptimize(
-            function_name="function_one",
-            file_path=Path("dummy_path.py"),
-            parents=[]
+            function_name="function_one", file_path=Path("dummy_path.py"), parents=[]
         ),
         FunctionToOptimize(
             function_name="method_two",
             file_path=Path("dummy_path.py"),
-            parents=[FunctionParent(name="TestClass", type="ClassDef")]
+            parents=[FunctionParent(name="TestClass", type="ClassDef")],
         ),
         FunctionToOptimize(
-            function_name="function_two",
-            file_path=Path("dummy_path.py"),
-            parents=[]
-        )
+            function_name="function_two", file_path=Path("dummy_path.py"), parents=[]
+        ),
     ]
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=functions_to_optimize
+        code=code, functions_to_optimize=functions_to_optimize
     )
 
     expected_code = """
@@ -340,15 +327,13 @@ def function_two():
         # Define functions to optimize
         functions_to_optimize = [
             FunctionToOptimize(
-                function_name="function_one",
-                file_path=test_file_path,
-                parents=[]
+                function_name="function_one", file_path=test_file_path, parents=[]
             ),
             FunctionToOptimize(
                 function_name="method_two",
                 file_path=test_file_path,
-                parents=[FunctionParent(name="TestClass", type="ClassDef")]
-            )
+                parents=[FunctionParent(name="TestClass", type="ClassDef")],
+            ),
         ]
 
         # Execute the function being tested
@@ -399,7 +384,7 @@ class ClassA:
 
         # Create second test Python file
         test_file_2_path = Path(temp_dir) / "module_b.py"
-        test_file_2_content ="""
+        test_file_2_content = """
 def function_b():
     return "Function in module B"
 
@@ -414,18 +399,16 @@ class ClassB:
         file_to_funcs_to_optimize = {
             test_file_1_path: [
                 FunctionToOptimize(
-                    function_name="function_a",
-                    file_path=test_file_1_path,
-                    parents=[]
+                    function_name="function_a", file_path=test_file_1_path, parents=[]
                 )
             ],
             test_file_2_path: [
                 FunctionToOptimize(
                     function_name="static_method_b",
                     file_path=test_file_2_path,
-                    parents=[FunctionParent(name="ClassB", type="ClassDef")]
+                    parents=[FunctionParent(name="ClassB", type="ClassDef")],
                 )
-            ]
+            ],
         }
 
         # Execute the function being tested
@@ -484,12 +467,11 @@ class OuterClass:
     fto = FunctionToOptimize(
         function_name="target_method",
         file_path=Path("dummy_path.py"),
-        parents=[FunctionParent(name="OuterClass", type="ClassDef")]
+        parents=[FunctionParent(name="OuterClass", type="ClassDef")],
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """
@@ -521,14 +503,11 @@ def target_function():
 """
 
     fto = FunctionToOptimize(
-        function_name="target_function",
-        file_path=Path("dummy_path.py"),
-        parents=[]
+        function_name="target_function", file_path=Path("dummy_path.py"), parents=[]
     )
 
     modified_code = add_codeflash_decorator_to_code(
-        code=code,
-        functions_to_optimize=[fto]
+        code=code, functions_to_optimize=[fto]
     )
 
     expected_code = """

@@ -1,7 +1,12 @@
 import os
 import pathlib
 
-from end_to_end_test_utilities import CoverageExpectation, TestConfig, run_codeflash_command, run_with_retries
+from end_to_end_test_utilities import (
+    CoverageExpectation,
+    TestConfig,
+    run_codeflash_command,
+    run_with_retries,
+)
 
 
 def run_test(expected_improvement_pct: int) -> bool:
@@ -11,7 +16,9 @@ def run_test(expected_improvement_pct: int) -> bool:
         min_improvement_x=0.1,
         coverage_expectations=[
             CoverageExpectation(
-                function_name="CharacterRemover.remove_control_characters", expected_coverage=100.0, expected_lines=[14]
+                function_name="CharacterRemover.remove_control_characters",
+                expected_coverage=100.0,
+                expected_lines=[14],
             )
         ],
     )

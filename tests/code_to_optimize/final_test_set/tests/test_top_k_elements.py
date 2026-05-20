@@ -1,4 +1,6 @@
-from tests.code_to_optimize.final_test_set.find_top_k_elements import find_top_k_elements
+from tests.code_to_optimize.final_test_set.find_top_k_elements import (
+    find_top_k_elements,
+)
 
 
 def test_negative_k():
@@ -13,9 +15,9 @@ def test_k_greater_than_array_length():
     array = [4, 1, 5, 6, 2]
     k = 10
     expected = sorted(array, reverse=True)
-    assert (
-        find_top_k_elements(array, k) == expected
-    ), "Failed when k is greater than array length"
+    assert find_top_k_elements(array, k) == expected, (
+        "Failed when k is greater than array length"
+    )
 
 
 def test_normal_case():
@@ -29,9 +31,9 @@ def test_array_with_duplicate_values():
     array = [5, 5, 5, 5]
     k = 2
     expected = [5, 5]
-    assert (
-        find_top_k_elements(array, k) == expected
-    ), "Failed when array contains duplicates"
+    assert find_top_k_elements(array, k) == expected, (
+        "Failed when array contains duplicates"
+    )
 
 
 def test_empty_array():
@@ -42,6 +44,6 @@ def test_single_element_array():
     array = [42]
     k = 1
     expected = [42]
-    assert (
-        find_top_k_elements(array, k) == expected
-    ), "Failed when array contains a single element"
+    assert find_top_k_elements(array, k) == expected, (
+        "Failed when array contains a single element"
+    )

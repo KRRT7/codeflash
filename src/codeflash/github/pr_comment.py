@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.models.models import BenchmarkDetail, TestResults
+from codeflash.models.domain import TestResults
+from codeflash.models.coverage import BenchmarkDetail
 
 
 @dataclass(frozen=True, config={"arbitrary_types_allowed": True})

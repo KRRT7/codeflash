@@ -20,13 +20,13 @@ from libcst.helpers import calculate_module_and_package
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.config_consts import MAX_CONTEXT_LEN_REVIEW
-from codeflash.models.models import CodePosition, FunctionParent
+from codeflash.models.domain import CodePosition, FunctionParent
 
 if TYPE_CHECKING:
     from libcst.helpers import ModuleNameAndPackage
 
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.models.models import FunctionSource
+    from codeflash.models.domain import FunctionSource
 
 
 class GlobalAssignmentCollector(cst.CSTVisitor):

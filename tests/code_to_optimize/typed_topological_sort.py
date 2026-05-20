@@ -9,7 +9,9 @@ class Graph:
     def addEdge(self, u: int, v: int) -> None:
         self.graph[u].append(v)
 
-    def topologicalSortUtil(self, v: int, visited: list[bool], stack: list[int]) -> None:
+    def topologicalSortUtil(
+        self, v: int, visited: list[bool], stack: list[int]
+    ) -> None:
         visited[v] = True
 
         for i in self.graph[v]:

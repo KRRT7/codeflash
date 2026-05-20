@@ -95,8 +95,8 @@ from codeflash.context.unused_definition_remover import (
 )
 from codeflash.discovery.functions_to_optimize import was_function_previously_optimized
 from codeflash.danom import Err, Ok
-from codeflash.models.models import ExperimentMetadata
-from codeflash.models.models import (
+from codeflash.models.domain import ExperimentMetadata
+from codeflash.models.domain import (
     AdaptiveOptimizedCandidate,
     AIServiceAdaptiveOptimizeRequest,
     AIServiceCodeRepairRequest,
@@ -146,7 +146,7 @@ if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
     from codeflash.danom import Result
     from codeflash.models.config import AppConfig
-    from codeflash.models.models import (
+    from codeflash.models.domain import (
         BenchmarkKey,
         CodeStringsMarkdown,
         CoverageData,

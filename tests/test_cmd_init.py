@@ -43,7 +43,10 @@ module-root = "invalid_directory"
         f.flush()
         valid, config, _message = is_valid_pyproject_toml(temp_dir / "pyproject.toml")
         assert not valid
-        assert _message == f"Invalid 'module_root': directory does not exist at {wrong_module_root}"
+        assert (
+            _message
+            == f"Invalid 'module_root': directory does not exist at {wrong_module_root}"
+        )
 
 
 def test_is_valid_pyproject_toml_with_incorrect_tests_root(temp_dir: Path) -> None:
@@ -58,7 +61,10 @@ tests-root = "incorrect_tests_root"
         f.flush()
         valid, config, _message = is_valid_pyproject_toml(temp_dir / "pyproject.toml")
         assert not valid
-        assert _message == f"Invalid 'tests_root': directory does not exist at {wrong_tests_root}"
+        assert (
+            _message
+            == f"Invalid 'tests_root': directory does not exist at {wrong_tests_root}"
+        )
 
 
 def test_is_valid_pyproject_toml_with_valid_config(temp_dir: Path) -> None:
@@ -77,7 +83,10 @@ tests-root = "tests"
 
 def test_get_formatter_cmd(temp_dir: Path) -> None:
     assert get_formatter_cmds("black") == ["black $file"]
-    assert get_formatter_cmds("ruff") == ["ruff check --exit-zero --fix $file", "ruff format $file"]
+    assert get_formatter_cmds("ruff") == [
+        "ruff check --exit-zero --fix $file",
+        "ruff format $file",
+    ]
     assert get_formatter_cmds("disabled") == ["disabled"]
     assert get_formatter_cmds("don't use a formatter") == ["disabled"]
 
@@ -142,7 +151,9 @@ formatter-cmds = ["black $file"]
         assert valid
 
 
-def test_configure_pyproject_toml_for_vscode_with_existing_config(temp_dir: Path) -> None:
+def test_configure_pyproject_toml_for_vscode_with_existing_config(
+    temp_dir: Path,
+) -> None:
     pyproject_path = temp_dir / "pyproject.toml"
 
     with (pyproject_path).open(mode="w") as f:
@@ -154,7 +165,9 @@ formatter-cmds = ["disabled"]
 """)
         f.flush()
         os.mkdir(temp_dir / "tests")
-        config = VsCodeSetupInfo(module_root=".", tests_root="tests", formatter="disabled")
+        config = VsCodeSetupInfo(
+            module_root=".", tests_root="tests", formatter="disabled"
+        )
 
         success = configure_pyproject_toml(config, pyproject_path)
         assert success

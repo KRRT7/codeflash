@@ -68,14 +68,17 @@ class TestTracer:
         current_dir = Path.cwd()
 
         config_path = tmp_path / "pyproject.toml"
-        config_path.write_text(f"""
+        config_path.write_text(
+            f"""
 [tool.codeflash]
 module-root = "{current_dir.as_posix()}"
 tests-root = "{tests_dir.as_posix()}"
 test-framework = "pytest"
 ignore-paths = []
-""", encoding="utf-8")
-        
+""",
+            encoding="utf-8",
+        )
+
         trace_path = tmp_path / "trace_file.trace"
         replay_test_pkl_path = tmp_path / "replay_test.pkl"
         config, found_config_path = parse_config_file(config_path)
@@ -111,7 +114,9 @@ ignore-paths = []
             )
             assert tracer.disable is True
 
-    def test_tracer_disabled_with_existing_profiler(self, trace_config: TraceConfig) -> None:
+    def test_tracer_disabled_with_existing_profiler(
+        self, trace_config: TraceConfig
+    ) -> None:
         """Test that tracer is disabled when another profiler is running."""
 
         def dummy_profiler(_frame: object, _event: str, _arg: object) -> object:
@@ -210,12 +215,18 @@ ignore-paths = []
             con = sqlite3.connect(tracer.output_file)
             cursor = con.cursor()
 
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='function_calls'")
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='function_calls'"
+            )
             if cursor.fetchone():
-                cursor.execute("SELECT function FROM function_calls WHERE function = 'test_function'")
+                cursor.execute(
+                    "SELECT function FROM function_calls WHERE function = 'test_function'"
+                )
                 cursor.fetchall()
 
-                cursor.execute("SELECT function FROM function_calls WHERE function = 'other_function'")
+                cursor.execute(
+                    "SELECT function FROM function_calls WHERE function = 'other_function'"
+                )
                 cursor.fetchall()
 
             con.close()
@@ -236,7 +247,9 @@ ignore-paths = []
             for i in range(5):
                 counting_function(i)
 
-        assert tracer.trace_count <= 3, "Tracer should limit the number of traced functions to max_function_count"
+        assert tracer.trace_count <= 3, (
+            "Tracer should limit the number of traced functions to max_function_count"
+        )
 
     def test_tracer_timeout_functionality(self, trace_config: TraceConfig) -> None:
         def slow_function() -> str:
@@ -355,7 +368,9 @@ ignore-paths = []
             con = sqlite3.connect(tracer.output_file)
             cursor = con.cursor()
 
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='function_calls'")
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='function_calls'"
+            )
             if cursor.fetchone():
                 # Query for all function calls
                 cursor.execute("SELECT function, classname FROM function_calls")
@@ -372,7 +387,9 @@ ignore-paths = []
                 pytest.fail("No function_calls table found in trace file")
             con.close()
 
-    def test_tracer_handles_exceptions_gracefully(self, trace_config: TraceConfig) -> None:
+    def test_tracer_handles_exceptions_gracefully(
+        self, trace_config: TraceConfig
+    ) -> None:
         """Test that tracer handles exceptions in traced code gracefully."""
 
         def failing_function() -> None:
@@ -390,7 +407,9 @@ ignore-paths = []
 
     def test_tracer_with_complex_arguments(self, trace_config: TraceConfig) -> None:
         def complex_function(
-            data_dict: dict[str, Any], nested_list: list[list[int]], func_arg: object = lambda x: x
+            data_dict: dict[str, Any],
+            nested_list: list[list[int]],
+            func_arg: object = lambda x: x,
         ) -> int:
             return len(data_dict) + len(nested_list)
 
@@ -415,9 +434,13 @@ ignore-paths = []
             con = sqlite3.connect(tracer.output_file)
             cursor = con.cursor()
 
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='function_calls'")
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='function_calls'"
+            )
             if cursor.fetchone():
-                cursor.execute("SELECT args FROM function_calls WHERE function = 'complex_function'")
+                cursor.execute(
+                    "SELECT args FROM function_calls WHERE function = 'complex_function'"
+                )
                 result = cursor.fetchone()
                 assert result is not None, "Function complex_function should be traced"
 

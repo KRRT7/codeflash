@@ -1,7 +1,12 @@
 import os
 import pathlib
 
-from end_to_end_test_utilities import CoverageExpectation, TestConfig, run_codeflash_command, run_with_retries
+from end_to_end_test_utilities import (
+    CoverageExpectation,
+    TestConfig,
+    run_codeflash_command,
+    run_with_retries,
+)
 
 
 def run_test(expected_improvement_pct: int) -> bool:
@@ -17,7 +22,10 @@ def run_test(expected_improvement_pct: int) -> bool:
         ],
     )
     cwd = (
-        pathlib.Path(__file__).parent.parent / "code_to_optimize" / "code_directories" / "async_e2e"
+        pathlib.Path(__file__).parent.parent
+        / "code_to_optimize"
+        / "code_directories"
+        / "async_e2e"
     ).resolve()
     return run_codeflash_command(cwd, config, expected_improvement_pct)
 

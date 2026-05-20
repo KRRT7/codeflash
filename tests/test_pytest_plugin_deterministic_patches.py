@@ -49,7 +49,9 @@ class TestDeterministicPatches:
 
         # Create deterministic implementations (matching pytest_plugin.py)
         fixed_timestamp = 1761717605.108106
-        fixed_datetime = datetime.datetime(2021, 1, 1, 2, 5, 10, tzinfo=datetime.timezone.utc)
+        fixed_datetime = datetime.datetime(
+            2021, 1, 1, 2, 5, 10, tzinfo=datetime.timezone.utc
+        )
         fixed_uuid = uuid.UUID("12345678-1234-5678-9abc-123456789012")
 
         # Counter for perf_counter
@@ -180,7 +182,9 @@ class TestDeterministicPatches:
 
         # Verify they're different and incrementing by approximately 0.001
         assert result1 < result2 < result3
-        assert abs((result2 - result1) - 0.001) < 1e-6  # Use reasonable epsilon for float comparison
+        assert (
+            abs((result2 - result1) - 0.001) < 1e-6
+        )  # Use reasonable epsilon for float comparison
         assert abs((result3 - result2) - 0.001) < 1e-6
 
     def test_uuid4_deterministic(self, setup_deterministic_environment):
@@ -282,7 +286,9 @@ class TestDeterministicPatches:
             # numpy not available, test should pass
             pytest.skip("NumPy not available")
 
-    def test_performance_characteristics_maintained(self, setup_deterministic_environment):
+    def test_performance_characteristics_maintained(
+        self, setup_deterministic_environment
+    ):
         """Test that performance characteristics are maintained."""
         # Test that they still execute quickly (performance check)
         start = time.perf_counter()
@@ -311,7 +317,9 @@ class TestDeterministicPatches:
         result1 = mock_now()
         result2 = mock_utcnow()
 
-        expected_dt = datetime.datetime(2021, 1, 1, 2, 5, 10, tzinfo=datetime.timezone.utc)
+        expected_dt = datetime.datetime(
+            2021, 1, 1, 2, 5, 10, tzinfo=datetime.timezone.utc
+        )
         assert result1 == expected_dt
         assert result2 == expected_dt
 
@@ -343,7 +351,9 @@ class TestDeterministicPatches:
             expected = base + ((i + 1) * 0.001)
             assert abs(result - expected) < 1e-6, f"Expected {expected}, got {result}"
 
-    def test_different_uuid_functions_same_result(self, setup_deterministic_environment):
+    def test_different_uuid_functions_same_result(
+        self, setup_deterministic_environment
+    ):
         """Test that both uuid4 and uuid1 return the same deterministic UUID."""
         uuid4_result = uuid.uuid4()
         uuid1_result = uuid.uuid1()
@@ -364,7 +374,9 @@ class TestDeterministicPatches:
         """Test edge cases and boundary conditions."""
         # Test uuid functions with edge case parameters
         assert uuid.uuid1(node=0) == uuid.UUID("12345678-1234-5678-9abc-123456789012")
-        assert uuid.uuid1(clock_seq=0) == uuid.UUID("12345678-1234-5678-9abc-123456789012")
+        assert uuid.uuid1(clock_seq=0) == uuid.UUID(
+            "12345678-1234-5678-9abc-123456789012"
+        )
 
         # Test urandom with edge cases
         assert os.urandom(0) == b""
@@ -378,10 +390,14 @@ class TestDeterministicPatches:
         # Test with different timezone
         utc_tz = datetime.timezone.utc
         result_with_tz = mock_now(utc_tz)
-        expected_with_tz = datetime.datetime(2021, 1, 1, 2, 5, 10, tzinfo=datetime.timezone.utc)
+        expected_with_tz = datetime.datetime(
+            2021, 1, 1, 2, 5, 10, tzinfo=datetime.timezone.utc
+        )
         assert result_with_tz == expected_with_tz
 
-    def test_integration_with_actual_optimization_scenario(self, setup_deterministic_environment):
+    def test_integration_with_actual_optimization_scenario(
+        self, setup_deterministic_environment
+    ):
         """Test the patching in a scenario similar to actual optimization."""
         # Simulate what happens during optimization - multiple function calls
         # that would normally produce different results but should now be deterministic

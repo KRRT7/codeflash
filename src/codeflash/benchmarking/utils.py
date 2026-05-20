@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.models.models import BenchmarkDetail, ProcessedBenchmarkInfo
+from codeflash.models.coverage import BenchmarkDetail, ProcessedBenchmarkInfo
 from codeflash.result.critic import performance_gain
 
 if TYPE_CHECKING:
-    from codeflash.models.models import BenchmarkKey
+    from codeflash.models.domain import BenchmarkKey
 
 
 def validate_and_format_benchmark_table(

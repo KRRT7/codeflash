@@ -27,7 +27,7 @@ from codeflash.context.unused_definition_remover import (
     remove_unused_definitions_by_function_names,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize  # noqa: TC001
-from codeflash.models.models import (
+from codeflash.models.domain import (
     CodeContextType,
     CodeOptimizationContext,
     CodeString,

@@ -11,9 +11,9 @@ from codeflash.context.code_context_extractor import (
     get_code_optimization_context,
     get_imported_class_definitions,
 )
-from codeflash.models.models import CodeString, CodeStringsMarkdown
+from codeflash.models.domain import CodeString, CodeStringsMarkdown
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import FunctionParent
+from codeflash.models.domain import FunctionParent
 from codeflash.optimization.optimizer import Optimizer
 from codeflash.code_utils.code_replacer import replace_functions_and_add_imports
 from codeflash.code_utils.code_extractor import (
@@ -255,7 +255,7 @@ def test_bubble_sort_helper() -> None:
     )
     hashing_context = code_ctx.hashing_code_context
 
-    expected_read_write_context = f"""
+    expected_read_write_context = """
 ```python:code_to_optimize/code_directories/retriever/bubble_sort_with_math.py
 import math
 

@@ -1,11 +1,10 @@
 import pathlib
-from dataclasses import dataclass
 
 import pytest
 
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.either import is_successful
-from codeflash.models.models import FunctionParent
+from codeflash.models.domain import FunctionParent
 from codeflash.optimization.function_optimizer import FunctionOptimizer
 from codeflash.verification.verification_utils import TestConfig
 
@@ -90,6 +89,7 @@ def recursive_dependency_1(num):
     num_1 = calculate_something(num)
     return recursive_dependency_1(num) + num_1
 
+
 from collections import defaultdict
 
 
@@ -154,11 +154,16 @@ def test_class_method_dependencies() -> None:
         code_context.helper_functions[0].jedi_definition.full_name
         == "test_function_dependencies.Graph.topologicalSortUtil"
     )
-    assert code_context.helper_functions[0].jedi_definition.name == "topologicalSortUtil"
     assert (
-        code_context.helper_functions[0].fully_qualified_name == "test_function_dependencies.Graph.topologicalSortUtil"
+        code_context.helper_functions[0].jedi_definition.name == "topologicalSortUtil"
     )
-    assert code_context.helper_functions[0].qualified_name == "Graph.topologicalSortUtil"
+    assert (
+        code_context.helper_functions[0].fully_qualified_name
+        == "test_function_dependencies.Graph.topologicalSortUtil"
+    )
+    assert (
+        code_context.helper_functions[0].qualified_name == "Graph.topologicalSortUtil"
+    )
     assert (
         code_context.testgen_context.flat
         == """# file: test_function_dependencies.py
@@ -190,6 +195,7 @@ class Graph:
         return stack"""
     )
 
+
 def test_recursive_function_context() -> None:
     file_path = pathlib.Path(__file__).resolve()
 
@@ -218,8 +224,14 @@ def test_recursive_function_context() -> None:
         pytest.fail()
     code_context = ctx_result.unwrap()
     assert len(code_context.helper_functions) == 2
-    assert code_context.helper_functions[0].fully_qualified_name == "test_function_dependencies.C.calculate_something_3"
-    assert code_context.helper_functions[1].fully_qualified_name == "test_function_dependencies.C.recursive"
+    assert (
+        code_context.helper_functions[0].fully_qualified_name
+        == "test_function_dependencies.C.calculate_something_3"
+    )
+    assert (
+        code_context.helper_functions[1].fully_qualified_name
+        == "test_function_dependencies.C.recursive"
+    )
     assert (
         code_context.testgen_context.flat
         == """# file: test_function_dependencies.py

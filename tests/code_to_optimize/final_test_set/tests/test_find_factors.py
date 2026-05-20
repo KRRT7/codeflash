@@ -30,15 +30,15 @@ def test_large_number():
     # 120 has factors: 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24, 30, 40, 60, 120
     result = find_factors(120)
     expected_factors = 16  # There should be 16 pairs
-    assert (
-        len(result) == expected_factors
-    ), "Failed on large number with multiple factors"
+    assert len(result) == expected_factors, (
+        "Failed on large number with multiple factors"
+    )
 
 
 def test_one():
-    assert find_factors(1) == [
-        (1, 1)
-    ], "Failed on one, which should only have one factor pair"
+    assert find_factors(1) == [(1, 1)], (
+        "Failed on one, which should only have one factor pair"
+    )
 
 
 def test_zero():

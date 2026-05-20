@@ -71,7 +71,9 @@ def validate_coverage(stdout: str, expectations: list[CoverageExpectation]) -> b
         """
 
         coverage_match = re.search(pattern, stdout, re.VERBOSE)
-        assert coverage_match, f"Failed to find coverage data for {expect.function_name}"
+        assert coverage_match, (
+            f"Failed to find coverage data for {expect.function_name}"
+        )
 
         coverage = float(coverage_match.group(1))
         assert coverage == expect.expected_coverage, (
@@ -85,14 +87,19 @@ def validate_coverage(stdout: str, expectations: list[CoverageExpectation]) -> b
 
     return True
 
+
 def validate_no_gen_tests(stdout: str) -> bool:
     if "Generated '0' tests for" not in stdout:
         logging.error("Tests generated even when flag was on")
         return False
     return True
 
+
 def run_codeflash_command(
-    cwd: pathlib.Path, config: TestConfig, expected_improvement_pct: int, expected_in_stdout: list[str] = None
+    cwd: pathlib.Path,
+    config: TestConfig,
+    expected_improvement_pct: int,
+    expected_in_stdout: list[str] = None,
 ) -> bool:
     logging.basicConfig(level=logging.INFO)
     if config.trace_mode:
@@ -103,11 +110,22 @@ def run_codeflash_command(
     pytest_dir = cwd / "tests" / "pytest"
     test_root = pytest_dir if pytest_dir.is_dir() else cwd / "tests"
 
-    command = build_command(cwd, config, test_root, config.benchmarks_root if config.benchmarks_root else None)
+    command = build_command(
+        cwd,
+        config,
+        test_root,
+        config.benchmarks_root if config.benchmarks_root else None,
+    )
     env = os.environ.copy()
-    env['PYTHONIOENCODING'] = 'utf-8'
+    env["PYTHONIOENCODING"] = "utf-8"
     process = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=str(cwd), env=env, encoding='utf-8'
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        cwd=str(cwd),
+        env=env,
+        encoding="utf-8",
     )
 
     output = []
@@ -122,7 +140,9 @@ def run_codeflash_command(
     if not validated:
         # Write original file contents back to file
         path_to_file.write_text(file_contents, "utf-8")
-        logging.info("Codeflash run did not meet expected requirements for testing, reverting file changes.")
+        logging.info(
+            "Codeflash run did not meet expected requirements for testing, reverting file changes."
+        )
         return False
 
     if expected_in_stdout:
@@ -130,17 +150,32 @@ def run_codeflash_command(
         if not stdout_validated:
             logging.error("Failed to find expected output in candidate output")
             validated = False
-        logging.info(f"Success: Expected output found in candidate output")
+        logging.info("Success: Expected output found in candidate output")
 
     return validated
 
 
 def build_command(
-    cwd: pathlib.Path, config: TestConfig, test_root: pathlib.Path, benchmarks_root: pathlib.Path | None = None
+    cwd: pathlib.Path,
+    config: TestConfig,
+    test_root: pathlib.Path,
+    benchmarks_root: pathlib.Path | None = None,
 ) -> list[str]:
-    python_path = "../../../codeflash/main.py" if "code_directories" in str(cwd) else "../codeflash/main.py"
+    python_path = (
+        "../../../codeflash/main.py"
+        if "code_directories" in str(cwd)
+        else "../codeflash/main.py"
+    )
 
-    base_command = ["uv", "run", "--no-project", python_path, "--file", config.file_path, "--no-pr"]
+    base_command = [
+        "uv",
+        "run",
+        "--no-project",
+        python_path,
+        "--file",
+        config.file_path,
+        "--no-pr",
+    ]
 
     if config.function_name:
         base_command.extend(["--function", config.function_name])
@@ -152,7 +187,9 @@ def build_command(
         with contextlib.suppress(Exception):
             with open(pyproject_path, "rb") as f:
                 pyproject_data = tomllib.load(f)
-                has_codeflash_config = "tool" in pyproject_data and "codeflash" in pyproject_data["tool"]
+                has_codeflash_config = (
+                    "tool" in pyproject_data and "codeflash" in pyproject_data["tool"]
+                )
 
     # Only pass --tests-root and --module-root if they're not configured in pyproject.toml
     if not has_codeflash_config:
@@ -167,7 +204,9 @@ def build_command(
     return base_command
 
 
-def validate_output(stdout: str, return_code: int, expected_improvement_pct: int, config: TestConfig) -> bool:
+def validate_output(
+    stdout: str, return_code: int, expected_improvement_pct: int, config: TestConfig
+) -> bool:
     if return_code != 0:
         logging.error(f"Command returned exit code {return_code} instead of 0")
         return False
@@ -184,39 +223,57 @@ def validate_output(stdout: str, return_code: int, expected_improvement_pct: int
     improvement_pct = int(improvement_match.group(1).replace(",", ""))
     improvement_x = float(improvement_pct) / 100
 
-    print("Performance improvement:", improvement_pct, "; Performance improvement rate:", improvement_x)
+    print(
+        "Performance improvement:",
+        improvement_pct,
+        "; Performance improvement rate:",
+        improvement_x,
+    )
     if improvement_pct <= expected_improvement_pct:
-        logging.error(f"Performance improvement {improvement_pct}% not above {expected_improvement_pct}%")
+        logging.error(
+            f"Performance improvement {improvement_pct}% not above {expected_improvement_pct}%"
+        )
         return False
 
     if improvement_x <= config.min_improvement_x:
-        logging.error(f"Performance improvement rate {improvement_x}x not above {config.min_improvement_x}x")
+        logging.error(
+            f"Performance improvement rate {improvement_x}x not above {config.min_improvement_x}x"
+        )
         return False
 
     if config.expected_unit_tests_count is not None:
         # Match the global test discovery message from optimizer.py which counts test invocations
         # Format: "Discovered X existing unit tests and Y replay tests in Z.Zs at /path/to/tests"
-        unit_test_match = re.search(r"Discovered (\d+) existing unit tests? and \d+ replay tests? in [\d.]+s at", stdout)
+        unit_test_match = re.search(
+            r"Discovered (\d+) existing unit tests? and \d+ replay tests? in [\d.]+s at",
+            stdout,
+        )
         if not unit_test_match:
             logging.error("Could not find global unit test count")
             return False
 
         num_tests = int(unit_test_match.group(1))
         if num_tests != config.expected_unit_tests_count:
-            logging.error(f"Expected {config.expected_unit_tests_count} global unit tests, found {num_tests}")
+            logging.error(
+                f"Expected {config.expected_unit_tests_count} global unit tests, found {num_tests}"
+            )
             return False
 
     if config.expected_unit_test_files is not None:
         # Match the per-function test discovery message from function_optimizer.py
         # Format: "Discovered X existing unit test files, Y replay test files, and Z concolic..."
-        unit_test_files_match = re.search(r"Discovered (\d+) existing unit test files?", stdout)
+        unit_test_files_match = re.search(
+            r"Discovered (\d+) existing unit test files?", stdout
+        )
         if not unit_test_files_match:
             logging.error("Could not find per-function unit test file count")
             return False
 
         num_test_files = int(unit_test_files_match.group(1))
         if num_test_files != config.expected_unit_test_files:
-            logging.error(f"Expected {config.expected_unit_test_files} unit test files, found {num_test_files}")
+            logging.error(
+                f"Expected {config.expected_unit_test_files} unit test files, found {num_test_files}"
+            )
             return False
 
     if config.coverage_expectations:
@@ -230,19 +287,39 @@ def validate_output(stdout: str, return_code: int, expected_improvement_pct: int
 
 
 def validate_stdout_in_candidate(stdout: str, expected_in_stdout: list[str]) -> bool:
-    candidate_output = stdout[stdout.find("INFO     Best candidate") : stdout.find("Best Candidate Explanation")]
+    candidate_output = stdout[
+        stdout.find("INFO     Best candidate") : stdout.find(
+            "Best Candidate Explanation"
+        )
+    ]
     return all(expected in candidate_output for expected in expected_in_stdout)
 
 
-def run_trace_test(cwd: pathlib.Path, config: TestConfig, expected_improvement_pct: int) -> bool:
+def run_trace_test(
+    cwd: pathlib.Path, config: TestConfig, expected_improvement_pct: int
+) -> bool:
     pytest_dir = cwd / "tests" / "pytest"
     test_root = pytest_dir if pytest_dir.is_dir() else cwd / "tests"
     clear_directory(test_root)
-    command = ["uv", "run", "--no-project", "-m", "codeflash.main", "optimize", "workload.py"]
+    command = [
+        "uv",
+        "run",
+        "--no-project",
+        "-m",
+        "codeflash.main",
+        "optimize",
+        "workload.py",
+    ]
     env = os.environ.copy()
-    env['PYTHONIOENCODING'] = 'utf-8'
+    env["PYTHONIOENCODING"] = "utf-8"
     process = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=str(cwd), env=env, encoding='utf-8'
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        cwd=str(cwd),
+        env=env,
+        encoding="utf-8",
     )
 
     output = []
@@ -254,11 +331,15 @@ def run_trace_test(cwd: pathlib.Path, config: TestConfig, expected_improvement_p
     stdout = "".join(output)
 
     if return_code != 0:
-        logging.error(f"Tracer with optimization command returned exit code {return_code}")
+        logging.error(
+            f"Tracer with optimization command returned exit code {return_code}"
+        )
         return False
 
     functions_traced = re.search(r"Traced (\d+) function calls successfully", stdout)
-    logging.info(functions_traced.groups() if functions_traced else "No functions traced")
+    logging.info(
+        functions_traced.groups() if functions_traced else "No functions traced"
+    )
     if not functions_traced:
         logging.error("Failed to find traced functions in output")
         return False

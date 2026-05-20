@@ -27,7 +27,9 @@ def create_mock_module(module_name: str, source_code: str) -> types.ModuleType:
     return module
 
 
-def test_clear_lru_caches_function(pytest_loops_instance: PytestLoops, mock_item: type) -> None:
+def test_clear_lru_caches_function(
+    pytest_loops_instance: PytestLoops, mock_item: type
+) -> None:
     source_code = """
 import functools
 
@@ -46,7 +48,9 @@ my_func(10)  # hit the cache
     assert mock_module.my_func.cache_info().currsize == 0
 
 
-def test_clear_lru_caches_class_method(pytest_loops_instance: PytestLoops, mock_item: type) -> None:
+def test_clear_lru_caches_class_method(
+    pytest_loops_instance: PytestLoops, mock_item: type
+) -> None:
     source_code = """
 import functools
 
@@ -67,7 +71,9 @@ obj.my_method(5)  # Hit the cache
     assert mock_module.MyClass.my_method.cache_info().currsize == 0
 
 
-def test_clear_lru_caches_exception_handling(pytest_loops_instance: PytestLoops, mock_item: type) -> None:
+def test_clear_lru_caches_exception_handling(
+    pytest_loops_instance: PytestLoops, mock_item: type
+) -> None:
     """Test that exceptions during clearing are handled."""
 
     class BrokenCache:
@@ -79,7 +85,9 @@ def test_clear_lru_caches_exception_handling(pytest_loops_instance: PytestLoops,
     pytest_loops_instance._clear_lru_caches(item)  # noqa: SLF001
 
 
-def test_clear_lru_caches_no_cache(pytest_loops_instance: PytestLoops, mock_item: type) -> None:
+def test_clear_lru_caches_no_cache(
+    pytest_loops_instance: PytestLoops, mock_item: type
+) -> None:
     def no_cache_func(x: int) -> int:
         return x
 

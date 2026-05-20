@@ -1,6 +1,16 @@
 from codeflash.code_utils.config_utils import get_qualified_name
-from codeflash.code_utils.validation import get_all_function_names, get_imports_from_file, is_class_defined_in_file, validate_python_code
-from codeflash.code_utils.path_utils import file_name_from_test_module_name, file_path_from_module_name, module_name_from_file_path, path_belongs_to_site_packages
+from codeflash.code_utils.validation import (
+    get_all_function_names,
+    get_imports_from_file,
+    is_class_defined_in_file,
+    validate_python_code,
+)
+from codeflash.code_utils.path_utils import (
+    file_name_from_test_module_name,
+    file_path_from_module_name,
+    module_name_from_file_path,
+    path_belongs_to_site_packages,
+)
 from codeflash.code_utils.cleanup import cleanup_paths, get_run_tmp_file
 import ast
 import site
@@ -16,7 +26,7 @@ from codeflash.verification.coverage_utils import (
     generate_candidates,
     prepare_coverage_files,
 )
-from codeflash.models.models import CodeStringsMarkdown
+from codeflash.models.domain import CodeStringsMarkdown
 from codeflash.verification.parse_test_output import resolve_test_file_from_class_path
 
 
@@ -410,7 +420,7 @@ def my_function():
 def mock_code_context():
     """Mock CodeOptimizationContext for testing extract_dependent_function."""
     from unittest.mock import MagicMock
-    from codeflash.models.models import CodeOptimizationContext
+    from codeflash.models.domain import CodeOptimizationContext
 
     context = MagicMock(spec=CodeOptimizationContext)
     context.preexisting_objects = []

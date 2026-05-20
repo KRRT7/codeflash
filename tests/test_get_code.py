@@ -2,9 +2,10 @@ import tempfile
 
 from codeflash.code_utils.code_extractor import get_code
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import FunctionParent
+from codeflash.models.domain import FunctionParent
 import pytest
 from pathlib import Path
+
 
 @pytest.fixture
 def temp_dir():
@@ -20,7 +21,9 @@ def test_get_code_function(temp_dir: Path) -> None:
         f.write(code)
         f.flush()
 
-        new_code, contextual_dunder_methods = get_code([FunctionToOptimize("test", f.name, [])])
+        new_code, contextual_dunder_methods = get_code(
+            [FunctionToOptimize("test", f.name, [])]
+        )
         assert new_code == code
         assert contextual_dunder_methods == set()
 
@@ -37,7 +40,11 @@ def test_get_code_property(temp_dir: Path) -> None:
         f.flush()
 
         new_code, contextual_dunder_methods = get_code(
-            [FunctionToOptimize("test", f.name, [FunctionParent("TestClass", "ClassDef")])]
+            [
+                FunctionToOptimize(
+                    "test", f.name, [FunctionParent("TestClass", "ClassDef")]
+                )
+            ]
         )
         assert new_code == code
         assert contextual_dunder_methods == {("TestClass", "__init__")}
@@ -66,7 +73,11 @@ class TestClass:
         f.flush()
 
         new_code, contextual_dunder_methods = get_code(
-            [FunctionToOptimize("test", f.name, [FunctionParent("TestClass", "ClassDef")])]
+            [
+                FunctionToOptimize(
+                    "test", f.name, [FunctionParent("TestClass", "ClassDef")]
+                )
+            ]
         )
         assert new_code == expected
         assert contextual_dunder_methods == {("TestClass", "__init__")}
@@ -117,10 +128,17 @@ class BubbleSortClass:
         f.flush()
 
         new_code, contextual_dunder_methods = get_code(
-            [FunctionToOptimize("sorter", f.name, [FunctionParent("BubbleSortClass", "ClassDef")])]
+            [
+                FunctionToOptimize(
+                    "sorter", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]
+                )
+            ]
         )
         assert new_code == expected
-        assert contextual_dunder_methods == {("BubbleSortClass", "__init__"), ("BubbleSortClass", "__call__")}
+        assert contextual_dunder_methods == {
+            ("BubbleSortClass", "__init__"),
+            ("BubbleSortClass", "__call__"),
+        }
 
 
 def test_get_code_indent(temp_dir: Path) -> None:
@@ -180,12 +198,19 @@ def non():
         f.flush()
         new_code, contextual_dunder_methods = get_code(
             [
-                FunctionToOptimize("sorter", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]),
-                FunctionToOptimize("helper", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]),
+                FunctionToOptimize(
+                    "sorter", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]
+                ),
+                FunctionToOptimize(
+                    "helper", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]
+                ),
             ]
         )
     assert new_code == expected
-    assert contextual_dunder_methods == {("BubbleSortClass", "__init__"), ("BubbleSortClass", "__call__")}
+    assert contextual_dunder_methods == {
+        ("BubbleSortClass", "__init__"),
+        ("BubbleSortClass", "__call__"),
+    }
 
     expected2 = """class BubbleSortClass:
     def __init__(self):
@@ -210,13 +235,22 @@ def non():
         f.flush()
         new_code, contextual_dunder_methods = get_code(
             [
-                FunctionToOptimize("sorter", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]),
-                FunctionToOptimize("helper", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]),
-                FunctionToOptimize("unsorter", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]),
+                FunctionToOptimize(
+                    "sorter", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]
+                ),
+                FunctionToOptimize(
+                    "helper", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]
+                ),
+                FunctionToOptimize(
+                    "unsorter", f.name, [FunctionParent("BubbleSortClass", "ClassDef")]
+                ),
             ]
         )
         assert new_code == expected2
-        assert contextual_dunder_methods == {("BubbleSortClass", "__init__"), ("BubbleSortClass", "__call__")}
+        assert contextual_dunder_methods == {
+            ("BubbleSortClass", "__init__"),
+            ("BubbleSortClass", "__call__"),
+        }
 
 
 def test_get_code_multiline_class_def(temp_dir: Path) -> None:
@@ -251,7 +285,11 @@ def test_get_code_multiline_class_def(temp_dir: Path) -> None:
                 FunctionToOptimize(
                     "computeStatement",
                     f.name,
-                    [FunctionParent("StatementAssignmentVariableConstantMutable", "ClassDef")],
+                    [
+                        FunctionParent(
+                            "StatementAssignmentVariableConstantMutable", "ClassDef"
+                        )
+                    ],
                 )
             ]
         )
@@ -273,7 +311,11 @@ class CustomDataClass:
         # single FunctionToOptimize instance, in the case where that instance has been filtered to represent a function
         # (with a definition).
         new_code, contextual_dunder_methods = get_code(
-            [FunctionToOptimize("name", f.name, [FunctionParent("CustomDataClass", "ClassDef")])]
+            [
+                FunctionToOptimize(
+                    "name", f.name, [FunctionParent("CustomDataClass", "ClassDef")]
+                )
+            ]
         )
         assert new_code is None
         assert contextual_dunder_methods == set()

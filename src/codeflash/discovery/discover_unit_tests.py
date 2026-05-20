@@ -25,7 +25,7 @@ from pydantic.dataclasses import dataclass
 from codeflash.cli_cmds.logging_config import logger, test_files_progress_bar, rule
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE, codeflash_cache_db
 from codeflash.code_utils.shell_utils import get_cross_platform_subprocess_run_args
-from codeflash.models.models import (
+from codeflash.models.domain import (
     CodePosition,
     FunctionCalledInTest,
     TestsInFile,

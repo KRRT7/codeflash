@@ -3,9 +3,7 @@ from codeflash.code_utils.config_utils import custom_addopts
 
 import configparser
 import os
-import stat
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 import tomlkit
@@ -31,6 +29,7 @@ def test_custom_addopts_modifies_and_restores_dotini_file(tmp_path: Path) -> Non
     # Check that the file is restored after exiting the context
     restored_content = config_file.read_text()
     assert restored_content.strip() == original_content.strip()
+
 
 def test_custom_addopts_modifies_and_restores_ini_file(tmp_path: Path) -> None:
     """Verify that custom_addopts correctly modifies and then restores a pytest.ini file."""
@@ -72,7 +71,12 @@ def test_custom_addopts_modifies_and_restores_toml_file(tmp_path: Path) -> None:
         # Check that the file is modified inside the context
         modified_content = config_file.read_text()
         modified_data = tomlkit.parse(modified_content)
-        modified_addopts = modified_data.get("tool", {}).get("pytest", {}).get("ini_options", {}).get("addopts", "")
+        modified_addopts = (
+            modified_data.get("tool", {})
+            .get("pytest", {})
+            .get("ini_options", {})
+            .get("addopts", "")
+        )
         assert modified_addopts == "-v"
 
     # Check that the file is restored after exiting the context
@@ -96,6 +100,7 @@ def test_custom_addopts_handles_no_addopts(tmp_path: Path) -> None:
     # The file should remain unchanged
     content_after_context = config_file.read_text()
     assert content_after_context == original_content
+
 
 def test_custom_addopts_handles_no_relevant_files(tmp_path: Path) -> None:
     """Ensure custom_addopts runs without error when no config files are found."""
@@ -167,7 +172,12 @@ def test_custom_addopts_with_multiple_config_files(tmp_path: Path) -> None:
         # Check TOML file modification
         toml_modified_content = toml_file.read_text()
         modified_data = tomlkit.parse(toml_modified_content)
-        modified_addopts = modified_data.get("tool", {}).get("pytest", {}).get("ini_options", {}).get("addopts", "")
+        modified_addopts = (
+            modified_data.get("tool", {})
+            .get("pytest", {})
+            .get("ini_options", {})
+            .get("addopts", "")
+        )
         assert modified_addopts == "-s"
 
     # Check that both files are restored

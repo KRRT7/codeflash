@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from argparse import Namespace
 
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.models.models import FunctionCalledInTest
+    from codeflash.models.domain import FunctionCalledInTest
 
 
 def generate_concolic_tests(

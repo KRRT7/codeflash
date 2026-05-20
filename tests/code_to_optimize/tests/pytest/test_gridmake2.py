@@ -15,12 +15,7 @@ class TestGridmake2With1DArrays:
         result = _gridmake2(x1, x2)
 
         # Expected: x1 is tiled len(x2) times, x2 is repeated len(x1) times
-        expected = np.array([
-            [1, 3],
-            [2, 3],
-            [1, 4],
-            [2, 4]
-        ])
+        expected = np.array([[1, 3], [2, 3], [1, 4], [2, 4]])
         assert_array_equal(result, expected)
 
     def test_different_length_arrays(self):
@@ -30,14 +25,7 @@ class TestGridmake2With1DArrays:
         result = _gridmake2(x1, x2)
 
         # Result should have len(x1) * len(x2) = 6 rows
-        expected = np.array([
-            [1, 10],
-            [2, 10],
-            [3, 10],
-            [1, 20],
-            [2, 20],
-            [3, 20]
-        ])
+        expected = np.array([[1, 10], [2, 10], [3, 10], [1, 20], [2, 20], [3, 20]])
         assert_array_equal(result, expected)
         assert result.shape == (6, 2)
 
@@ -57,11 +45,7 @@ class TestGridmake2With1DArrays:
         x2 = np.array([10, 20, 30])
         result = _gridmake2(x1, x2)
 
-        expected = np.array([
-            [1, 10],
-            [1, 20],
-            [1, 30]
-        ])
+        expected = np.array([[1, 10], [1, 20], [1, 30]])
         assert_array_equal(result, expected)
 
     def test_float_arrays(self):
@@ -70,12 +54,7 @@ class TestGridmake2With1DArrays:
         x2 = np.array([0.1, 0.2])
         result = _gridmake2(x1, x2)
 
-        expected = np.array([
-            [1.5, 0.1],
-            [2.5, 0.1],
-            [1.5, 0.2],
-            [2.5, 0.2]
-        ])
+        expected = np.array([[1.5, 0.1], [2.5, 0.1], [1.5, 0.2], [2.5, 0.2]])
         assert_array_equal(result, expected)
 
     def test_negative_values(self):
@@ -84,14 +63,7 @@ class TestGridmake2With1DArrays:
         x2 = np.array([-10, 10])
         result = _gridmake2(x1, x2)
 
-        expected = np.array([
-            [-1, -10],
-            [0, -10],
-            [1, -10],
-            [-1, 10],
-            [0, 10],
-            [1, 10]
-        ])
+        expected = np.array([[-1, -10], [0, -10], [1, -10], [-1, 10], [0, 10], [1, 10]])
         assert_array_equal(result, expected)
 
     def test_result_shape(self):
@@ -128,12 +100,7 @@ class TestGridmake2With2DFirst:
 
         # x1 is tiled len(x2) times vertically
         # x2 is repeated len(x1) times (2 rows)
-        expected = np.array([
-            [1, 2, 10],
-            [3, 4, 10],
-            [1, 2, 20],
-            [3, 4, 20]
-        ])
+        expected = np.array([[1, 2, 10], [3, 4, 10], [1, 2, 20], [3, 4, 20]])
         assert_array_equal(result, expected)
 
     def test_2d_single_column(self):
@@ -142,14 +109,7 @@ class TestGridmake2With2DFirst:
         x2 = np.array([10, 20])
         result = _gridmake2(x1, x2)
 
-        expected = np.array([
-            [1, 10],
-            [2, 10],
-            [3, 10],
-            [1, 20],
-            [2, 20],
-            [3, 20]
-        ])
+        expected = np.array([[1, 10], [2, 10], [3, 10], [1, 20], [2, 20], [3, 20]])
         assert_array_equal(result, expected)
 
     def test_2d_multiple_columns(self):
@@ -158,10 +118,7 @@ class TestGridmake2With2DFirst:
         x2 = np.array([100])
         result = _gridmake2(x1, x2)
 
-        expected = np.array([
-            [1, 2, 3, 100],
-            [4, 5, 6, 100]
-        ])
+        expected = np.array([[1, 2, 3, 100], [4, 5, 6, 100]])
         assert_array_equal(result, expected)
 
 

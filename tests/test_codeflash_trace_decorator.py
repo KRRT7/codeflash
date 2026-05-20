@@ -1,6 +1,5 @@
-from codeflash.code_utils.cleanup import get_run_tmp_file
 from codeflash.benchmarking.codeflash_trace import codeflash_trace
-from pathlib import Path
+
 
 @codeflash_trace
 def example_function(arr):

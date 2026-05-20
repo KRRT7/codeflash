@@ -17,7 +17,9 @@ def temp_dir():
         yield Path(temp)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_function_detection(temp_dir):
     async_function = """
 async def async_function_with_return():
@@ -31,19 +33,21 @@ async def async_function_without_return():
 def regular_function():
     return 10
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(async_function)
     functions_found = find_all_functions_in_file(file_path)
-    
+
     function_names = [fn.function_name for fn in functions_found[file_path]]
-    
+
     assert "async_function_with_return" in function_names
     assert "regular_function" in function_names
     assert "async_function_without_return" not in function_names
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_method_in_class(temp_dir):
     code_with_async_method = """
 class AsyncClass:
@@ -58,25 +62,27 @@ class AsyncClass:
     def sync_method(self):
         return "sync result"
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(code_with_async_method)
     functions_found = find_all_functions_in_file(file_path)
-    
+
     found_functions = functions_found[file_path]
     function_names = [fn.function_name for fn in found_functions]
     qualified_names = [fn.qualified_name for fn in found_functions]
-    
+
     assert "async_method" in function_names
     assert "AsyncClass.async_method" in qualified_names
-    
+
     assert "sync_method" in function_names
     assert "AsyncClass.sync_method" in qualified_names
-    
+
     assert "async_method_no_return" not in function_names
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_nested_async_functions(temp_dir):
     nested_async = """
 async def outer_async():
@@ -92,19 +98,21 @@ def outer_sync():
     
     return inner_async
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(nested_async)
     functions_found = find_all_functions_in_file(file_path)
-    
+
     function_names = [fn.function_name for fn in functions_found[file_path]]
-    
+
     assert "outer_async" in function_names
     assert "outer_sync" in function_names
     assert "inner_async" not in function_names
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_staticmethod_and_classmethod(temp_dir):
     async_decorators = """
 class MyClass:
@@ -122,20 +130,22 @@ class MyClass:
     async def async_property(self):
         return await self.get_value()
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(async_decorators)
     functions_found = find_all_functions_in_file(file_path)
-    
+
     function_names = [fn.function_name for fn in functions_found[file_path]]
-    
+
     assert "async_static_method" in function_names
     assert "async_class_method" in function_names
-    
+
     assert "async_property" not in function_names
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_generator_functions(temp_dir):
     async_generators = """
 async def async_generator_with_return():
@@ -151,19 +161,21 @@ async def regular_async_with_return():
     result = await compute()
     return result
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(async_generators)
     functions_found = find_all_functions_in_file(file_path)
-    
+
     function_names = [fn.function_name for fn in functions_found[file_path]]
-    
+
     assert "async_generator_with_return" in function_names
     assert "regular_async_with_return" in function_names
     assert "async_generator_no_return" not in function_names
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_inspect_async_top_level_functions(temp_dir):
     code = """
 async def top_level_async():
@@ -183,29 +195,39 @@ class AsyncContainer:
     async def async_classmethod(cls):
         return "classmethod"
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(code)
-    
+
     result = inspect_top_level_functions_or_methods(file_path, "top_level_async")
     assert result.is_top_level
-    
-    result = inspect_top_level_functions_or_methods(file_path, "async_method", class_name="AsyncContainer")
+
+    result = inspect_top_level_functions_or_methods(
+        file_path, "async_method", class_name="AsyncContainer"
+    )
     assert result.is_top_level
-    
-    result = inspect_top_level_functions_or_methods(file_path, "nested_async", class_name="AsyncContainer")
+
+    result = inspect_top_level_functions_or_methods(
+        file_path, "nested_async", class_name="AsyncContainer"
+    )
     assert not result.is_top_level
-    
-    result = inspect_top_level_functions_or_methods(file_path, "async_static", class_name="AsyncContainer")
+
+    result = inspect_top_level_functions_or_methods(
+        file_path, "async_static", class_name="AsyncContainer"
+    )
     assert result.is_top_level
     assert result.is_staticmethod
-    
-    result = inspect_top_level_functions_or_methods(file_path, "async_classmethod", class_name="AsyncContainer")
+
+    result = inspect_top_level_functions_or_methods(
+        file_path, "async_classmethod", class_name="AsyncContainer"
+    )
     assert result.is_top_level
     assert result.is_classmethod
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_get_functions_to_optimize_with_async(temp_dir):
     mixed_code = """
 async def async_func_one():
@@ -224,17 +246,17 @@ class MixedClass:
     def sync_method(self):
         return self.operation()
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(mixed_code)
-    
+
     test_config = TestConfig(
         tests_root="tests",
         project_root_path=".",
         test_framework="pytest",
-        tests_project_rootdir=Path()
+        tests_project_rootdir=Path(),
     )
-    
+
     functions, functions_count, _ = get_functions_to_optimize(
         optimize_all=None,
         replay_test=None,
@@ -245,19 +267,21 @@ class MixedClass:
         project_root=file_path.parent,
         module_root=file_path.parent,
     )
-    
+
     assert functions_count == 4
-    
+
     function_names = [fn.function_name for fn in functions[file_path]]
     assert "async_func_one" in function_names
     assert "sync_func_one" in function_names
     assert "async_method" in function_names
     assert "sync_method" in function_names
-    
+
     assert "async_func_two" not in function_names
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_functions_always_included(temp_dir):
     """Test that async functions are always included now (no longer filtered out)."""
     mixed_code = """
@@ -277,17 +301,17 @@ class MixedClass:
     def sync_method(self):
         return self.operation()
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(mixed_code)
-    
+
     test_config = TestConfig(
         tests_root="tests",
         project_root_path=".",
         test_framework="pytest",
-        tests_project_rootdir=Path()
+        tests_project_rootdir=Path(),
     )
-    
+
     functions, functions_count, _ = get_functions_to_optimize(
         optimize_all=None,
         replay_test=None,
@@ -298,10 +322,10 @@ class MixedClass:
         project_root=file_path.parent,
         module_root=file_path.parent,
     )
-    
+
     # Now async functions are always included, so we expect 4 functions (not 2)
     assert functions_count == 4
-    
+
     function_names = [fn.function_name for fn in functions[file_path]]
     assert "sync_func_one" in function_names
     assert "sync_method" in function_names
@@ -310,7 +334,9 @@ class MixedClass:
     assert "async_method" in function_names
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_function_parents(temp_dir):
     complex_structure = """
 class OuterClass:
@@ -327,13 +353,13 @@ async def module_level_async():
             return 3
     return LocalClass()
 """
-    
+
     file_path = temp_dir / "test_file.py"
     file_path.write_text(complex_structure)
     functions_found = find_all_functions_in_file(file_path)
-    
+
     found_functions = functions_found[file_path]
-    
+
     for fn in found_functions:
         if fn.function_name == "outer_method":
             assert len(fn.parents) == 1

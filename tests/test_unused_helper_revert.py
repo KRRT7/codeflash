@@ -6,11 +6,10 @@ from pathlib import Path
 import pytest
 from codeflash.context.unused_definition_remover import detect_unused_helper_functions
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import CodeStringsMarkdown
+from codeflash.models.domain import CodeStringsMarkdown
 from codeflash.optimization.function_optimizer import FunctionOptimizer
 from codeflash.verification.verification_utils import TestConfig
 from codeflash.context.unused_definition_remover import revert_unused_helper_functions
-
 
 
 @pytest.fixture
@@ -77,7 +76,10 @@ def helper_function_2(x):
 
     # Create FunctionToOptimize instance
     function_to_optimize = FunctionToOptimize(
-        file_path=main_file, function_name="entrypoint_function", qualified_name="entrypoint_function", parents=[]
+        file_path=main_file,
+        function_name="entrypoint_function",
+        qualified_name="entrypoint_function",
+        parents=[],
     )
 
     # Create function optimizer
@@ -94,13 +96,19 @@ def helper_function_2(x):
     code_context = ctx_result.unwrap()
 
     # Test unused helper detection
-    unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+    unused_helpers = detect_unused_helper_functions(
+        optimizer.function_to_optimize,
+        code_context,
+        CodeStringsMarkdown.parse_markdown_code(optimized_code),
+    )
 
     # Should detect helper_function_2 as unused
     unused_names = {uh.qualified_name for uh in unused_helpers}
     expected_unused = {"helper_function_2"}
 
-    assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+    assert unused_names == expected_unused, (
+        f"Expected unused: {expected_unused}, got: {unused_names}"
+    )
 
     # Also test the complete replace_function_and_helpers_with_optimized_code workflow
     # First modify the optimized code to include a MODIFIED unused helper
@@ -125,7 +133,9 @@ def helper_function_2(x):
 
     # Apply optimization and test reversion
     optimizer.replace_function_and_helpers_with_optimized_code(
-        code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code_with_modified_helper), original_helper_code
+        code_context,
+        CodeStringsMarkdown.parse_markdown_code(optimized_code_with_modified_helper),
+        original_helper_code,
     )
     # Check final file content
     final_content = main_file.read_text()
@@ -134,17 +144,27 @@ def helper_function_2(x):
     assert "result1 + n * 3" in final_content, "Entrypoint function should be optimized"
 
     # helper_function_2 should be reverted to original (x * 3, NOT the modified x * 7)
-    assert "return x * 3" in final_content, "helper_function_2 should be reverted to original"
-    assert "return x * 7" not in final_content, "helper_function_2 should NOT contain the modified version"
+    assert "return x * 3" in final_content, (
+        "helper_function_2 should be reverted to original"
+    )
+    assert "return x * 7" not in final_content, (
+        "helper_function_2 should NOT contain the modified version"
+    )
 
     # helper_function_1 should remain (it's still called)
-    assert "def helper_function_1(x):" in final_content, "helper_function_1 should still exist"
+    assert "def helper_function_1(x):" in final_content, (
+        "helper_function_1 should still exist"
+    )
 
     # Also test the complete replace_function_and_helpers_with_optimized_code workflow
     original_helper_code = {main_file: main_file.read_text()}
 
     # Apply optimization and test reversion
-    optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+    optimizer.replace_function_and_helpers_with_optimized_code(
+        code_context,
+        CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        original_helper_code,
+    )
 
     # Check final file content
     final_content = main_file.read_text()
@@ -153,11 +173,17 @@ def helper_function_2(x):
     assert "result1 + n * 3" in final_content, "Entrypoint function should be optimized"
 
     # helper_function_2 should be reverted to original (return x * 3, NOT the modified x * 4)
-    assert "return x * 3" in final_content, "helper_function_2 should be reverted to original"
-    assert "return x * 4" not in final_content, "helper_function_2 should NOT contain the modified version"
+    assert "return x * 3" in final_content, (
+        "helper_function_2 should be reverted to original"
+    )
+    assert "return x * 4" not in final_content, (
+        "helper_function_2 should NOT contain the modified version"
+    )
 
     # helper_function_1 should remain as optimized (it's still called)
-    assert "def helper_function_1(x):" in final_content, "helper_function_1 should still exist"
+    assert "def helper_function_1(x):" in final_content, (
+        "helper_function_1 should still exist"
+    )
 
 
 def test_revert_unused_helper_functions(temp_project):
@@ -184,7 +210,10 @@ def helper_function_2(x):
 
     # Create FunctionToOptimize instance
     function_to_optimize = FunctionToOptimize(
-        file_path=main_file, function_name="entrypoint_function", qualified_name="entrypoint_function", parents=[]
+        file_path=main_file,
+        function_name="entrypoint_function",
+        qualified_name="entrypoint_function",
+        parents=[],
     )
 
     # Create function optimizer
@@ -208,7 +237,11 @@ def helper_function_2(x):
     # 1. Apply the optimization
     # 2. Detect unused helpers
     # 3. Revert unused helpers to original definitions
-    optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+    optimizer.replace_function_and_helpers_with_optimized_code(
+        code_context,
+        CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        original_helper_code,
+    )
 
     # Check final file content
     final_content = main_file.read_text()
@@ -217,25 +250,32 @@ def helper_function_2(x):
     assert "result1 + n * 3" in final_content, "Entrypoint function should be optimized"
 
     # helper_function_2 should be reverted to original (return x * 3, not x * 4)
-    assert "return x * 3" in final_content, "helper_function_2 should be reverted to original"
-    assert "return x * 4" not in final_content, "helper_function_2 should not contain the optimized version"
+    assert "return x * 3" in final_content, (
+        "helper_function_2 should be reverted to original"
+    )
+    assert "return x * 4" not in final_content, (
+        "helper_function_2 should not contain the optimized version"
+    )
 
     # helper_function_1 should remain as optimized (it's still called)
-    assert "def helper_function_1(x):" in final_content, "helper_function_1 should still exist"
+    assert "def helper_function_1(x):" in final_content, (
+        "helper_function_1 should still exist"
+    )
 
 
 def test_no_unused_helpers_no_revert(temp_project):
     """Test that when all helpers are still used, nothing is reverted."""
     temp_dir, main_file, test_cfg = temp_project
-    
-    
+
     # Store original content to verify nothing changes
     original_content = main_file.read_text()
-    
+
     revert_unused_helper_functions(temp_dir, [], {})
-    
+
     # Verify the file content remains unchanged
-    assert main_file.read_text() == original_content, "File should remain unchanged when no helpers to revert"
+    assert main_file.read_text() == original_content, (
+        "File should remain unchanged when no helpers to revert"
+    )
 
     # Optimized version that still calls both helpers
     optimized_code = """
@@ -258,7 +298,10 @@ def helper_function_2(x):
 
     # Create FunctionToOptimize instance
     function_to_optimize = FunctionToOptimize(
-        file_path=main_file, function_name="entrypoint_function", qualified_name="entrypoint_function", parents=[]
+        file_path=main_file,
+        function_name="entrypoint_function",
+        qualified_name="entrypoint_function",
+        parents=[],
     )
 
     # Create function optimizer
@@ -278,18 +321,30 @@ def helper_function_2(x):
     original_helper_code = {main_file: main_file.read_text()}
 
     # Test detection - should find no unused helpers
-    unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+    unused_helpers = detect_unused_helper_functions(
+        optimizer.function_to_optimize,
+        code_context,
+        CodeStringsMarkdown.parse_markdown_code(optimized_code),
+    )
     assert len(unused_helpers) == 0, "No helpers should be detected as unused"
 
     # Apply optimization
-    optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+    optimizer.replace_function_and_helpers_with_optimized_code(
+        code_context,
+        CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        original_helper_code,
+    )
 
     # Check final file content - should contain the optimized versions
     final_content = main_file.read_text()
 
     # Both helpers should be optimized
-    assert "x << 1" in final_content, "helper_function_1 should be optimized to use bit shift"
-    assert "result1 + result2" in final_content, "Entrypoint should still call both helpers"
+    assert "x << 1" in final_content, (
+        "helper_function_1 should be optimized to use bit shift"
+    )
+    assert "result1 + result2" in final_content, (
+        "Entrypoint should still call both helpers"
+    )
 
 
 def test_detect_unused_in_multi_file_project():
@@ -350,7 +405,10 @@ def entrypoint_function(n):
 
         # Create FunctionToOptimize instance
         function_to_optimize = FunctionToOptimize(
-            file_path=main_file, function_name="entrypoint_function", qualified_name="entrypoint_function", parents=[]
+            file_path=main_file,
+            function_name="entrypoint_function",
+            qualified_name="entrypoint_function",
+            parents=[],
         )
 
         # Create function optimizer
@@ -362,18 +420,26 @@ def entrypoint_function(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect helper_function_2 as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"helper_function_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # First, simulate modified helper in the helper file
@@ -410,18 +476,34 @@ def helper_function_2(x):
         }
 
         # Apply optimization and test reversion
-        optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+        optimizer.replace_function_and_helpers_with_optimized_code(
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+            original_helper_code,
+        )
         # Check main file content
         main_content = main_file.read_text()
-        assert "result1 + n * 3" in main_content, "Entrypoint function should be optimized"
-        assert "from helpers import helper_function_1" in main_content, "Import should be updated"
+        assert "result1 + n * 3" in main_content, (
+            "Entrypoint function should be optimized"
+        )
+        assert "from helpers import helper_function_1" in main_content, (
+            "Import should be updated"
+        )
 
         # Check helper file content - helper_function_2 should be reverted to original
         helper_content = helper_file.read_text()
-        assert "def helper_function_1(x):" in helper_content, "helper_function_1 should still exist"
-        assert "def helper_function_2(x):" in helper_content, "helper_function_2 should exist"
-        assert "return x * 3" in helper_content, "helper_function_2 should be reverted to original"
-        assert "return x * 9" not in helper_content, "helper_function_2 should NOT contain the modified version"
+        assert "def helper_function_1(x):" in helper_content, (
+            "helper_function_1 should still exist"
+        )
+        assert "def helper_function_2(x):" in helper_content, (
+            "helper_function_2 should exist"
+        )
+        assert "return x * 3" in helper_content, (
+            "helper_function_2 should be reverted to original"
+        )
+        assert "return x * 9" not in helper_content, (
+            "helper_function_2 should NOT contain the modified version"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # First, simulate modified helper in the helper file
@@ -458,19 +540,35 @@ def helper_function_2(x):
         }
 
         # Apply optimization and test reversion
-        optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+        optimizer.replace_function_and_helpers_with_optimized_code(
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+            original_helper_code,
+        )
 
         # Check main file content
         main_content = main_file.read_text()
-        assert "result1 + n * 3" in main_content, "Entrypoint function should be optimized"
-        assert "from helpers import helper_function_1" in main_content, "Import should be updated"
+        assert "result1 + n * 3" in main_content, (
+            "Entrypoint function should be optimized"
+        )
+        assert "from helpers import helper_function_1" in main_content, (
+            "Import should be updated"
+        )
 
         # Check helper file content - helper_function_2 should be reverted to original
         helper_content = helper_file.read_text()
-        assert "def helper_function_1(x):" in helper_content, "helper_function_1 should still exist"
-        assert "def helper_function_2(x):" in helper_content, "helper_function_2 should exist"
-        assert "return x * 3" in helper_content, "helper_function_2 should be reverted to original"
-        assert "return x * 5" not in helper_content, "helper_function_2 should NOT contain the modified version"
+        assert "def helper_function_1(x):" in helper_content, (
+            "helper_function_1 should still exist"
+        )
+        assert "def helper_function_2(x):" in helper_content, (
+            "helper_function_2 should exist"
+        )
+        assert "return x * 3" in helper_content, (
+            "helper_function_2 should be reverted to original"
+        )
+        assert "return x * 5" not in helper_content, (
+            "helper_function_2 should NOT contain the modified version"
+        )
 
     finally:
         # Cleanup
@@ -532,7 +630,7 @@ class Calculator:
         )
 
         # Create FunctionToOptimize instance for class method
-        from codeflash.models.models import FunctionParent
+        from codeflash.models.domain import FunctionParent
 
         function_to_optimize = FunctionToOptimize(
             file_path=main_file,
@@ -550,18 +648,26 @@ class Calculator:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect Calculator.helper_method_2 as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"Calculator.helper_method_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # Update optimized code to include a MODIFIED unused helper
@@ -587,32 +693,50 @@ class Calculator:
 
         # Apply optimization and test reversion
         optimizer.replace_function_and_helpers_with_optimized_code(
-            code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code_with_modified_helper), original_helper_code
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(
+                optimized_code_with_modified_helper
+            ),
+            original_helper_code,
         )
 
         # Check final file content
         final_content = main_file.read_text()
 
         # The entrypoint method should be optimized
-        assert "result1 + n * 3" in final_content, "Entrypoint method should be optimized"
+        assert "result1 + n * 3" in final_content, (
+            "Entrypoint method should be optimized"
+        )
 
         # helper_method_2 should be reverted to original (x * 3, NOT the modified x * 8)
-        assert "return x * 3" in final_content, "helper_method_2 should be reverted to original"
-        assert "return x * 8" not in final_content, "helper_method_2 should NOT contain the modified version"
+        assert "return x * 3" in final_content, (
+            "helper_method_2 should be reverted to original"
+        )
+        assert "return x * 8" not in final_content, (
+            "helper_method_2 should NOT contain the modified version"
+        )
 
         # helper_method_1 should remain (it's still called)
-        assert "def helper_method_1(self, x):" in final_content, "helper_method_1 should still exist"
+        assert "def helper_method_1(self, x):" in final_content, (
+            "helper_method_1 should still exist"
+        )
 
         # Test reversion
         original_helper_code = {main_file: main_file.read_text()}
 
-        optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+        optimizer.replace_function_and_helpers_with_optimized_code(
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+            original_helper_code,
+        )
 
         # Check final file content
         final_content = main_file.read_text()
 
         # The entrypoint method should be optimized
-        assert "result1 + n * 3" in final_content, "Entrypoint method should be optimized"
+        assert "result1 + n * 3" in final_content, (
+            "Entrypoint method should be optimized"
+        )
 
         # helper_method_2 should be reverted to original
         assert "x * 3" in final_content, "helper_method_2 should still exist"
@@ -677,7 +801,7 @@ class Processor:
         )
 
         # Create FunctionToOptimize instance for class method
-        from codeflash.models.models import FunctionParent
+        from codeflash.models.domain import FunctionParent
 
         function_to_optimize = FunctionToOptimize(
             file_path=main_file,
@@ -695,18 +819,26 @@ class Processor:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect external_helper_2 as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"external_helper_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # Update optimized code to include a MODIFIED unused helper
@@ -732,7 +864,11 @@ class Processor:
 
         # Apply optimization and test reversion
         optimizer.replace_function_and_helpers_with_optimized_code(
-            code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code_with_modified_helper), original_helper_code
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(
+                optimized_code_with_modified_helper
+            ),
+            original_helper_code,
         )
 
         # Check final file content
@@ -742,11 +878,17 @@ class Processor:
         assert "result1 + n * 3" in final_content, "Process method should be optimized"
 
         # external_helper_2 should be reverted to original (x * 3, NOT the modified x * 11)
-        assert "return x * 3" in final_content, "external_helper_2 should be reverted to original"
-        assert "return x * 11" not in final_content, "external_helper_2 should NOT contain the modified version"
+        assert "return x * 3" in final_content, (
+            "external_helper_2 should be reverted to original"
+        )
+        assert "return x * 11" not in final_content, (
+            "external_helper_2 should NOT contain the modified version"
+        )
 
         # external_helper_1 should remain (it's still called)
-        assert "def external_helper_1(x):" in final_content, "external_helper_1 should still exist"
+        assert "def external_helper_1(x):" in final_content, (
+            "external_helper_1 should still exist"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # Update optimized code to include a MODIFIED unused helper
@@ -772,7 +914,11 @@ class Processor:
 
         # Apply optimization and test reversion
         optimizer.replace_function_and_helpers_with_optimized_code(
-            code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code_with_modified_helper), original_helper_code
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(
+                optimized_code_with_modified_helper
+            ),
+            original_helper_code,
         )
 
         # Check final file content
@@ -782,11 +928,17 @@ class Processor:
         assert "result1 + n * 3" in final_content, "Process method should be optimized"
 
         # external_helper_2 should be reverted to original (x * 3, NOT the modified x * 7)
-        assert "return x * 3" in final_content, "external_helper_2 should be reverted to original"
-        assert "return x * 7" not in final_content, "external_helper_2 should NOT contain the modified version"
+        assert "return x * 3" in final_content, (
+            "external_helper_2 should be reverted to original"
+        )
+        assert "return x * 7" not in final_content, (
+            "external_helper_2 should NOT contain the modified version"
+        )
 
         # external_helper_1 should remain (it's still called)
-        assert "def external_helper_1(x):" in final_content, "external_helper_1 should still exist"
+        assert "def external_helper_1(x):" in final_content, (
+            "external_helper_1 should still exist"
+        )
 
     finally:
         # Cleanup
@@ -853,7 +1005,7 @@ class OuterClass:
 
         # Note: In practice, codeflash might not handle deeply nested classes,
         # but we test the detection logic anyway
-        from codeflash.models.models import FunctionParent
+        from codeflash.models.domain import FunctionParent
 
         function_to_optimize = FunctionToOptimize(
             file_path=main_file,
@@ -889,7 +1041,9 @@ class OuterClass:
                                 "only_function_name": "global_helper_1",
                                 "fully_qualified_name": "main.global_helper_1",
                                 "file_path": main_file,
-                                "jedi_definition": type("MockJedi", (), {"type": "function"})(),
+                                "jedi_definition": type(
+                                    "MockJedi", (), {"type": "function"}
+                                )(),
                             },
                         )(),
                         type(
@@ -900,7 +1054,9 @@ class OuterClass:
                                 "only_function_name": "global_helper_2",
                                 "fully_qualified_name": "main.global_helper_2",
                                 "file_path": main_file,
-                                "jedi_definition": type("MockJedi", (), {"type": "function"})(),
+                                "jedi_definition": type(
+                                    "MockJedi", (), {"type": "function"}
+                                )(),
                             },
                         )(),
                     ]
@@ -913,7 +1069,9 @@ class OuterClass:
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"global_helper_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
         # For nested class tests, we'll skip the complete workflow test since nested classes
         # may not be fully supported by the optimizer, but we've verified detection works
@@ -1018,7 +1176,10 @@ def entrypoint_function(n):
 
         # Create FunctionToOptimize instance
         function_to_optimize = FunctionToOptimize(
-            file_path=main_file, function_name="entrypoint_function", qualified_name="entrypoint_function", parents=[]
+            file_path=main_file,
+            function_name="entrypoint_function",
+            qualified_name="entrypoint_function",
+            parents=[],
         )
 
         # Create function optimizer
@@ -1030,12 +1191,18 @@ def entrypoint_function(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect multiply, process_data as unused (at minimum)
         unused_names = {uh.qualified_name for uh in unused_helpers}
@@ -1043,8 +1210,12 @@ def entrypoint_function(n):
         # The exact unused functions may vary based on what helpers are discovered by Jedi
         # At minimum, we expect multiply to be detected as unused since it's not imported
         assert "multiply" in unused_names, "Expected multiply to be detected as unused"
-        assert "process_data" in unused_names, "Expected process_data to be detected as unused"
-        assert "subtract" not in unused_names, "Expected subtract not to be detected as unused"
+        assert "process_data" in unused_names, (
+            "Expected process_data to be detected as unused"
+        )
+        assert "subtract" not in unused_names, (
+            "Expected subtract not to be detected as unused"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # First modify some helper files to simulate optimization changes
@@ -1095,11 +1266,17 @@ def subtract(x, y):
         }
 
         # Apply optimization and test reversion
-        optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+        optimizer.replace_function_and_helpers_with_optimized_code(
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+            original_helper_code,
+        )
 
         # Check main file content
         main_content = main_file.read_text()
-        assert "(n * 2) + (n ** 2)" in main_content, "Entrypoint function should be optimized with inlined calculations"
+        assert "(n * 2) + (n ** 2)" in main_content, (
+            "Entrypoint function should be optimized with inlined calculations"
+        )
         assert "from math_helpers import add" in main_content, (
             "Imports should be updated to only include used functions"
         )
@@ -1109,7 +1286,9 @@ def subtract(x, y):
         assert "def add(x, y):" in math_content, "add function should still exist"
         # If multiply was unused and modified, it should be reverted
         if "multiply" in unused_names:
-            assert "return x * y" in math_content, "multiply should be reverted to original if it was unused"
+            assert "return x * y" in math_content, (
+                "multiply should be reverted to original if it was unused"
+            )
             assert "return x * y * 2" not in math_content, (
                 "multiply should NOT contain the modified version if it was unused"
             )
@@ -1178,7 +1357,10 @@ def entrypoint_function(n):
 
         # Create FunctionToOptimize instance
         function_to_optimize = FunctionToOptimize(
-            file_path=main_file, function_name="entrypoint_function", qualified_name="entrypoint_function", parents=[]
+            file_path=main_file,
+            function_name="entrypoint_function",
+            qualified_name="entrypoint_function",
+            parents=[],
         )
 
         # Create function optimizer
@@ -1190,18 +1372,26 @@ def entrypoint_function(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect multiply_numbers and divide_numbers as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
 
         # Check that multiply_numbers is detected as unused
-        assert "multiply_numbers" in unused_names, f"Expected 'multiply_numbers' to be unused, got: {unused_names}"
+        assert "multiply_numbers" in unused_names, (
+            f"Expected 'multiply_numbers' to be unused, got: {unused_names}"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # First modify the calculator file to simulate optimization changes
@@ -1246,21 +1436,37 @@ def divide_numbers(x, y):
         }
 
         # Apply optimization and test reversion
-        optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+        optimizer.replace_function_and_helpers_with_optimized_code(
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+            original_helper_code,
+        )
 
         # Check main file content
         main_content = main_file.read_text()
-        assert "+ (n * 5)" in main_content, "Entrypoint function should be optimized with inlined multiplication"
+        assert "+ (n * 5)" in main_content, (
+            "Entrypoint function should be optimized with inlined multiplication"
+        )
         assert "import calculator" in main_content, "Calculator import should remain"
 
         # Check calculator file content - unused functions should be reverted if modified
         calc_content = calc_file.read_text()
-        assert "def add_numbers(x, y):" in calc_content, "add_numbers should still exist"
-        assert "def multiply_numbers(x, y):" in calc_content, "multiply_numbers should exist"
-        assert "def divide_numbers(x, y):" in calc_content, "divide_numbers should remain as original"
+        assert "def add_numbers(x, y):" in calc_content, (
+            "add_numbers should still exist"
+        )
+        assert "def multiply_numbers(x, y):" in calc_content, (
+            "multiply_numbers should exist"
+        )
+        assert "def divide_numbers(x, y):" in calc_content, (
+            "divide_numbers should remain as original"
+        )
         # multiply_numbers should be reverted to original since it's unused
-        assert "return x * y" in calc_content, "multiply_numbers should be reverted to original"
-        assert "return x * y * 5" not in calc_content, "multiply_numbers should NOT contain the modified version"
+        assert "return x * y" in calc_content, (
+            "multiply_numbers should be reverted to original"
+        )
+        assert "return x * y * 5" not in calc_content, (
+            "multiply_numbers should NOT contain the modified version"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # First modify the calculator file to simulate optimization changes
@@ -1305,21 +1511,37 @@ def divide_numbers(x, y):
         }
 
         # Apply optimization and test reversion
-        optimizer.replace_function_and_helpers_with_optimized_code(code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code)
+        optimizer.replace_function_and_helpers_with_optimized_code(
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+            original_helper_code,
+        )
 
         # Check main file content
         main_content = main_file.read_text()
-        assert "+ (n * 5)" in main_content, "Entrypoint function should be optimized with inlined multiplication"
+        assert "+ (n * 5)" in main_content, (
+            "Entrypoint function should be optimized with inlined multiplication"
+        )
         assert "import calculator" in main_content, "Calculator import should remain"
 
         # Check calculator file content - unused functions should be reverted if modified
         calc_content = calc_file.read_text()
-        assert "def add_numbers(x, y):" in calc_content, "add_numbers should still exist"
-        assert "def multiply_numbers(x, y):" in calc_content, "multiply_numbers should exist"
-        assert "def divide_numbers(x, y):" in calc_content, "divide_numbers should remain as original"
+        assert "def add_numbers(x, y):" in calc_content, (
+            "add_numbers should still exist"
+        )
+        assert "def multiply_numbers(x, y):" in calc_content, (
+            "multiply_numbers should exist"
+        )
+        assert "def divide_numbers(x, y):" in calc_content, (
+            "divide_numbers should remain as original"
+        )
         # multiply_numbers should be reverted to original since it's unused
-        assert "return x * y" in calc_content, "multiply_numbers should be reverted to original"
-        assert "return x * y * 3" not in calc_content, "multiply_numbers should NOT contain the modified version"
+        assert "return x * y" in calc_content, (
+            "multiply_numbers should be reverted to original"
+        )
+        assert "return x * y * 3" not in calc_content, (
+            "multiply_numbers should NOT contain the modified version"
+        )
 
     finally:
         # Cleanup
@@ -1393,7 +1615,7 @@ class MathUtils:
         )
 
         # Test static method optimization
-        from codeflash.models.models import FunctionParent
+        from codeflash.models.domain import FunctionParent
 
         function_to_optimize = FunctionToOptimize(
             file_path=main_file,
@@ -1411,20 +1633,26 @@ class MathUtils:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection for static method
         unused_helpers = detect_unused_helper_functions(
-            optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_static_code)
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_static_code),
         )
 
         # Should detect utility_function_2 as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"utility_function_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
         # Also test the complete replace_function_and_helpers_with_optimized_code workflow
         # Update optimized code to include a MODIFIED unused helper
@@ -1456,7 +1684,11 @@ class MathUtils:
 
         # Apply optimization and test reversion
         optimizer.replace_function_and_helpers_with_optimized_code(
-            code_context, CodeStringsMarkdown.parse_markdown_code(optimized_static_code_with_modified_helper), original_helper_code
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(
+                optimized_static_code_with_modified_helper
+            ),
+            original_helper_code,
         )
 
         # Check final file content
@@ -1466,11 +1698,17 @@ class MathUtils:
         assert "result1 + n * 3" in final_content, "Static method should be optimized"
 
         # utility_function_2 should be reverted to original (x * 3, NOT the modified x * 6)
-        assert "return x * 3" in final_content, "utility_function_2 should be reverted to original"
-        assert "return x * 6" not in final_content, "utility_function_2 should NOT contain the modified version"
+        assert "return x * 3" in final_content, (
+            "utility_function_2 should be reverted to original"
+        )
+        assert "return x * 6" not in final_content, (
+            "utility_function_2 should NOT contain the modified version"
+        )
 
         # utility_function_1 should remain (it's still called)
-        assert "def utility_function_1(x):" in final_content, "utility_function_1 should still exist"
+        assert "def utility_function_1(x):" in final_content, (
+            "utility_function_1 should still exist"
+        )
 
     finally:
         # Cleanup
@@ -1531,10 +1769,10 @@ async def async_entrypoint(n):
 
         # Create FunctionToOptimize instance for async function
         function_to_optimize = FunctionToOptimize(
-            file_path=main_file, 
-            function_name="async_entrypoint", 
+            file_path=main_file,
+            function_name="async_entrypoint",
             parents=[],
-            is_async=True
+            is_async=True,
         )
 
         # Create function optimizer
@@ -1546,22 +1784,31 @@ async def async_entrypoint(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect async_helper_2 as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"async_helper_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
     finally:
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -1621,9 +1868,7 @@ def sync_entrypoint(n):
 
         # Create FunctionToOptimize instance for sync function
         function_to_optimize = FunctionToOptimize(
-            file_path=main_file, 
-            function_name="sync_entrypoint", 
-            parents=[]
+            file_path=main_file, function_name="sync_entrypoint", parents=[]
         )
 
         # Create function optimizer
@@ -1635,22 +1880,31 @@ def sync_entrypoint(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect async_helper_2 as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"async_helper_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
     finally:
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -1729,10 +1983,10 @@ async def mixed_entrypoint(n):
 
         # Create FunctionToOptimize instance for async function
         function_to_optimize = FunctionToOptimize(
-            file_path=main_file, 
-            function_name="mixed_entrypoint", 
+            file_path=main_file,
+            function_name="mixed_entrypoint",
             parents=[],
-            is_async=True
+            is_async=True,
         )
 
         # Create function optimizer
@@ -1744,22 +1998,31 @@ async def mixed_entrypoint(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect both sync_helper_2 and async_helper_2 as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"sync_helper_2", "async_helper_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
     finally:
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -1824,13 +2087,13 @@ class AsyncProcessor:
         )
 
         # Create FunctionToOptimize instance for async class method
-        from codeflash.models.models import FunctionParent
+        from codeflash.models.domain import FunctionParent
 
         function_to_optimize = FunctionToOptimize(
             file_path=main_file,
             function_name="entrypoint_method",
             parents=[FunctionParent(name="AsyncProcessor", type="ClassDef")],
-            is_async=True
+            is_async=True,
         )
 
         # Create function optimizer
@@ -1842,22 +2105,31 @@ class AsyncProcessor:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect async_helper_method_2 as unused (sync_helper_method may not be discovered as helper)
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"AsyncProcessor.async_helper_method_2"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
     finally:
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -1913,10 +2185,10 @@ async def async_entrypoint(n):
 
         # Create FunctionToOptimize instance for async function
         function_to_optimize = FunctionToOptimize(
-            file_path=main_file, 
-            function_name="async_entrypoint", 
+            file_path=main_file,
+            function_name="async_entrypoint",
             parents=[],
-            is_async=True
+            is_async=True,
         )
 
         # Create function optimizer
@@ -1928,7 +2200,9 @@ async def async_entrypoint(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
@@ -1937,25 +2211,36 @@ async def async_entrypoint(n):
 
         # Apply optimization and test reversion
         optimizer.replace_function_and_helpers_with_optimized_code(
-            code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code), original_helper_code
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+            original_helper_code,
         )
 
         # Check final file content
         final_content = main_file.read_text()
 
         # The entrypoint should be optimized
-        assert "result1 + n * 3" in final_content, "Async entrypoint function should be optimized"
+        assert "result1 + n * 3" in final_content, (
+            "Async entrypoint function should be optimized"
+        )
 
         # async_helper_2 should be reverted to original (return x * 3, not x * 10)
-        assert "return x * 3" in final_content, "async_helper_2 should be reverted to original"
-        assert "return x * 10" not in final_content, "async_helper_2 should not contain the modified version"
+        assert "return x * 3" in final_content, (
+            "async_helper_2 should be reverted to original"
+        )
+        assert "return x * 10" not in final_content, (
+            "async_helper_2 should not contain the modified version"
+        )
 
         # async_helper_1 should remain (it's still called)
-        assert "async def async_helper_1(x):" in final_content, "async_helper_1 should still exist"
+        assert "async def async_helper_1(x):" in final_content, (
+            "async_helper_1 should still exist"
+        )
 
     finally:
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -2008,21 +2293,30 @@ def gcd_recursive(a: int, b: int) -> int:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should NOT detect gcd_recursive as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
 
-        assert "gcd_recursive" not in unused_names, f"Recursive function gcd_recursive should NOT be detected as unused, but got unused: {unused_names}"
+        assert "gcd_recursive" not in unused_names, (
+            f"Recursive function gcd_recursive should NOT be detected as unused, but got unused: {unused_names}"
+        )
 
     finally:
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -2104,10 +2398,10 @@ async def async_entrypoint_with_generators(n):
 
         # Create FunctionToOptimize instance for async function
         function_to_optimize = FunctionToOptimize(
-            file_path=main_file, 
-            function_name="async_entrypoint_with_generators", 
+            file_path=main_file,
+            function_name="async_entrypoint_with_generators",
             parents=[],
-            is_async=True
+            is_async=True,
         )
 
         # Create function optimizer
@@ -2119,20 +2413,29 @@ async def async_entrypoint_with_generators(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+        assert ctx_result.is_successful(), (
+            f"Failed to get context: {ctx_result.failure()}"
+        )
 
         code_context = ctx_result.unwrap()
 
         # Test unused helper detection
-        unused_helpers = detect_unused_helper_functions(optimizer.function_to_optimize, code_context, CodeStringsMarkdown.parse_markdown_code(optimized_code))
+        unused_helpers = detect_unused_helper_functions(
+            optimizer.function_to_optimize,
+            code_context,
+            CodeStringsMarkdown.parse_markdown_code(optimized_code),
+        )
 
         # Should detect another_coroutine_helper as unused
         unused_names = {uh.qualified_name for uh in unused_helpers}
         expected_unused = {"another_coroutine_helper"}
 
-        assert unused_names == expected_unused, f"Expected unused: {expected_unused}, got: {unused_names}"
+        assert unused_names == expected_unused, (
+            f"Expected unused: {expected_unused}, got: {unused_names}"
+        )
 
     finally:
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_dir, ignore_errors=True)

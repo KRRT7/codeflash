@@ -1,8 +1,10 @@
 from pathlib import Path
 
 import pytest
-from codeflash.code_utils.edit_generated_tests import remove_functions_from_generated_tests
-from codeflash.models.models import GeneratedTests, GeneratedTestsList
+from codeflash.code_utils.edit_generated_tests import (
+    remove_functions_from_generated_tests,
+)
+from codeflash.models.domain import GeneratedTests, GeneratedTestsList
 
 
 def test_simple_removal():
@@ -41,9 +43,14 @@ def test_sorted_list():
     codeflash_output = sorter([1, 2, 3, 4, 5])
     # Outputs were verified to be equal to the original implementation"""
 
-    generated_tests = remove_functions_from_generated_tests(generated_tests_list, functions_to_remove)
+    generated_tests = remove_functions_from_generated_tests(
+        generated_tests_list, functions_to_remove
+    )
 
-    assert generated_tests_list.generated_tests[0].generated_original_test_source == expected
+    assert (
+        generated_tests_list.generated_tests[0].generated_original_test_source
+        == expected
+    )
 
 
 def test_multiple_removals():
@@ -78,8 +85,12 @@ def test_sorted_list():
 
 
 """
-    generated_tests_1 = remove_functions_from_generated_tests(generated_tests_list_1, functions_to_remove)
-    assert generated_tests_1.generated_tests[0].generated_original_test_source == expected
+    generated_tests_1 = remove_functions_from_generated_tests(
+        generated_tests_list_1, functions_to_remove
+    )
+    assert (
+        generated_tests_1.generated_tests[0].generated_original_test_source == expected
+    )
 
     functions_to_remove = ["test_single_element", "test_empty_list"]
 
@@ -99,8 +110,13 @@ def test_sorted_list():
 
     generated_tests_list_2 = GeneratedTestsList(generated_tests=[generated_tests_2])
 
-    generated_tests_2 = remove_functions_from_generated_tests(generated_tests_list_2, functions_to_remove)
-    assert generated_tests_list_2.generated_tests[0].generated_original_test_source == expected
+    generated_tests_2 = remove_functions_from_generated_tests(
+        generated_tests_list_2, functions_to_remove
+    )
+    assert (
+        generated_tests_list_2.generated_tests[0].generated_original_test_source
+        == expected
+    )
 
 
 def test_remove_complex_functions():
@@ -169,7 +185,9 @@ def test_list_with_mixed_orderable_and_non_orderable_types():
         sorter([True, 1, "string", [1, 2]])
     # Outputs were verified to be equal to the original implementation"""
 
-    generated_tests = remove_functions_from_generated_tests(generated_tests_list, functions_to_remove)
+    generated_tests = remove_functions_from_generated_tests(
+        generated_tests_list, functions_to_remove
+    )
     assert generated_tests.generated_tests[0].generated_original_test_source == expected
 
 
@@ -233,11 +251,18 @@ def test_sorted_list():
     codeflash_output = sorter([1, 2, 3, 4, 5])
     # Outputs were verified to be equal to the original implementation"""
 
-    generated_tests = remove_functions_from_generated_tests(generated_tests_list, functions_to_remove)
-    assert generated_tests_list.generated_tests[0].generated_original_test_source == expected
+    generated_tests = remove_functions_from_generated_tests(
+        generated_tests_list, functions_to_remove
+    )
+    assert (
+        generated_tests_list.generated_tests[0].generated_original_test_source
+        == expected
+    )
 
 
-@pytest.mark.skip("We don't handle the edge case where the parametrized test appears right after the test to remove")
+@pytest.mark.skip(
+    "We don't handle the edge case where the parametrized test appears right after the test to remove"
+)
 def test_keep_parametrized_test2():
     generated_test_source = """def test_empty_list():
     # Test sorting an empty list
@@ -298,5 +323,10 @@ def test_sorted_list():
     codeflash_output = sorter([1, 2, 3, 4, 5])
     # Outputs were verified to be equal to the original implementation"""
 
-    generated_tests = remove_functions_from_generated_tests(generated_tests_list, functions_to_remove)
-    assert generated_tests_list.generated_tests[0].generated_original_test_source == expected
+    generated_tests = remove_functions_from_generated_tests(
+        generated_tests_list, functions_to_remove
+    )
+    assert (
+        generated_tests_list.generated_tests[0].generated_original_test_source
+        == expected
+    )

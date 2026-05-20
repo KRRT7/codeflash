@@ -1,6 +1,5 @@
 import tempfile
 from pathlib import Path
-import uuid
 import os
 import sys
 
@@ -11,7 +10,8 @@ from codeflash.code_utils.instrument_existing_tests import (
     inject_profiling_into_existing_test,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import CodePosition, TestingMode
+from codeflash.models.coverage import TestingMode
+from codeflash.models.domain import CodePosition
 
 
 @pytest.fixture
@@ -53,7 +53,9 @@ def temp_dir():
 #             pass  # Ignore cleanup errors
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_decorator_application_behavior_mode(temp_dir):
     async_function_code = '''
 import asyncio
@@ -85,14 +87,16 @@ async def async_function(x: int, y: int) -> int:
         function_name="async_function", file_path=test_file, parents=[], is_async=True
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func, TestingMode.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
 
     assert decorator_added
     modified_code = test_file.read_text()
     assert modified_code.strip() == expected_decorated_code.strip()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_decorator_application_performance_mode(temp_dir):
     async_function_code = '''
 import asyncio
@@ -124,14 +128,16 @@ async def async_function(x: int, y: int) -> int:
         function_name="async_function", file_path=test_file, parents=[], is_async=True
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func, TestingMode.PERFORMANCE)
+    decorator_added = add_async_decorator_to_function(test_file, func.PERFORMANCE)
 
     assert decorator_added
     modified_code = test_file.read_text()
     assert modified_code.strip() == expected_decorated_code.strip()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_class_method_decorator_application(temp_dir):
     async_class_code = '''
 import asyncio
@@ -180,14 +186,16 @@ class Calculator:
         is_async=True,
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func, TestingMode.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
 
     assert decorator_added
     modified_code = test_file.read_text()
     assert modified_code.strip() == expected_decorated_code.strip()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_decorator_no_duplicate_application(temp_dir):
     already_decorated_code = '''
 from codeflash.code_utils.codeflash_wrap_decorator import codeflash_behavior_async
@@ -207,13 +215,15 @@ async def async_function(x: int, y: int) -> int:
         function_name="async_function", file_path=test_file, parents=[], is_async=True
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func, TestingMode.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
 
     # Should not add duplicate decorator
     assert not decorator_added
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_inject_profiling_async_function_behavior_mode(temp_dir):
     source_module_code = '''
 import asyncio
@@ -245,25 +255,37 @@ async def test_async_function():
     test_file = temp_dir / "test_async.py"
     test_file.write_text(async_test_code)
 
-    func = FunctionToOptimize(function_name="async_function", parents=[], file_path=Path("my_module.py"), is_async=True)
-
-    # First instrument the source module
-    from codeflash.code_utils.instrument_existing_tests import add_async_decorator_to_function
-
-    source_success = add_async_decorator_to_function(
-        source_file, func, TestingMode.BEHAVIOR
+    func = FunctionToOptimize(
+        function_name="async_function",
+        parents=[],
+        file_path=Path("my_module.py"),
+        is_async=True,
     )
 
+    # First instrument the source module
+    from codeflash.code_utils.instrument_existing_tests import (
+        add_async_decorator_to_function,
+    )
+
+    source_success = add_async_decorator_to_function(source_file, func.BEHAVIOR)
+
     assert source_success is True
-    
+
     # Verify the file was modified
     instrumented_source = source_file.read_text()
     assert "@codeflash_behavior_async" in instrumented_source
-    assert "from codeflash.code_utils.codeflash_wrap_decorator import" in instrumented_source
+    assert (
+        "from codeflash.code_utils.codeflash_wrap_decorator import"
+        in instrumented_source
+    )
     assert "codeflash_behavior_async" in instrumented_source
 
     success, instrumented_test_code = inject_profiling_into_existing_test(
-        test_file, [CodePosition(8, 18), CodePosition(11, 19)], func, temp_dir, mode=TestingMode.BEHAVIOR
+        test_file,
+        [CodePosition(8, 18), CodePosition(11, 19)],
+        func,
+        temp_dir,
+        mode=TestingMode.BEHAVIOR,
     )
 
     # For async functions, once source is decorated, test injection should fail
@@ -272,7 +294,9 @@ async def test_async_function():
     assert instrumented_test_code is None
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_inject_profiling_async_function_performance_mode(temp_dir):
     source_module_code = '''
 import asyncio
@@ -302,22 +326,30 @@ async def test_async_function():
     test_file = temp_dir / "test_async.py"
     test_file.write_text(async_test_code)
 
-    func = FunctionToOptimize(function_name="async_function", parents=[], file_path=Path("my_module.py"), is_async=True)
-
-    # First instrument the source module
-    from codeflash.code_utils.instrument_existing_tests import add_async_decorator_to_function
-
-    source_success = add_async_decorator_to_function(
-        source_file, func, TestingMode.PERFORMANCE
+    func = FunctionToOptimize(
+        function_name="async_function",
+        parents=[],
+        file_path=Path("my_module.py"),
+        is_async=True,
     )
 
+    # First instrument the source module
+    from codeflash.code_utils.instrument_existing_tests import (
+        add_async_decorator_to_function,
+    )
+
+    source_success = add_async_decorator_to_function(source_file, func.PERFORMANCE)
+
     assert source_success is True
-    
+
     # Verify the file was modified
     instrumented_source = source_file.read_text()
     assert "@codeflash_performance_async" in instrumented_source
     # Check for the import with line continuation formatting
-    assert "from codeflash.code_utils.codeflash_wrap_decorator import" in instrumented_source
+    assert (
+        "from codeflash.code_utils.codeflash_wrap_decorator import"
+        in instrumented_source
+    )
     assert "codeflash_performance_async" in instrumented_source
 
     # Now test the full pipeline with source module path
@@ -331,7 +363,9 @@ async def test_async_function():
     assert instrumented_test_code is None
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_mixed_sync_async_instrumentation(temp_dir):
     source_module_code = '''
 import asyncio
@@ -368,21 +402,27 @@ async def test_mixed_functions():
     test_file.write_text(mixed_test_code)
 
     async_func = FunctionToOptimize(
-        function_name="async_function", parents=[], file_path=Path("my_module.py"), is_async=True
+        function_name="async_function",
+        parents=[],
+        file_path=Path("my_module.py"),
+        is_async=True,
     )
 
-    from codeflash.code_utils.instrument_existing_tests import add_async_decorator_to_function
-
-    source_success = add_async_decorator_to_function(
-        source_file, async_func, TestingMode.BEHAVIOR
+    from codeflash.code_utils.instrument_existing_tests import (
+        add_async_decorator_to_function,
     )
+
+    source_success = add_async_decorator_to_function(source_file, async_func.BEHAVIOR)
 
     assert source_success
-    
+
     # Verify the file was modified
     instrumented_source = source_file.read_text()
     assert "@codeflash_behavior_async" in instrumented_source
-    assert "from codeflash.code_utils.codeflash_wrap_decorator import" in instrumented_source
+    assert (
+        "from codeflash.code_utils.codeflash_wrap_decorator import"
+        in instrumented_source
+    )
     assert "codeflash_behavior_async" in instrumented_source
     # Sync function should remain unchanged
     assert "def sync_function(x: int, y: int) -> int:" in instrumented_source
@@ -400,7 +440,9 @@ async def test_mixed_functions():
     assert instrumented_test_code is None
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_function_qualified_name_handling(temp_dir):
     nested_async_code = '''
 import asyncio
@@ -419,14 +461,16 @@ class OuterClass:
     func = FunctionToOptimize(
         function_name="nested_async_method",
         file_path=test_file,
-        parents=[{"name": "OuterClass", "type": "ClassDef"}, {"name": "InnerClass", "type": "ClassDef"}],
+        parents=[
+            {"name": "OuterClass", "type": "ClassDef"},
+            {"name": "InnerClass", "type": "ClassDef"},
+        ],
         is_async=True,
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func, TestingMode.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
 
-    expected_output = (
-        """import asyncio
+    expected_output = """import asyncio
 
 from codeflash.code_utils.codeflash_wrap_decorator import \\
     codeflash_behavior_async
@@ -440,14 +484,15 @@ class OuterClass:
             await asyncio.sleep(0.001)
             return x * 2
 """
-    )
 
     assert decorator_added
     modified_code = test_file.read_text()
     assert modified_code.strip() == expected_output.strip()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_decorator_with_existing_decorators(temp_dir):
     """Test async decorator application when function already has other decorators."""
     decorated_async_code = '''
@@ -474,7 +519,7 @@ async def async_function(x: int, y: int) -> int:
         function_name="async_function", file_path=test_file, parents=[], is_async=True
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func, TestingMode.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
 
     assert decorator_added
     modified_code = test_file.read_text()
@@ -487,7 +532,9 @@ async def async_function(x: int, y: int) -> int:
     assert codeflash_pos < my_decorator_pos
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_sync_function_not_affected_by_async_logic(temp_dir):
     sync_function_code = '''
 def sync_function(x: int, y: int) -> int:
@@ -505,16 +552,17 @@ def sync_function(x: int, y: int) -> int:
         is_async=False,
     )
 
-    decorator_added = add_async_decorator_to_function(
-        test_file, sync_func, TestingMode.BEHAVIOR
-    )
+    decorator_added = add_async_decorator_to_function(test_file, sync_func.BEHAVIOR)
 
     assert not decorator_added
     # File should not be modified for sync functions
     modified_code = test_file.read_text()
     assert modified_code == sync_function_code
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_inject_profiling_async_multiple_calls_same_test(temp_dir):
     """Test that multiple async function calls within the same test function get correctly numbered 0, 1, 2, etc."""
     source_module_code = '''
@@ -553,18 +601,21 @@ async def test_multiple_calls():
     test_file.write_text(test_code_multiple_calls)
 
     func = FunctionToOptimize(
-        function_name="async_sorter", parents=[], file_path=Path("async_sorter.py"), is_async=True
+        function_name="async_sorter",
+        parents=[],
+        file_path=Path("async_sorter.py"),
+        is_async=True,
     )
 
     # First instrument the source module with async decorators
-    from codeflash.code_utils.instrument_existing_tests import add_async_decorator_to_function
-
-    source_success = add_async_decorator_to_function(
-        source_file, func, TestingMode.BEHAVIOR
+    from codeflash.code_utils.instrument_existing_tests import (
+        add_async_decorator_to_function,
     )
 
+    source_success = add_async_decorator_to_function(source_file, func.BEHAVIOR)
+
     assert source_success
-    
+
     # Verify the file was modified
     instrumented_source = source_file.read_text()
     assert "@codeflash_behavior_async" in instrumented_source
@@ -575,8 +626,11 @@ async def test_multiple_calls():
     call_positions = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Await) and isinstance(node.value, ast.Call):
-            if (hasattr(node.value.func, "id") and node.value.func.id == "async_sorter") or (
-                hasattr(node.value.func, "attr") and node.value.func.attr == "async_sorter"
+            if (
+                hasattr(node.value.func, "id") and node.value.func.id == "async_sorter"
+            ) or (
+                hasattr(node.value.func, "attr")
+                and node.value.func.attr == "async_sorter"
             ):
                 call_positions.append(CodePosition(node.lineno, node.col_offset))
 
@@ -592,22 +646,33 @@ async def test_multiple_calls():
     assert "os.environ['CODEFLASH_CURRENT_LINE_ID'] = '0'" in instrumented_test_code
 
     # Count occurrences of each line_id to verify numbering
-    line_id_0_count = instrumented_test_code.count("os.environ['CODEFLASH_CURRENT_LINE_ID'] = '0'")
-    line_id_1_count = instrumented_test_code.count("os.environ['CODEFLASH_CURRENT_LINE_ID'] = '1'")
-    line_id_2_count = instrumented_test_code.count("os.environ['CODEFLASH_CURRENT_LINE_ID'] = '2'")
+    line_id_0_count = instrumented_test_code.count(
+        "os.environ['CODEFLASH_CURRENT_LINE_ID'] = '0'"
+    )
+    line_id_1_count = instrumented_test_code.count(
+        "os.environ['CODEFLASH_CURRENT_LINE_ID'] = '1'"
+    )
+    line_id_2_count = instrumented_test_code.count(
+        "os.environ['CODEFLASH_CURRENT_LINE_ID'] = '2'"
+    )
+
+    assert line_id_0_count == 2, (
+        f"Expected 2 occurrences of line_id '0', got {line_id_0_count}"
+    )
+    assert line_id_1_count == 1, (
+        f"Expected 1 occurrence of line_id '1', got {line_id_1_count}"
+    )
+    assert line_id_2_count == 1, (
+        f"Expected 1 occurrence of line_id '2', got {line_id_2_count}"
+    )
 
 
-    assert line_id_0_count == 2, f"Expected 2 occurrences of line_id '0', got {line_id_0_count}"
-    assert line_id_1_count == 1, f"Expected 1 occurrence of line_id '1', got {line_id_1_count}"
-    assert line_id_2_count == 1, f"Expected 1 occurrence of line_id '2', got {line_id_2_count}"
-
-
-
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_behavior_decorator_return_values_and_test_ids():
     """Test that async behavior decorator correctly captures return values, test IDs, and stores data in database."""
     import asyncio
-    import os
     import sqlite3
     from pathlib import Path
 
@@ -644,7 +709,7 @@ def test_async_behavior_decorator_return_values_and_test_ids():
 
         from codeflash.code_utils.codeflash_wrap_decorator import get_run_tmp_file
 
-        db_path = get_run_tmp_file(Path(f"test_return_values_2.sqlite"))
+        db_path = get_run_tmp_file(Path("test_return_values_2.sqlite"))
 
         # Verify database exists and has data
         assert db_path.exists(), f"Database file not created at {db_path}"
@@ -671,7 +736,9 @@ def test_async_behavior_decorator_return_values_and_test_ids():
             verification_type,
         ) = row
 
-        assert test_module == "test_module", f"Expected test_module 'test_module', got '{test_module}'"
+        assert test_module == "test_module", (
+            f"Expected test_module 'test_module', got '{test_module}'"
+        )
         assert test_class is None, f"Expected test_class None, got '{test_class}'"
         assert test_function == "test_async_multiply_function", (
             f"Expected test_function 'test_async_multiply_function', got '{test_function}'"
@@ -680,7 +747,9 @@ def test_async_behavior_decorator_return_values_and_test_ids():
             f"Expected function_name 'test_async_multiply', got '{function_name}'"
         )
         assert loop_index == 1, f"Expected loop_index 1, got {loop_index}"
-        assert iteration_id == "0_0", f"Expected iteration_id '0_0', got '{iteration_id}'"
+        assert iteration_id == "0_0", (
+            f"Expected iteration_id '0_0', got '{iteration_id}'"
+        )
         assert verification_type == "function_call", (
             f"Expected verification_type 'function_call', got '{verification_type}'"
         )
@@ -690,7 +759,9 @@ def test_async_behavior_decorator_return_values_and_test_ids():
         assert args == (6, 7), f"Expected args (6, 7), got {args}"
         assert kwargs == {}, f"Expected empty kwargs, got {kwargs}"
 
-        assert actual_return_value == 42, f"Expected stored return value 42, got {actual_return_value}"
+        assert actual_return_value == 42, (
+            f"Expected stored return value 42, got {actual_return_value}"
+        )
 
         con.close()
 
@@ -702,16 +773,20 @@ def test_async_behavior_decorator_return_values_and_test_ids():
                 del os.environ[k]
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_decorator_comprehensive_return_values_and_test_ids():
     import asyncio
-    import os
     import sqlite3
     from pathlib import Path
 
     import dill as pickle
 
-    from codeflash.code_utils.codeflash_wrap_decorator import codeflash_behavior_async, get_run_tmp_file
+    from codeflash.code_utils.codeflash_wrap_decorator import (
+        codeflash_behavior_async,
+        get_run_tmp_file,
+    )
 
     @codeflash_behavior_async
     async def async_multiply_add(x: int, y: int, z: int = 1) -> int:
@@ -745,7 +820,9 @@ def test_async_decorator_comprehensive_return_values_and_test_ids():
 
         results = []
         for test_case in test_cases:
-            result = asyncio.run(async_multiply_add(*test_case["args"], **test_case["kwargs"]))
+            result = asyncio.run(
+                async_multiply_add(*test_case["args"], **test_case["kwargs"])
+            )
             results.append(result)
 
             # Verify each return value is exactly correct
@@ -753,7 +830,7 @@ def test_async_decorator_comprehensive_return_values_and_test_ids():
                 f"Expected {test_case['expected']}, got {result} for args {test_case['args']}, kwargs {test_case['kwargs']}"
             )
 
-        db_path = get_run_tmp_file(Path(f"test_return_values_3.sqlite"))
+        db_path = get_run_tmp_file(Path("test_return_values_3.sqlite"))
         assert db_path.exists(), f"Database not created at {db_path}"
 
         con = sqlite3.connect(db_path)
@@ -780,7 +857,9 @@ def test_async_decorator_comprehensive_return_values_and_test_ids():
             assert test_module == "test_comprehensive_module", (
                 f"Row {i}: Expected test_module 'test_comprehensive_module', got '{test_module}'"
             )
-            assert test_class == "AsyncTestClass", f"Row {i}: Expected test_class 'AsyncTestClass', got '{test_class}'"
+            assert test_class == "AsyncTestClass", (
+                f"Row {i}: Expected test_class 'AsyncTestClass', got '{test_class}'"
+            )
             assert test_function == "test_comprehensive_async_function", (
                 f"Row {i}: Expected test_function 'test_comprehensive_async_function', got '{test_function}'"
             )
@@ -797,14 +876,17 @@ def test_async_decorator_comprehensive_return_values_and_test_ids():
                 f"Row {i}: Expected iteration_id '{expected_iteration_id}', got '{iteration_id}'"
             )
 
-
             args, kwargs, actual_return_value = pickle.loads(return_value_blob)
             expected_args = test_cases[i]["args"]
             expected_kwargs = test_cases[i]["kwargs"]
             expected_return = test_cases[i]["expected"]
 
-            assert args == expected_args, f"Row {i}: Expected args {expected_args}, got {args}"
-            assert kwargs == expected_kwargs, f"Row {i}: Expected kwargs {expected_kwargs}, got {kwargs}"
+            assert args == expected_args, (
+                f"Row {i}: Expected args {expected_args}, got {args}"
+            )
+            assert kwargs == expected_kwargs, (
+                f"Row {i}: Expected kwargs {expected_kwargs}, got {kwargs}"
+            )
             assert actual_return_value == expected_return, (
                 f"Row {i}: Expected return value {expected_return}, got {actual_return_value}"
             )

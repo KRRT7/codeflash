@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 from codeflash.code_utils.env_utils import get_pr_number
-from codeflash.models.models import (
+from codeflash.models.domain import (
     CodeOptimizationContext,
     CoverageData,
     CoverageStatus,
@@ -28,11 +28,17 @@ def test_performance_gain() -> None:
 
     assert performance_gain(original_runtime_ns=1000, optimized_runtime_ns=500) == 1.0
 
-    assert performance_gain(original_runtime_ns=1000, optimized_runtime_ns=900) == 0.1111111111111111
+    assert (
+        performance_gain(original_runtime_ns=1000, optimized_runtime_ns=900)
+        == 0.1111111111111111
+    )
 
     assert performance_gain(original_runtime_ns=1000, optimized_runtime_ns=1000) == 0.0
 
-    assert performance_gain(original_runtime_ns=1000, optimized_runtime_ns=1100) == -0.09090909090909091
+    assert (
+        performance_gain(original_runtime_ns=1000, optimized_runtime_ns=1100)
+        == -0.09090909090909091
+    )
 
 
 def test_speedup_critic() -> None:
@@ -47,7 +53,12 @@ def test_speedup_critic() -> None:
         total_candidate_timing=12,
     )
 
-    assert speedup_critic(candidate_result, original_code_runtime, best_runtime_until_now, disable_gh_action_noise=True)  # 20% improvement
+    assert speedup_critic(
+        candidate_result,
+        original_code_runtime,
+        best_runtime_until_now,
+        disable_gh_action_noise=True,
+    )  # 20% improvement
 
     candidate_result = OptimizedCandidateResult(
         max_loop_count=5,
@@ -58,7 +69,12 @@ def test_speedup_critic() -> None:
         optimization_candidate_index=0,
     )
 
-    assert not speedup_critic(candidate_result, original_code_runtime, best_runtime_until_now, disable_gh_action_noise=True)  # 6% improvement
+    assert not speedup_critic(
+        candidate_result,
+        original_code_runtime,
+        best_runtime_until_now,
+        disable_gh_action_noise=True,
+    )  # 6% improvement
 
     original_code_runtime = 100000
     best_runtime_until_now = 100000
@@ -72,7 +88,12 @@ def test_speedup_critic() -> None:
         optimization_candidate_index=0,
     )
 
-    assert speedup_critic(candidate_result, original_code_runtime, best_runtime_until_now, disable_gh_action_noise=True)  # 6% improvement
+    assert speedup_critic(
+        candidate_result,
+        original_code_runtime,
+        best_runtime_until_now,
+        disable_gh_action_noise=True,
+    )  # 6% improvement
 
 
 def test_generated_test_critic() -> None:
@@ -415,22 +436,29 @@ def test_coverage_critic() -> None:
 
     assert coverage_critic(failing_coverage) is False
 
+
 def test_throughput_gain() -> None:
     """Test throughput_gain calculation."""
     # Test basic throughput improvement
-    assert throughput_gain(original_throughput=100, optimized_throughput=150) == 0.5  # 50% improvement
+    assert (
+        throughput_gain(original_throughput=100, optimized_throughput=150) == 0.5
+    )  # 50% improvement
 
     # Test no improvement
     assert throughput_gain(original_throughput=100, optimized_throughput=100) == 0.0
 
     # Test regression
-    assert throughput_gain(original_throughput=100, optimized_throughput=80) == -0.2  # 20% regression
+    assert (
+        throughput_gain(original_throughput=100, optimized_throughput=80) == -0.2
+    )  # 20% regression
 
     # Test zero original throughput (edge case)
     assert throughput_gain(original_throughput=0, optimized_throughput=50) == 0.0
 
     # Test large improvement
-    assert throughput_gain(original_throughput=50, optimized_throughput=200) == 3.0  # 300% improvement
+    assert (
+        throughput_gain(original_throughput=50, optimized_throughput=200) == 3.0
+    )  # 300% improvement
 
 
 def test_speedup_critic_with_async_throughput() -> None:
@@ -455,7 +483,7 @@ def test_speedup_critic_with_async_throughput() -> None:
         best_runtime_until_now=None,
         original_async_throughput=original_async_throughput,
         best_throughput_until_now=None,
-        disable_gh_action_noise=True
+        disable_gh_action_noise=True,
     )
 
     # Test case 2: Runtime improves significantly, throughput doesn't meet threshold (should pass)
@@ -475,7 +503,7 @@ def test_speedup_critic_with_async_throughput() -> None:
         best_runtime_until_now=None,
         original_async_throughput=original_async_throughput,
         best_throughput_until_now=None,
-        disable_gh_action_noise=True
+        disable_gh_action_noise=True,
     )
 
     # Test case 3: Throughput improves significantly, runtime doesn't meet threshold (should pass)
@@ -495,7 +523,7 @@ def test_speedup_critic_with_async_throughput() -> None:
         best_runtime_until_now=None,
         original_async_throughput=original_async_throughput,
         best_throughput_until_now=None,
-        disable_gh_action_noise=True
+        disable_gh_action_noise=True,
     )
 
     # Test case 4: No throughput data - should fall back to runtime-only evaluation
@@ -515,7 +543,7 @@ def test_speedup_critic_with_async_throughput() -> None:
         best_runtime_until_now=None,
         original_async_throughput=None,  # No original throughput data
         best_throughput_until_now=None,
-        disable_gh_action_noise=True
+        disable_gh_action_noise=True,
     )
 
     # Test case 5: Test best_throughput_until_now comparison
@@ -536,7 +564,7 @@ def test_speedup_critic_with_async_throughput() -> None:
         best_runtime_until_now=None,
         original_async_throughput=original_async_throughput,
         best_throughput_until_now=None,
-        disable_gh_action_noise=True
+        disable_gh_action_noise=True,
     )
 
     # Should fail when there's a better throughput already
@@ -546,7 +574,7 @@ def test_speedup_critic_with_async_throughput() -> None:
         best_runtime_until_now=7000,  # Better runtime already exists
         original_async_throughput=original_async_throughput,
         best_throughput_until_now=120,  # Better throughput already exists
-        disable_gh_action_noise=True
+        disable_gh_action_noise=True,
     )
 
     # Test case 6: Zero original throughput (edge case)
@@ -567,5 +595,5 @@ def test_speedup_critic_with_async_throughput() -> None:
         best_runtime_until_now=None,
         original_async_throughput=0,  # Zero original throughput
         best_throughput_until_now=None,
-        disable_gh_action_noise=True
+        disable_gh_action_noise=True,
     )

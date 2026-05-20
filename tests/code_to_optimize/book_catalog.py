@@ -6,8 +6,10 @@ from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, relationship, sessionmaker
 from sqlalchemy.orm.relationships import Relationship
 
-POSTGRES_CONNECTION_STRING: str = ("postgresql://cf_developer:XJcbU37MBYeh4dDK6PTV5n@sqlalchemy-experiments.postgres"
-                                   ".database.azure.com:5432/postgres")
+POSTGRES_CONNECTION_STRING: str = (
+    "postgresql://cf_developer:XJcbU37MBYeh4dDK6PTV5n@sqlalchemy-experiments.postgres"
+    ".database.azure.com:5432/postgres"
+)
 
 
 class Base(DeclarativeBase):
@@ -40,7 +42,9 @@ def init_table() -> Session:
         author: Author = Author(id=i, name=f"author{i}")
         session.add(author)
     for i in range(100000):
-        book: Book = Book(id=i, title=f"book{i}", author_id=i % 50, is_bestseller=i % 2 == 0)
+        book: Book = Book(
+            id=i, title=f"book{i}", author_id=i % 50, is_bestseller=i % 2 == 0
+        )
         session.add(book)
     session.commit()
 
@@ -56,6 +60,7 @@ def get_authors(books: list[Book]) -> list[Author]:
         list(set(_authors)),
         key=lambda x: x.id,
     )
+
 
 def get_authors2(num_authors) -> list[Author]:
     engine: Engine = create_engine(POSTGRES_CONNECTION_STRING, echo=True)

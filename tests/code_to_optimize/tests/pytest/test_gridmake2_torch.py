@@ -17,14 +17,16 @@ class TestGridmake2TorchCPU:
         # Expected: x1 tiled x2.shape[0] times, x2 repeat_interleaved x1.shape[0]
         # x1 tiled: [1, 2, 3, 1, 2, 3]
         # x2 repeated: [10, 10, 10, 20, 20, 20]
-        expected = torch.tensor([
-            [1, 10],
-            [2, 10],
-            [3, 10],
-            [1, 20],
-            [2, 20],
-            [3, 20],
-        ])
+        expected = torch.tensor(
+            [
+                [1, 10],
+                [2, 10],
+                [3, 10],
+                [1, 20],
+                [2, 20],
+                [3, 20],
+            ]
+        )
         assert torch.equal(result, expected)
 
     def test_both_1d_single_element(self):
@@ -57,12 +59,14 @@ class TestGridmake2TorchCPU:
         # x1 tiled along first dim: [[1, 2], [3, 4], [1, 2], [3, 4]]
         # x2 repeated: [10, 10, 20, 20]
         # column_stack: [[1, 2, 10], [3, 4, 10], [1, 2, 20], [3, 4, 20]]
-        expected = torch.tensor([
-            [1, 2, 10],
-            [3, 4, 10],
-            [1, 2, 20],
-            [3, 4, 20],
-        ])
+        expected = torch.tensor(
+            [
+                [1, 2, 10],
+                [3, 4, 10],
+                [1, 2, 20],
+                [3, 4, 20],
+            ]
+        )
         assert torch.equal(result, expected)
 
     def test_2d_and_1d_single_column(self):
@@ -72,14 +76,16 @@ class TestGridmake2TorchCPU:
 
         result = _gridmake2_torch(x1, x2)
 
-        expected = torch.tensor([
-            [1, 10],
-            [2, 10],
-            [3, 10],
-            [1, 20],
-            [2, 20],
-            [3, 20],
-        ])
+        expected = torch.tensor(
+            [
+                [1, 10],
+                [2, 10],
+                [3, 10],
+                [1, 20],
+                [2, 20],
+                [3, 20],
+            ]
+        )
         assert torch.equal(result, expected)
 
     def test_output_shape_1d_1d(self):
@@ -160,14 +166,17 @@ class TestGridmake2TorchCUDA:
 
         result = _gridmake2_torch(x1, x2)
 
-        expected = torch.tensor([
-            [1, 10],
-            [2, 10],
-            [3, 10],
-            [1, 20],
-            [2, 20],
-            [3, 20],
-        ], device="cuda")
+        expected = torch.tensor(
+            [
+                [1, 10],
+                [2, 10],
+                [3, 10],
+                [1, 20],
+                [2, 20],
+                [3, 20],
+            ],
+            device="cuda",
+        )
         assert result.device.type == "cuda"
         assert torch.equal(result, expected)
 
@@ -192,12 +201,15 @@ class TestGridmake2TorchCUDA:
 
         result = _gridmake2_torch(x1, x2)
 
-        expected = torch.tensor([
-            [1, 2, 10],
-            [3, 4, 10],
-            [1, 2, 20],
-            [3, 4, 20],
-        ], device="cuda")
+        expected = torch.tensor(
+            [
+                [1, 2, 10],
+                [3, 4, 10],
+                [1, 2, 20],
+                [3, 4, 20],
+            ],
+            device="cuda",
+        )
         assert result.device.type == "cuda"
         assert torch.equal(result, expected)
 
@@ -264,4 +276,3 @@ class TestGridmake2TorchCUDA:
 
         with pytest.raises(NotImplementedError, match="Come back here"):
             _gridmake2_torch(x1, x2)
-

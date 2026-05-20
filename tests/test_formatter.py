@@ -1,5 +1,4 @@
 import argparse
-import os
 import tempfile
 from pathlib import Path
 
@@ -14,7 +13,7 @@ from codeflash.code_utils.formatter import (
 )
 
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import CodeString, CodeStringsMarkdown
+from codeflash.models.domain import CodeString, CodeStringsMarkdown
 from codeflash.optimization.function_optimizer import FunctionOptimizer
 from codeflash.verification.verification_utils import TestConfig
 
@@ -284,10 +283,10 @@ def _run_formatting_test(
             )
 
         if should_content_change:
-            assert content != original, f"Expected content to change for source.py"
+            assert content != original, "Expected content to change for source.py"
         else:
             assert content == original, (
-                f"Expected content to remain unchanged for source.py"
+                "Expected content to remain unchanged for source.py"
             )
 
 

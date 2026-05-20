@@ -1,4 +1,9 @@
-from codeflash.models.models import FunctionTestInvocation, InvocationId, TestResults, TestType
+from codeflash.models.domain import (
+    FunctionTestInvocation,
+    InvocationId,
+    TestResults,
+    TestType,
+)
 from codeflash.verification.parse_test_output import merge_test_results
 
 
@@ -180,7 +185,9 @@ def test_merge_test_results_1():
         )
     )
     merged_results = merge_test_results(
-        xml_test_results=test_results_xml, bin_test_results=test_results_bin, test_framework="unittest"
+        xml_test_results=test_results_xml,
+        bin_test_results=test_results_bin,
+        test_framework="unittest",
     )
     assert merged_results == expected_merged_results
 
@@ -206,22 +213,30 @@ def test_merge_test_results_1():
     )
 
     merged_results = merge_test_results(
-        xml_test_results=test_results_xml_single, bin_test_results=test_results_bin, test_framework="unittest"
+        xml_test_results=test_results_xml_single,
+        bin_test_results=test_results_bin,
+        test_framework="unittest",
     )
 
     assert merged_results == expected_merged_results
 
     merged_results = merge_test_results(
-        xml_test_results=test_results_xml_single, bin_test_results=TestResults(), test_framework="unittest"
+        xml_test_results=test_results_xml_single,
+        bin_test_results=TestResults(),
+        test_framework="unittest",
     )
 
     assert merged_results == test_results_xml_single
 
     merged_results = merge_test_results(
-        xml_test_results=TestResults(), bin_test_results=test_results_bin, test_framework="unittest"
+        xml_test_results=TestResults(),
+        bin_test_results=test_results_bin,
+        test_framework="unittest",
     )
 
-    assert merged_results == TestResults()  # XML Results should always have better coverage than bin results
+    assert (
+        merged_results == TestResults()
+    )  # XML Results should always have better coverage than bin results
 
     test_results_xml_pytest = TestResults()
     test_results_xml_pytest.add(
@@ -285,7 +300,9 @@ def test_merge_test_results_1():
     )
 
     merged_results = merge_test_results(
-        xml_test_results=test_results_xml_pytest, bin_test_results=test_results_bin_pytest, test_framework="unittest"
+        xml_test_results=test_results_xml_pytest,
+        bin_test_results=test_results_bin_pytest,
+        test_framework="unittest",
     )
 
     assert merged_results == test_results_bin_pytest

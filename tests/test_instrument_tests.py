@@ -14,7 +14,7 @@ from codeflash.code_utils.instrument_existing_tests import (
 )
 from codeflash.code_utils.line_profile_utils import add_decorator_imports
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import (
+from codeflash.models.domain import (
     CodeOptimizationContext,
     CodePosition,
     FunctionParent,
@@ -114,11 +114,14 @@ import pytest"""
     if extra_imports:
         imports += "\n" + extra_imports
     return imports
+
+
 # create a temporary directory for the test results
 @pytest.fixture
 def tmp_dir():
     with tempfile.TemporaryDirectory() as tmpdirname:
         yield Path(tmpdirname)
+
 
 def test_perfinjector_bubble_sort(tmp_dir) -> None:
     code = """import unittest
@@ -150,12 +153,12 @@ import dill as pickle"""
     # timeout_decorator no longer used since pytest handles timeouts
 
     imports += "\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
-    
+
     wrapper_func = codeflash_wrap_string
-    
+
     test_class_header = "class TestPigLatin(unittest.TestCase):"
     test_decorator = ""  # pytest-timeout handles timeouts now, not timeout_decorator
-    
+
     expected = imports + "\n\n\n" + wrapper_func + "\n" + test_class_header + "\n\n"
     if test_decorator:
         expected += test_decorator + "\n"
@@ -185,7 +188,9 @@ import dill as pickle"""
     with (tmp_dir / "test_sort.py").open("w") as f:
         f.write(code)
         f.flush()
-        func = FunctionToOptimize(function_name="sorter", parents=[], file_path=Path(f.name))
+        func = FunctionToOptimize(
+            function_name="sorter", parents=[], file_path=Path(f.name)
+        )
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
         os.chdir(run_cwd)
@@ -198,7 +203,8 @@ import dill as pickle"""
         os.chdir(original_cwd)
     assert success
     assert new_test.replace('"', "'") == expected.format(
-        module_path=Path(f.name).stem, tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+        module_path=Path(f.name).stem,
+        tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
     ).replace('"', "'")
 
 
@@ -287,7 +293,11 @@ def test_prepare_image_for_yolo():
     with (tmp_dir / "test_return_values.py").open("w") as f:
         f.write(code)
         f.flush()
-        func = FunctionToOptimize(function_name="prepare_image_for_yolo", parents=[], file_path=Path("module.py"))
+        func = FunctionToOptimize(
+            function_name="prepare_image_for_yolo",
+            parents=[],
+            file_path=Path("module.py"),
+        )
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
         os.chdir(run_cwd)
@@ -297,7 +307,8 @@ def test_prepare_image_for_yolo():
         os.chdir(original_cwd)
     assert success
     assert new_test.replace('"', "'") == expected.format(
-        module_path=Path(f.name).stem, tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+        module_path=Path(f.name).stem,
+        tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
     ).replace('"', "'")
 
 
@@ -389,12 +400,16 @@ def test_sort():
     try:
         with test_path.open("w") as f:
             f.write(code)
-        code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+        code_path = (
+            Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py"
+        ).resolve()
         tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
         project_root_path = (Path(__file__).parent / "..").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
-        func = FunctionToOptimize(function_name="sorter", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="sorter", parents=[], file_path=code_path
+        )
         os.chdir(run_cwd)
         success, new_test = inject_profiling_into_existing_test(
             test_path,
@@ -408,7 +423,7 @@ def test_sort():
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
             module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
         success, new_perf_test = inject_profiling_into_existing_test(
@@ -422,7 +437,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
         assert new_perf_test is not None
         assert new_perf_test.replace('"', "'") == expected_perfonly.format(
             module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
         with test_path.open("w") as f:
@@ -437,7 +452,9 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
             test_framework="pytest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
@@ -538,7 +555,9 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
                 helper_code = f.read()
                 original_helper_code[helper_function_path] = helper_code
         computed_fn_opt = True
-        line_profiler_output_file = add_decorator_imports(func_optimizer.function_to_optimize, code_context)
+        line_profiler_output_file = add_decorator_imports(
+            func_optimizer.function_to_optimize, code_context
+        )
         line_profile_results, _ = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.LINE_PROFILE,
             test_env=test_env,
@@ -551,7 +570,10 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         )
         tmp_lpr = list(line_profile_results["timings"].keys())
         if sys.platform != "win32":
-            assert len(tmp_lpr) == 1 and line_profile_results["timings"][tmp_lpr[0]][0][1] == 2
+            assert (
+                len(tmp_lpr) == 1
+                and line_profile_results["timings"][tmp_lpr[0]][0][1] == 2
+            )
     finally:
         if computed_fn_opt:
             func_optimizer.write_code_and_helpers(
@@ -632,7 +654,9 @@ def test_sort_parametrized(input, expected_output):
     assert output == expected_output
 """
     )
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_results_temp.py"
@@ -645,19 +669,31 @@ def test_sort_parametrized(input, expected_output):
         with open(test_path, "w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
 
-        func = FunctionToOptimize(function_name="sorter", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="sorter", parents=[], file_path=code_path
+        )
         os.chdir(run_cwd)
         success, new_test = inject_profiling_into_existing_test(
-            test_path, [CodePosition(14, 13)], func, project_root_path, mode=TestingMode.BEHAVIOR
+            test_path,
+            [CodePosition(14, 13)],
+            func,
+            project_root_path,
+            mode=TestingMode.BEHAVIOR,
         )
         assert success
         success, new_test_perf = inject_profiling_into_existing_test(
-            test_path, [CodePosition(14, 13)], func, project_root_path, mode=TestingMode.PERFORMANCE
+            test_path,
+            [CodePosition(14, 13)],
+            func,
+            project_root_path,
+            mode=TestingMode.PERFORMANCE,
         )
 
         os.chdir(original_cwd)
@@ -698,7 +734,9 @@ def test_sort_parametrized(input, expected_output):
             test_framework="pytest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_results, coverage_data = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.BEHAVIOR,
             test_env=test_env,
@@ -809,7 +847,9 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
                 helper_code = f.read()
                 original_helper_code[helper_function_path] = helper_code
         computed_fn_opt = True
-        line_profiler_output_file = add_decorator_imports(func_optimizer.function_to_optimize, code_context)
+        line_profiler_output_file = add_decorator_imports(
+            func_optimizer.function_to_optimize, code_context
+        )
         line_profile_results, _ = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.LINE_PROFILE,
             test_env=test_env,
@@ -822,7 +862,10 @@ result: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         )
         tmp_lpr = list(line_profile_results["timings"].keys())
         if sys.platform != "win32":
-            assert len(tmp_lpr) == 1 and line_profile_results["timings"][tmp_lpr[0]][0][1] == 3
+            assert (
+                len(tmp_lpr) == 1
+                and line_profile_results["timings"][tmp_lpr[0]][0][1] == 3
+            )
     finally:
         if computed_fn_opt:
             func_optimizer.write_code_and_helpers(
@@ -905,7 +948,9 @@ def test_sort_parametrized_loop(input, expected_output):
         assert output == expected_output
 """
     )
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_parametrized_loop_results_temp.py"
@@ -922,19 +967,31 @@ def test_sort_parametrized_loop(input, expected_output):
         with open(test_path, "w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
 
-        func = FunctionToOptimize(function_name="sorter", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="sorter", parents=[], file_path=code_path
+        )
         os.chdir(run_cwd)
         success, new_test = inject_profiling_into_existing_test(
-            test_path, [CodePosition(15, 17)], func, project_root_path, mode=TestingMode.BEHAVIOR
+            test_path,
+            [CodePosition(15, 17)],
+            func,
+            project_root_path,
+            mode=TestingMode.BEHAVIOR,
         )
         assert success
         success, new_test_perf = inject_profiling_into_existing_test(
-            test_path, [CodePosition(15, 17)], func, project_root_path, mode=TestingMode.PERFORMANCE
+            test_path,
+            [CodePosition(15, 17)],
+            func,
+            project_root_path,
+            mode=TestingMode.PERFORMANCE,
         )
 
         os.chdir(original_cwd)
@@ -942,7 +999,7 @@ def test_sort_parametrized_loop(input, expected_output):
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
             module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
         # Overwrite old test with new instrumented test
@@ -951,7 +1008,7 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
 
         assert new_test_perf.replace('"', "'") == expected_perf.format(
             module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_parametrized_loop_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
         # Overwrite old test with new instrumented test
@@ -987,7 +1044,9 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
             test_framework="pytest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_results, coverage_data = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.BEHAVIOR,
             test_env=test_env,
@@ -1168,7 +1227,9 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
                 helper_code = f.read()
                 original_helper_code[helper_function_path] = helper_code
         computed_fn_opt = True
-        line_profiler_output_file = add_decorator_imports(func_optimizer.function_to_optimize, code_context)
+        line_profiler_output_file = add_decorator_imports(
+            func_optimizer.function_to_optimize, code_context
+        )
         line_profile_results, _ = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.LINE_PROFILE,
             test_env=test_env,
@@ -1181,7 +1242,10 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         )
         tmp_lpr = list(line_profile_results["timings"].keys())
         if sys.platform != "win32":
-            assert len(tmp_lpr) == 1 and line_profile_results["timings"][tmp_lpr[0]][0][1] == 6
+            assert (
+                len(tmp_lpr) == 1
+                and line_profile_results["timings"][tmp_lpr[0]][0][1] == 6
+            )
     finally:
         if computed_fn_opt:
             func_optimizer.write_code_and_helpers(
@@ -1265,7 +1329,9 @@ def test_sort():
         assert output == expected_output
 """
     )
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/pytest/test_perfinjector_bubble_sort_loop_results_temp.py"
@@ -1282,31 +1348,43 @@ def test_sort():
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
 
-        func = FunctionToOptimize(function_name="sorter", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="sorter", parents=[], file_path=code_path
+        )
         os.chdir(str(run_cwd))
         success, new_test_behavior = inject_profiling_into_existing_test(
-            test_path, [CodePosition(11, 17)], func, project_root_path, mode=TestingMode.BEHAVIOR
+            test_path,
+            [CodePosition(11, 17)],
+            func,
+            project_root_path,
+            mode=TestingMode.BEHAVIOR,
         )
         assert success
         success, new_test_perf = inject_profiling_into_existing_test(
-            test_path, [CodePosition(11, 17)], func, project_root_path, mode=TestingMode.PERFORMANCE
+            test_path,
+            [CodePosition(11, 17)],
+            func,
+            project_root_path,
+            mode=TestingMode.PERFORMANCE,
         )
         os.chdir(original_cwd)
         assert success
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected.format(
             module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
         assert new_test_perf.replace('"', "'") == expected_perf.format(
             module_path="tests.code_to_optimize.tests.pytest.test_perfinjector_bubble_sort_loop_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
         # Overwrite old test with new instrumented test
@@ -1344,7 +1422,9 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
             test_framework="pytest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_results, coverage_data = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.BEHAVIOR,
             test_env=test_env,
@@ -1450,7 +1530,9 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
                 helper_code = f.read()
                 original_helper_code[helper_function_path] = helper_code
         computed_fn_opt = True
-        line_profiler_output_file = add_decorator_imports(func_optimizer.function_to_optimize, code_context)
+        line_profiler_output_file = add_decorator_imports(
+            func_optimizer.function_to_optimize, code_context
+        )
         line_profile_results, _ = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.LINE_PROFILE,
             test_env=test_env,
@@ -1463,7 +1545,10 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
         )
         tmp_lpr = list(line_profile_results["timings"].keys())
         if sys.platform != "win32":
-            assert len(tmp_lpr) == 1 and line_profile_results["timings"][tmp_lpr[0]][0][1] == 3
+            assert (
+                len(tmp_lpr) == 1
+                and line_profile_results["timings"][tmp_lpr[0]][0][1] == 3
+            )
     finally:
         if computed_fn_opt is True:
             func_optimizer.write_code_and_helpers(
@@ -1477,7 +1562,7 @@ result: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
 
 
 def test_perfinjector_bubble_sort_unittest_results() -> None:
-    
+
     code = """import unittest
 
 from tests.code_to_optimize.bubble_sort import sorter
@@ -1499,7 +1584,7 @@ class TestPigLatin(unittest.TestCase):
 """
 
     is_windows = platform.system() == "Windows"
-    
+
     if is_windows:
         expected = (
             """import gc
@@ -1640,7 +1725,9 @@ class TestPigLatin(unittest.TestCase):
         self.assertEqual(output, list(range(50)))
 """
         )
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_results_temp.py"
@@ -1657,12 +1744,16 @@ class TestPigLatin(unittest.TestCase):
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
 
-        func = FunctionToOptimize(function_name="sorter", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="sorter", parents=[], file_path=code_path
+        )
         os.chdir(run_cwd)
         success, new_test_behavior = inject_profiling_into_existing_test(
             test_path,
@@ -1685,11 +1776,11 @@ class TestPigLatin(unittest.TestCase):
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected.format(
             module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         assert new_test_perf.replace('"', "'") == expected_perf.format(
             module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         #
         # Overwrite old test with new instrumented test
@@ -1727,7 +1818,9 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
             test_framework="unittest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_results, coverage_data = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.BEHAVIOR,
             test_env=test_env,
@@ -1850,9 +1943,11 @@ class TestPigLatin(unittest.TestCase):
 """
 
     # Build expected behavior output with platform-aware imports
-    imports_behavior = build_expected_unittest_imports("from parameterized import parameterized")
+    imports_behavior = build_expected_unittest_imports(
+        "from parameterized import parameterized"
+    )
     imports_behavior += "\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
-    
+
     test_decorator_behavior = ""  # pytest-timeout handles timeouts now
     test_class_behavior = """class TestPigLatin(unittest.TestCase):
 
@@ -1872,8 +1967,10 @@ class TestPigLatin(unittest.TestCase):
         self.assertEqual(output, expected_output)
         codeflash_con.close()
 """
-    
-    expected_behavior = imports_behavior + "\n\n\n" + codeflash_wrap_string + "\n" + test_class_behavior
+
+    expected_behavior = (
+        imports_behavior + "\n\n\n" + codeflash_wrap_string + "\n" + test_class_behavior
+    )
     # Build expected perf output with platform-aware imports
     imports_perf = """import gc
 import os
@@ -1882,7 +1979,7 @@ import unittest
 """
     # pytest-timeout handles timeouts now, no timeout_decorator needed
     imports_perf += "\nfrom parameterized import parameterized\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
-    
+
     test_decorator_perf = ""  # pytest-timeout handles timeouts now
     test_class_perf = """class TestPigLatin(unittest.TestCase):
 
@@ -1895,9 +1992,17 @@ import unittest
         output = codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '0', codeflash_loop_index, input)
         self.assertEqual(output, expected_output)
 """
-    
-    expected_perf = imports_perf + "\n\n\n" + codeflash_wrap_perfonly_string + "\n" + test_class_perf
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+
+    expected_perf = (
+        imports_perf
+        + "\n\n\n"
+        + codeflash_wrap_perfonly_string
+        + "\n"
+        + test_class_perf
+    )
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_results_temp.py"
@@ -1913,19 +2018,31 @@ import unittest
     try:
         with test_path.open("w") as f:
             f.write(code)
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
 
-        func = FunctionToOptimize(function_name="sorter", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="sorter", parents=[], file_path=code_path
+        )
         os.chdir(run_cwd)
         success, new_test_behavior = inject_profiling_into_existing_test(
-            test_path, [CodePosition(16, 17)], func, project_root_path, mode=TestingMode.BEHAVIOR
+            test_path,
+            [CodePosition(16, 17)],
+            func,
+            project_root_path,
+            mode=TestingMode.BEHAVIOR,
         )
         assert success
         success, new_test_perf = inject_profiling_into_existing_test(
-            test_path, [CodePosition(16, 17)], func, project_root_path, mode=TestingMode.PERFORMANCE
+            test_path,
+            [CodePosition(16, 17)],
+            func,
+            project_root_path,
+            mode=TestingMode.PERFORMANCE,
         )
 
         os.chdir(original_cwd)
@@ -1933,13 +2050,13 @@ import unittest
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected_behavior.format(
             module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
         assert new_test_perf is not None
         assert new_test_perf.replace('"', "'") == expected_perf.format(
             module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
 
         #
@@ -1977,7 +2094,9 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
             test_framework="unittest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_results, coverage_data = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.BEHAVIOR,
             test_env=test_env,
@@ -2099,10 +2218,10 @@ class TestPigLatin(unittest.TestCase):
             output = sorter(input)
             self.assertEqual(output, expected_output)"""
 
-    # Build expected behavior output with platform-aware imports  
+    # Build expected behavior output with platform-aware imports
     imports_behavior = build_expected_unittest_imports()
     imports_behavior += "\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
-    
+
     test_decorator_behavior = ""  # pytest-timeout handles timeouts now
     test_class_behavior = """class TestPigLatin(unittest.TestCase):
 
@@ -2127,7 +2246,9 @@ class TestPigLatin(unittest.TestCase):
         codeflash_con.close()
 """
 
-    expected_behavior = imports_behavior + "\n\n\n" + codeflash_wrap_string + "\n" + test_class_behavior
+    expected_behavior = (
+        imports_behavior + "\n\n\n" + codeflash_wrap_string + "\n" + test_class_behavior
+    )
 
     # Build expected perf output with platform-aware imports
     imports_perf = """import gc
@@ -2137,7 +2258,7 @@ import unittest
 """
     # pytest-timeout handles timeouts now, no timeout_decorator needed
     imports_perf += "\nfrom tests.code_to_optimize.bubble_sort import sorter"
-    
+
     test_decorator_perf = ""  # pytest-timeout handles timeouts now
     test_class_perf = """class TestPigLatin(unittest.TestCase):
 
@@ -2154,9 +2275,17 @@ import unittest
             output = codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '2_2', codeflash_loop_index, input)
             self.assertEqual(output, expected_output)
 """
-    
-    expected_perf = imports_perf + "\n\n\n" + codeflash_wrap_perfonly_string + "\n" + test_class_perf
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+
+    expected_perf = (
+        imports_perf
+        + "\n\n\n"
+        + codeflash_wrap_perfonly_string
+        + "\n"
+        + test_class_perf
+    )
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_loop_results_temp.py"
@@ -2173,30 +2302,42 @@ import unittest
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
 
-        func = FunctionToOptimize(function_name="sorter", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="sorter", parents=[], file_path=code_path
+        )
         os.chdir(run_cwd)
         success, new_test_behavior = inject_profiling_into_existing_test(
-            test_path, [CodePosition(14, 21)], func, project_root_path, mode=TestingMode.BEHAVIOR
+            test_path,
+            [CodePosition(14, 21)],
+            func,
+            project_root_path,
+            mode=TestingMode.BEHAVIOR,
         )
         assert success
         success, new_test_perf = inject_profiling_into_existing_test(
-            test_path, [CodePosition(14, 21)], func, project_root_path, mode=TestingMode.PERFORMANCE
+            test_path,
+            [CodePosition(14, 21)],
+            func,
+            project_root_path,
+            mode=TestingMode.PERFORMANCE,
         )
         os.chdir(original_cwd)
         assert success
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected_behavior.format(
             module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         assert new_test_perf.replace('"', "'") == expected_perf.format(
             module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_loop_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         #
         # # Overwrite old test with new instrumented test
@@ -2233,7 +2374,9 @@ tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
             test_framework="unittest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_results, coverage_data = func_optimizer.run_and_parse_tests(
             test_env=test_env,
             testing_type=TestingMode.BEHAVIOR,
@@ -2359,9 +2502,11 @@ class TestPigLatin(unittest.TestCase):
 """
 
     # Build expected behavior output with platform-aware imports
-    imports_behavior = build_expected_unittest_imports("from parameterized import parameterized")
+    imports_behavior = build_expected_unittest_imports(
+        "from parameterized import parameterized"
+    )
     imports_behavior += "\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
-    
+
     test_decorator_behavior = ""  # pytest-timeout handles timeouts now
     test_class_behavior = """class TestPigLatin(unittest.TestCase):
 
@@ -2383,7 +2528,9 @@ class TestPigLatin(unittest.TestCase):
         codeflash_con.close()
 """
 
-    expected_behavior = imports_behavior + "\n\n\n" + codeflash_wrap_string + "\n" + test_class_behavior
+    expected_behavior = (
+        imports_behavior + "\n\n\n" + codeflash_wrap_string + "\n" + test_class_behavior
+    )
     # Build expected perf output with platform-aware imports
     imports_perf = """import gc
 import os
@@ -2392,7 +2539,7 @@ import unittest
 """
     # pytest-timeout handles timeouts now, no timeout_decorator needed
     imports_perf += "\nfrom parameterized import parameterized\n\nfrom tests.code_to_optimize.bubble_sort import sorter"
-    
+
     test_decorator_perf = ""  # pytest-timeout handles timeouts now
     test_class_perf = """class TestPigLatin(unittest.TestCase):
 
@@ -2406,9 +2553,17 @@ import unittest
             output = codeflash_wrap(sorter, '{module_path}', 'TestPigLatin', 'test_sort', 'sorter', '0_0', codeflash_loop_index, input)
             self.assertEqual(output, expected_output)
 """
-    
-    expected_perf = imports_perf + "\n\n\n" + codeflash_wrap_perfonly_string + "\n" + test_class_perf
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py").resolve()
+
+    expected_perf = (
+        imports_perf
+        + "\n\n\n"
+        + codeflash_wrap_perfonly_string
+        + "\n"
+        + test_class_perf
+    )
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/bubble_sort.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/unittest/test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp.py"
@@ -2424,7 +2579,9 @@ import unittest
     try:
         with test_path.open("w") as _f:
             _f.write(code)
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
@@ -2432,21 +2589,29 @@ import unittest
         f = FunctionToOptimize(function_name="sorter", file_path=code_path, parents=[])
         os.chdir(run_cwd)
         success, new_test_behavior = inject_profiling_into_existing_test(
-            test_path, [CodePosition(17, 21)], f, project_root_path, mode=TestingMode.BEHAVIOR
+            test_path,
+            [CodePosition(17, 21)],
+            f,
+            project_root_path,
+            mode=TestingMode.BEHAVIOR,
         )
         success, new_test_perf = inject_profiling_into_existing_test(
-            test_path, [CodePosition(17, 21)], f, project_root_path, mode=TestingMode.PERFORMANCE
+            test_path,
+            [CodePosition(17, 21)],
+            f,
+            project_root_path,
+            mode=TestingMode.PERFORMANCE,
         )
         os.chdir(original_cwd)
         assert success
         assert new_test_behavior is not None
         assert new_test_behavior.replace('"', "'") == expected_behavior.format(
             module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         assert new_test_perf.replace('"', "'") == expected_perf.format(
             module_path="tests.code_to_optimize.tests.unittest.test_perfinjector_bubble_sort_unittest_parametrized_loop_results_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
         #
         # Overwrite old test with new instrumented test
@@ -2661,13 +2826,17 @@ from module import functionB as function_B
 import class_name_B
 from nuitka.nodes.ImportNodes import ExpressionBuiltinImport as nuitka_nodes_ImportNodes_ExpressionBuiltinImport
 """
-    f = FunctionToOptimize(function_name="functionA", file_path=Path("module.py"), parents=[])
+    f = FunctionToOptimize(
+        function_name="functionA", file_path=Path("module.py"), parents=[]
+    )
     tree = ast.parse(code)
     visitor = FunctionImportedAsVisitor(f)
     visitor.visit(tree)
     assert visitor.imported_as.function_name == "functionA"
 
-    f = FunctionToOptimize(function_name="functionB", file_path=Path("module.py"), parents=[])
+    f = FunctionToOptimize(
+        function_name="functionB", file_path=Path("module.py"), parents=[]
+    )
     visitor = FunctionImportedAsVisitor(f)
     visitor.visit(tree)
     assert visitor.imported_as.function_name == "function_B"
@@ -2679,9 +2848,14 @@ from nuitka.nodes.ImportNodes import ExpressionBuiltinImport as nuitka_nodes_Imp
     )
     visitor = FunctionImportedAsVisitor(f)
     visitor.visit(tree)
-    assert visitor.imported_as.qualified_name == "nuitka_nodes_ImportNodes_ExpressionBuiltinImport.method_name"
+    assert (
+        visitor.imported_as.qualified_name
+        == "nuitka_nodes_ImportNodes_ExpressionBuiltinImport.method_name"
+    )
 
-    f = FunctionToOptimize(function_name="class_name_B", file_path=Path("module.py"), parents=[])
+    f = FunctionToOptimize(
+        function_name="class_name_B", file_path=Path("module.py"), parents=[]
+    )
     visitor = FunctionImportedAsVisitor(f)
     visitor.visit(tree)
     assert visitor.imported_as.qualified_name == "class_name_B"
@@ -2722,7 +2896,8 @@ def test_class_name_A_function_name():
     )
 
     test_path = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_class_function_instrumentation_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_class_function_instrumentation_temp.py"
     )
     try:
         with open(test_path, "w") as f:
@@ -2799,7 +2974,8 @@ def test_common_tags_1():
     )
 
     test_path = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_wrong_function_instrumentation_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_wrong_function_instrumentation_temp.py"
     )
     try:
         with test_path.open("w") as f:
@@ -2810,12 +2986,17 @@ def test_common_tags_1():
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
         func = FunctionToOptimize(
-            function_name="find_common_tags", file_path=project_root_path / "module.py", parents=[]
+            function_name="find_common_tags",
+            file_path=project_root_path / "module.py",
+            parents=[],
         )
 
         os.chdir(str(run_cwd))
         success, new_test = inject_profiling_into_existing_test(
-            test_path, [CodePosition(7, 11), CodePosition(11, 11)], func, project_root_path
+            test_path,
+            [CodePosition(7, 11), CodePosition(11, 11)],
+            func,
+            project_root_path,
         )
         os.chdir(original_cwd)
         assert success
@@ -2867,7 +3048,8 @@ def test_sort():
 """
     )
     test_path = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_conditional_instrumentation_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_conditional_instrumentation_temp.py"
     )
     try:
         with open(test_path, "w") as f:
@@ -2877,7 +3059,11 @@ def test_sort():
         project_root_path = Path(__file__).parent.resolve() / "code_to_optimize/"
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
-        func = FunctionToOptimize(function_name="sorter", file_path=project_root_path / "module.py", parents=[])
+        func = FunctionToOptimize(
+            function_name="sorter",
+            file_path=project_root_path / "module.py",
+            parents=[],
+        )
 
         os.chdir(str(run_cwd))
         success, new_test = inject_profiling_into_existing_test(
@@ -2888,7 +3074,7 @@ def test_sort():
         assert new_test is not None
         assert new_test.replace('"', "'") == expected.format(
             module_path="tests.pytest.test_conditional_instrumentation_temp",
-tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         ).replace('"', "'")
     finally:
         test_path.unlink(missing_ok=True)
@@ -2944,7 +3130,9 @@ def test_sort():
 
     function_to_optimize = FunctionToOptimize(
         function_name="sorter",
-        file_path=Path("/Users/renaud/repos/codeflash/cli/tests/code_to_optimize/bubble_sort.py"),
+        file_path=Path(
+            "/Users/renaud/repos/codeflash/cli/tests/code_to_optimize/bubble_sort.py"
+        ),
         parents=[FunctionParent("BubbleSorter", "ClassDef")],
         starting_line=None,
         ending_line=None,
@@ -2964,13 +3152,16 @@ def test_sort():
 
         os.chdir(run_cwd)
         success, new_test = inject_profiling_into_existing_test(
-            test_path, [CodePosition(6, 26), CodePosition(10, 26)], function_to_optimize, project_root_path
+            test_path,
+            [CodePosition(6, 26), CodePosition(10, 26)],
+            function_to_optimize,
+            project_root_path,
         )
         os.chdir(original_cwd)
         assert success
         formatted_expected = expected.format(
             module_path="tests.pytest.test_perfinjector_bubble_sort_results_temp",
-            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+            tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
         )
         assert new_test is not None
         assert new_test.replace('"', "'") == formatted_expected.replace('"', "'")
@@ -3054,7 +3245,7 @@ def test_code_replacement10() -> None:
 
     test_file_path = tmp_path / "test_class_method_instrumentation.py"
     test_file_path.write_text(code, encoding="utf-8")
-    
+
     func = FunctionToOptimize(
         function_name="get_code_optimization_context",
         parents=[FunctionParent("Optimizer", "ClassDef")],
@@ -3064,12 +3255,16 @@ def test_code_replacement10() -> None:
     run_cwd = Path(__file__).parent.parent.resolve()
     os.chdir(run_cwd)
     success, new_test = inject_profiling_into_existing_test(
-        test_file_path, [CodePosition(22, 28), CodePosition(28, 28)], func, test_file_path.parent
+        test_file_path,
+        [CodePosition(22, 28), CodePosition(28, 28)],
+        func,
+        test_file_path.parent,
     )
     os.chdir(original_cwd)
     assert success
     assert new_test.replace('"', "'") == expected.replace('"', "'").format(
-        module_path=test_file_path.stem, tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix()
+        module_path=test_file_path.stem,
+        tmp_dir_path=get_run_tmp_file(Path("test_return_values")).as_posix(),
     )
 
 
@@ -3106,7 +3301,9 @@ def test_sleepfunc_sequence_short(n, expected_total_sleep_time):
     assert output == expected_total_sleep_time
 """
     )
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/sleeptime.py").resolve()
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/sleeptime.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/pytest/test_time_correction_instrumentation_temp.py"
@@ -3115,14 +3312,22 @@ def test_sleepfunc_sequence_short(n, expected_total_sleep_time):
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
-        func = FunctionToOptimize(function_name="accurate_sleepfunc", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="accurate_sleepfunc", parents=[], file_path=code_path
+        )
         os.chdir(run_cwd)
         success, new_test = inject_profiling_into_existing_test(
-            test_path, [CodePosition(8, 13)], func, project_root_path, mode=TestingMode.PERFORMANCE
+            test_path,
+            [CodePosition(8, 13)],
+            func,
+            project_root_path,
+            mode=TestingMode.PERFORMANCE,
         )
         os.chdir(original_cwd)
 
@@ -3147,7 +3352,9 @@ def test_sleepfunc_sequence_short(n, expected_total_sleep_time):
             test_framework="pytest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_files = TestFiles(
             test_files=[
                 TestFile(
@@ -3180,7 +3387,9 @@ def test_sleepfunc_sequence_short(n, expected_total_sleep_time):
         assert len(test_results) == 4
         for i, test_result in enumerate(test_results):
             assert test_result.did_pass
-            assert math.isclose(test_result.runtime, ((i % 2) + 1) * 100_000_000, rel_tol=0.01)
+            assert math.isclose(
+                test_result.runtime, ((i % 2) + 1) * 100_000_000, rel_tol=0.01
+            )
 
     finally:
         test_path.unlink(missing_ok=True)
@@ -3209,7 +3418,7 @@ import unittest
 """
     # pytest-timeout handles timeouts now, no timeout_decorator needed
     imports += "\nfrom parameterized import parameterized\n\nfrom tests.code_to_optimize.sleeptime import accurate_sleepfunc"
-    
+
     test_decorator = ""  # pytest-timeout handles timeouts now
     test_class = """class TestPigLatin(unittest.TestCase):
 
@@ -3221,9 +3430,11 @@ import unittest
         codeflash_loop_index = int(os.environ['CODEFLASH_LOOP_INDEX'])
         output = codeflash_wrap(accurate_sleepfunc, '{module_path}', 'TestPigLatin', 'test_sleepfunc_sequence_short', 'accurate_sleepfunc', '0', codeflash_loop_index, n)
 """
-    
+
     expected = imports + "\n\n\n" + codeflash_wrap_perfonly_string + "\n" + test_class
-    code_path = (Path(__file__).parent.resolve() / "code_to_optimize/sleeptime.py").resolve()
+    code_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/sleeptime.py"
+    ).resolve()
     test_path = (
         Path(__file__).parent.resolve()
         / "code_to_optimize/tests/unittest/test_time_correction_instrumentation_unittest_temp.py"
@@ -3232,14 +3443,22 @@ import unittest
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/unittest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent.resolve() / "../").resolve()
         original_cwd = Path.cwd()
         run_cwd = Path(__file__).parent.parent.resolve()
-        func = FunctionToOptimize(function_name="accurate_sleepfunc", parents=[], file_path=code_path)
+        func = FunctionToOptimize(
+            function_name="accurate_sleepfunc", parents=[], file_path=code_path
+        )
         os.chdir(run_cwd)
         success, new_test = inject_profiling_into_existing_test(
-            test_path, [CodePosition(12, 17)], func, project_root_path, mode=TestingMode.PERFORMANCE
+            test_path,
+            [CodePosition(12, 17)],
+            func,
+            project_root_path,
+            mode=TestingMode.PERFORMANCE,
         )
         os.chdir(original_cwd)
 
@@ -3282,7 +3501,9 @@ import unittest
             test_framework="unittest",
             pytest_cmd="pytest",
         )
-        func_optimizer = FunctionOptimizer(function_to_optimize=func, test_cfg=test_config)
+        func_optimizer = FunctionOptimizer(
+            function_to_optimize=func, test_cfg=test_config
+        )
         test_results, coverage_data = func_optimizer.run_and_parse_tests(
             testing_type=TestingMode.PERFORMANCE,
             test_env=test_env,
@@ -3305,7 +3526,9 @@ import unittest
         assert len(test_results) == 2
         for i, test_result in enumerate(test_results):
             assert test_result.did_pass
-            assert math.isclose(test_result.runtime, ((i % 2) + 1) * 100_000_000, rel_tol=0.01)
+            assert math.isclose(
+                test_result.runtime, ((i % 2) + 1) * 100_000_000, rel_tol=0.01
+            )
 
     finally:
         test_path.unlink(missing_ok=True)

@@ -11,6 +11,7 @@ def sorter(arr):
                 arr[j + 1] = temp
     return arr
 
+
 async def decompress_braces(string):
     numbers = "123456789"
     stack = []
@@ -36,12 +37,13 @@ async def sorter_one_level_depth_lower(arr):
     return sorter(arr)
 
 
-
 def add_one_level_depth(a, b):
     return add(a, b)
 
+
 def add(a, b):
     return a + b
+
 
 def multiply_and_add(a, b, c):
     return a * b + c

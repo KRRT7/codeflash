@@ -11,11 +11,11 @@ import libcst as cst
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_replacer import replace_function_definitions_in_module
-from codeflash.models.models import CodeString, CodeStringsMarkdown
+from codeflash.models.domain import CodeString, CodeStringsMarkdown
 
 if TYPE_CHECKING:
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.models.models import CodeOptimizationContext, FunctionSource
+    from codeflash.models.domain import CodeOptimizationContext, FunctionSource
 
 
 @dataclass

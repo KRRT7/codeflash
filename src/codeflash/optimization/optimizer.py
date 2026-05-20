@@ -24,13 +24,14 @@ from codeflash.code_utils.git_worktree_utils import (
 )
 from codeflash.code_utils.time_utils import humanize_runtime
 from codeflash.models.config import AppConfig
-from codeflash.models.models import ValidCode
+from codeflash.models.domain import ValidCode
 from codeflash.verification.verification_utils import TestConfig
 
 if TYPE_CHECKING:
     from codeflash.benchmarking.function_ranker import FunctionRanker
     from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-    from codeflash.models.models import BenchmarkKey, FunctionCalledInTest
+    from codeflash.models.coverage import BenchmarkKey
+    from codeflash.models.domain import FunctionCalledInTest
     from codeflash.optimization.function_optimizer import FunctionOptimizer
 
 

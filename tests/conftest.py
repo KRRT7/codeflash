@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from codeflash.models.models import TestFile, TestFiles, TestType
+from codeflash.models.domain import TestFile, TestFiles, TestType
 from codeflash.verification.verification_utils import TestConfig
 
 

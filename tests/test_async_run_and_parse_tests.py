@@ -8,12 +8,27 @@ from pathlib import Path
 import pytest
 
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import CodePosition, FunctionParent, TestFile, TestFiles, TestingMode, TestType
+from codeflash.models.coverage import TestingMode
+from codeflash.models.domain import (
+    CodePosition,
+    FunctionParent,
+    TestFile,
+    TestFiles,
+    TestType,
+)
 from codeflash.optimization.optimizer import Optimizer
-from codeflash.verification.instrument_codeflash_capture import instrument_codeflash_capture
-from codeflash.code_utils.instrument_existing_tests import add_async_decorator_to_function, inject_profiling_into_existing_test
+from codeflash.verification.instrument_codeflash_capture import (
+    instrument_codeflash_capture,
+)
+from codeflash.code_utils.instrument_existing_tests import (
+    add_async_decorator_to_function,
+    inject_profiling_into_existing_test,
+)
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_bubble_sort_behavior_results() -> None:
     test_code = """import asyncio
 import pytest
@@ -31,12 +46,16 @@ async def test_async_sort():
     assert output == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]"""
 
     test_path = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_bubble_sort_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_bubble_sort_temp.py"
     ).resolve()
     test_path_perf = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_bubble_sort_perf_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_bubble_sort_perf_temp.py"
     ).resolve()
-    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py").resolve()
+    fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py"
+    ).resolve()
     original_code = fto_path.read_text("utf-8")
 
     try:
@@ -44,22 +63,30 @@ async def test_async_sort():
         with test_path.open("w") as f:
             f.write(test_code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
 
         # Create async function to optimize
-        func = FunctionToOptimize(function_name="async_sorter", parents=[], file_path=Path(fto_path), is_async=True)
-
-        # For async functions, instrument the source module directly with decorators
-        source_success = add_async_decorator_to_function(
-            fto_path, func, TestingMode.BEHAVIOR
+        func = FunctionToOptimize(
+            function_name="async_sorter",
+            parents=[],
+            file_path=Path(fto_path),
+            is_async=True,
         )
 
+        # For async functions, instrument the source module directly with decorators
+        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
+
         assert source_success
-        
+
         # Verify the file was modified
         instrumented_source = fto_path.read_text("utf-8")
-        assert '''import asyncio\nfrom typing import List, Union\n\nfrom codeflash.code_utils.codeflash_wrap_decorator import \\\n    codeflash_behavior_async\n\n\n@codeflash_behavior_async\nasync def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:\n    """\n    Async bubble sort implementation for testing.\n    """\n    print("codeflash stdout: Async sorting list")\n    \n    await asyncio.sleep(0.01)\n    \n    n = len(lst)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if lst[j] > lst[j + 1]:\n                lst[j], lst[j + 1] = lst[j + 1], lst[j]\n    \n    result = lst.copy()\n    print(f"result: {result}")\n    return result\n\n\nclass AsyncBubbleSorter:\n    """Class with async sorting method for testing."""\n    \n    async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:\n        """\n        Async bubble sort implementation within a class.\n        """\n        print("codeflash stdout: AsyncBubbleSorter.sorter() called")\n        \n        # Add some async delay\n        await asyncio.sleep(0.005)\n        \n        n = len(lst)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if lst[j] > lst[j + 1]:\n                    lst[j], lst[j + 1] = lst[j + 1], lst[j]\n        \n        result = lst.copy()\n        return result\n''' in instrumented_source
+        assert (
+            '''import asyncio\nfrom typing import List, Union\n\nfrom codeflash.code_utils.codeflash_wrap_decorator import \\\n    codeflash_behavior_async\n\n\n@codeflash_behavior_async\nasync def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:\n    """\n    Async bubble sort implementation for testing.\n    """\n    print("codeflash stdout: Async sorting list")\n    \n    await asyncio.sleep(0.01)\n    \n    n = len(lst)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if lst[j] > lst[j + 1]:\n                lst[j], lst[j + 1] = lst[j + 1], lst[j]\n    \n    result = lst.copy()\n    print(f"result: {result}")\n    return result\n\n\nclass AsyncBubbleSorter:\n    """Class with async sorting method for testing."""\n    \n    async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:\n        """\n        Async bubble sort implementation within a class.\n        """\n        print("codeflash stdout: AsyncBubbleSorter.sorter() called")\n        \n        # Add some async delay\n        await asyncio.sleep(0.005)\n        \n        n = len(lst)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if lst[j] > lst[j + 1]:\n                    lst[j], lst[j + 1] = lst[j + 1], lst[j]\n        \n        result = lst.copy()\n        return result\n'''
+            in instrumented_source
+        )
 
         # Add codeflash capture
         instrument_codeflash_capture(func, {}, tests_root)
@@ -79,7 +106,9 @@ async def test_async_sort():
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
-        test_env["CODEFLASH_TEST_MODULE"] = "tests.code_to_optimize.tests.pytest.test_async_bubble_sort_temp"
+        test_env["CODEFLASH_TEST_MODULE"] = (
+            "tests.code_to_optimize.tests.pytest.test_async_bubble_sort_temp"
+        )
         test_env["CODEFLASH_TEST_CLASS"] = ""
         test_env["CODEFLASH_TEST_FUNCTION"] = "test_async_sort"
         test_env["CODEFLASH_CURRENT_LINE_ID"] = "0"
@@ -118,9 +147,10 @@ async def test_async_sort():
         assert results_list[0].did_pass
         assert results_list[0].runtime is None or results_list[0].runtime >= 0
 
-        expected_stdout = "codeflash stdout: Async sorting list\nresult: [0, 1, 2, 3, 4, 5]\n"
+        expected_stdout = (
+            "codeflash stdout: Async sorting list\nresult: [0, 1, 2, 3, 4, 5]\n"
+        )
         assert expected_stdout == results_list[0].stdout
-
 
         assert results_list[1].id.function_getting_tested == "async_sorter"
         assert results_list[1].id.test_function_name == "test_async_sort"
@@ -139,7 +169,9 @@ async def test_async_sort():
             test_path_perf.unlink()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_class_method_behavior_results() -> None:
     """Test async class method behavior with run_and_parse_tests."""
     test_code = """import asyncio
@@ -155,19 +187,25 @@ async def test_async_class_sort():
     assert output == [1, 1, 3, 4, 5]"""
 
     test_path = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_class_bubble_sort_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_class_bubble_sort_temp.py"
     ).resolve()
     test_path_perf = (
-        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_class_bubble_sort_perf_temp.py"
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_class_bubble_sort_perf_temp.py"
     ).resolve()
-    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py").resolve()
+    fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py"
+    ).resolve()
     original_code = fto_path.read_text("utf-8")
 
     try:
         with test_path.open("w") as f:
             f.write(test_code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
 
         func = FunctionToOptimize(
@@ -177,12 +215,10 @@ async def test_async_class_sort():
             is_async=True,
         )
 
-        source_success = add_async_decorator_to_function(
-            fto_path, func, TestingMode.BEHAVIOR
-        )
+        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
 
         assert source_success
-        
+
         # Verify the file was modified
         instrumented_source = fto_path.read_text("utf-8")
         assert "@codeflash_behavior_async" in instrumented_source
@@ -203,7 +239,9 @@ async def test_async_class_sort():
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
-        test_env["CODEFLASH_TEST_MODULE"] = "tests.code_to_optimize.tests.pytest.test_async_class_bubble_sort_temp"
+        test_env["CODEFLASH_TEST_MODULE"] = (
+            "tests.code_to_optimize.tests.pytest.test_async_class_bubble_sort_temp"
+        )
         test_env["CODEFLASH_TEST_CLASS"] = ""
         test_env["CODEFLASH_TEST_FUNCTION"] = "test_async_class_sort"
         test_env["CODEFLASH_CURRENT_LINE_ID"] = "0"
@@ -231,16 +269,16 @@ async def test_async_class_sort():
             testing_time=0.1,
         )
 
-
         assert test_results is not None
         assert test_results.test_results is not None
 
         results_list = test_results.test_results
-        assert len(results_list) == 2, f"Expected 2 results but got {len(results_list)}: {[r.id.function_getting_tested for r in results_list]}"
+        assert len(results_list) == 2, (
+            f"Expected 2 results but got {len(results_list)}: {[r.id.function_getting_tested for r in results_list]}"
+        )
 
         init_result = results_list[0]
         sorter_result = results_list[1]
-
 
         assert sorter_result.id.function_getting_tested == "sorter"
         assert sorter_result.id.test_class_name is None
@@ -262,7 +300,9 @@ async def test_async_class_sort():
             test_path_perf.unlink()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_function_performance_mode() -> None:
     test_code = """import asyncio
 import pytest
@@ -275,30 +315,43 @@ async def test_async_perf():
     output = await async_sorter(input)
     assert output == [1, 2, 3, 4, 5, 6, 7, 8]"""
 
-    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_perf_temp.py").resolve()
-    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py").resolve()
+    test_path = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_perf_temp.py"
+    ).resolve()
+    fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py"
+    ).resolve()
     original_code = fto_path.read_text("utf-8")
 
     try:
         with test_path.open("w") as f:
             f.write(test_code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
 
         # Create async function to optimize
-        func = FunctionToOptimize(function_name="async_sorter", parents=[], file_path=Path(fto_path), is_async=True)
-
-        # Instrument the source module with async performance decorators
-        source_success = add_async_decorator_to_function(
-            fto_path, func, TestingMode.PERFORMANCE
+        func = FunctionToOptimize(
+            function_name="async_sorter",
+            parents=[],
+            file_path=Path(fto_path),
+            is_async=True,
         )
 
+        # Instrument the source module with async performance decorators
+        source_success = add_async_decorator_to_function(fto_path, func.PERFORMANCE)
+
         assert source_success
-        
+
         # Verify the file was modified
         instrumented_source = fto_path.read_text("utf-8")
-        assert '''import asyncio\nfrom typing import List, Union\n\nfrom codeflash.code_utils.codeflash_wrap_decorator import \\\n    codeflash_performance_async\n\n\n@codeflash_performance_async\nasync def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:\n    """\n    Async bubble sort implementation for testing.\n    """\n    print("codeflash stdout: Async sorting list")\n    \n    await asyncio.sleep(0.01)\n    \n    n = len(lst)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if lst[j] > lst[j + 1]:\n                lst[j], lst[j + 1] = lst[j + 1], lst[j]\n    \n    result = lst.copy()\n    print(f"result: {result}")\n    return result\n\n\nclass AsyncBubbleSorter:\n    """Class with async sorting method for testing."""\n    \n    async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:\n        """\n        Async bubble sort implementation within a class.\n        """\n        print("codeflash stdout: AsyncBubbleSorter.sorter() called")\n        \n        # Add some async delay\n        await asyncio.sleep(0.005)\n        \n        n = len(lst)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if lst[j] > lst[j + 1]:\n                    lst[j], lst[j + 1] = lst[j + 1], lst[j]\n        \n        result = lst.copy()\n        return result\n''' == instrumented_source
+        assert (
+            '''import asyncio\nfrom typing import List, Union\n\nfrom codeflash.code_utils.codeflash_wrap_decorator import \\\n    codeflash_performance_async\n\n\n@codeflash_performance_async\nasync def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:\n    """\n    Async bubble sort implementation for testing.\n    """\n    print("codeflash stdout: Async sorting list")\n    \n    await asyncio.sleep(0.01)\n    \n    n = len(lst)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if lst[j] > lst[j + 1]:\n                lst[j], lst[j + 1] = lst[j + 1], lst[j]\n    \n    result = lst.copy()\n    print(f"result: {result}")\n    return result\n\n\nclass AsyncBubbleSorter:\n    """Class with async sorting method for testing."""\n    \n    async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:\n        """\n        Async bubble sort implementation within a class.\n        """\n        print("codeflash stdout: AsyncBubbleSorter.sorter() called")\n        \n        # Add some async delay\n        await asyncio.sleep(0.005)\n        \n        n = len(lst)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if lst[j] > lst[j + 1]:\n                    lst[j], lst[j + 1] = lst[j + 1], lst[j]\n        \n        result = lst.copy()\n        return result\n'''
+            == instrumented_source
+        )
 
         instrument_codeflash_capture(func, {}, tests_root)
 
@@ -316,7 +369,9 @@ async def test_async_perf():
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
-        test_env["CODEFLASH_TEST_MODULE"] = "tests.code_to_optimize.tests.pytest.test_async_perf_temp"
+        test_env["CODEFLASH_TEST_MODULE"] = (
+            "tests.code_to_optimize.tests.pytest.test_async_perf_temp"
+        )
         test_env["CODEFLASH_TEST_CLASS"] = ""
         test_env["CODEFLASH_TEST_FUNCTION"] = "test_async_perf"
         test_env["CODEFLASH_CURRENT_LINE_ID"] = "0"
@@ -355,8 +410,9 @@ async def test_async_perf():
             test_path.unlink()
 
 
-
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_function_error_handling() -> None:
     test_code = """import asyncio
 import pytest
@@ -368,9 +424,17 @@ async def test_async_error():
     with pytest.raises(ValueError, match="Test error"):
         await async_error_function([1, 2, 3])"""
 
-    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_error_temp.py").resolve()
-    test_path_perf = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_error_perf_temp.py").resolve()
-    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py").resolve()
+    test_path = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_error_temp.py"
+    ).resolve()
+    test_path_perf = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_error_perf_temp.py"
+    ).resolve()
+    fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py"
+    ).resolve()
     original_code = fto_path.read_text("utf-8")
 
     try:
@@ -381,27 +445,32 @@ async def async_error_function(lst):
     await asyncio.sleep(0.001)  # Small delay
     raise ValueError("Test error")
 """
-        
+
         modified_code = original_code + error_func_code
         fto_path.write_text(modified_code, "utf-8")
-        
+
         with test_path.open("w") as f:
             f.write(test_code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
 
-        func = FunctionToOptimize(function_name="async_error_function", parents=[], file_path=Path(fto_path), is_async=True)
-
-        source_success = add_async_decorator_to_function(
-            fto_path, func, TestingMode.BEHAVIOR
+        func = FunctionToOptimize(
+            function_name="async_error_function",
+            parents=[],
+            file_path=Path(fto_path),
+            is_async=True,
         )
 
+        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
+
         assert source_success
-        
+
         # Verify the file was modified
         instrumented_source = fto_path.read_text("utf-8")
-        
+
         expected_instrumented_source = """import asyncio
 from typing import List, Union
 
@@ -473,7 +542,9 @@ async def async_error_function(lst):
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
-        test_env["CODEFLASH_TEST_MODULE"] = "tests.code_to_optimize.tests.pytest.test_async_error_temp"
+        test_env["CODEFLASH_TEST_MODULE"] = (
+            "tests.code_to_optimize.tests.pytest.test_async_error_temp"
+        )
         test_env["CODEFLASH_TEST_CLASS"] = ""
         test_env["CODEFLASH_TEST_FUNCTION"] = "test_async_error"
         test_env["CODEFLASH_CURRENT_LINE_ID"] = "0"
@@ -504,7 +575,7 @@ async def async_error_function(lst):
         assert test_results is not None
         assert test_results.test_results is not None
         assert len(test_results.test_results) >= 1
-        
+
         result = test_results.test_results[0]
         assert result.id.function_getting_tested == "async_error_function"
         assert result.did_pass
@@ -518,7 +589,9 @@ async def async_error_function(lst):
             test_path_perf.unlink()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_multiple_iterations() -> None:
     test_code = """import asyncio
 import pytest
@@ -535,23 +608,36 @@ async def test_async_multi():
     output2 = await async_sorter(input2)
     assert output2 == [7, 9]"""
 
-    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_multi_temp.py").resolve()
-    test_path_perf = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_multi_perf_temp.py").resolve()
-    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py").resolve()
+    test_path = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_multi_temp.py"
+    ).resolve()
+    test_path_perf = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_multi_perf_temp.py"
+    ).resolve()
+    fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py"
+    ).resolve()
     original_code = fto_path.read_text("utf-8")
 
     try:
         with test_path.open("w") as f:
             f.write(test_code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
 
-        func = FunctionToOptimize(function_name="async_sorter", parents=[], file_path=Path(fto_path), is_async=True)
-
-        source_success = add_async_decorator_to_function(
-            fto_path, func, TestingMode.BEHAVIOR
+        func = FunctionToOptimize(
+            function_name="async_sorter",
+            parents=[],
+            file_path=Path(fto_path),
+            is_async=True,
         )
+
+        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
 
         assert source_success
         instrument_codeflash_capture(func, {}, tests_root)
@@ -570,7 +656,9 @@ async def test_async_multi():
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "3"
-        test_env["CODEFLASH_TEST_MODULE"] = "tests.code_to_optimize.tests.pytest.test_async_multi_temp"
+        test_env["CODEFLASH_TEST_MODULE"] = (
+            "tests.code_to_optimize.tests.pytest.test_async_multi_temp"
+        )
         test_env["CODEFLASH_TEST_CLASS"] = ""
         test_env["CODEFLASH_TEST_FUNCTION"] = "test_async_multi"
         test_env["CODEFLASH_CURRENT_LINE_ID"] = "0"
@@ -601,17 +689,25 @@ async def test_async_multi():
         assert test_results is not None
         assert test_results.test_results is not None
         assert len(test_results.test_results) >= 2
-        
+
         results_list = test_results.test_results
-        function_calls = [r for r in results_list if r.id.function_getting_tested == "async_sorter"]
+        function_calls = [
+            r for r in results_list if r.id.function_getting_tested == "async_sorter"
+        ]
         assert len(function_calls) == 2
-        
+
         first_call = function_calls[0]
         second_call = function_calls[1]
-        
-        assert first_call.stdout == "codeflash stdout: Async sorting list\nresult: [3, 4, 5]\n"
-        assert second_call.stdout == "codeflash stdout: Async sorting list\nresult: [7, 9]\n"
-        
+
+        assert (
+            first_call.stdout
+            == "codeflash stdout: Async sorting list\nresult: [3, 4, 5]\n"
+        )
+        assert (
+            second_call.stdout
+            == "codeflash stdout: Async sorting list\nresult: [7, 9]\n"
+        )
+
         assert first_call.did_pass
         assert second_call.did_pass
         assert first_call.runtime is None or first_call.runtime >= 0
@@ -625,7 +721,9 @@ async def test_async_multi():
             test_path_perf.unlink()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_async_empty_input_edge_cases() -> None:
     test_code = """import asyncio
 import pytest
@@ -649,23 +747,36 @@ async def test_async_edge_cases():
     result_sorted = await async_sorter(sorted_list)
     assert result_sorted == [1, 2, 3, 4]"""
 
-    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_edge_temp.py").resolve()
-    test_path_perf = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_async_edge_perf_temp.py").resolve()
-    fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py").resolve()
+    test_path = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_edge_temp.py"
+    ).resolve()
+    test_path_perf = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_async_edge_perf_temp.py"
+    ).resolve()
+    fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/async_bubble_sort.py"
+    ).resolve()
     original_code = fto_path.read_text("utf-8")
 
     try:
         with test_path.open("w") as f:
             f.write(test_code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
 
-        func = FunctionToOptimize(function_name="async_sorter", parents=[], file_path=Path(fto_path), is_async=True)
-
-        source_success = add_async_decorator_to_function(
-            fto_path, func, TestingMode.BEHAVIOR
+        func = FunctionToOptimize(
+            function_name="async_sorter",
+            parents=[],
+            file_path=Path(fto_path),
+            is_async=True,
         )
+
+        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
 
         assert source_success
         instrument_codeflash_capture(func, {}, tests_root)
@@ -684,7 +795,9 @@ async def test_async_edge_cases():
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
-        test_env["CODEFLASH_TEST_MODULE"] = "tests.code_to_optimize.tests.pytest.test_async_edge_temp"
+        test_env["CODEFLASH_TEST_MODULE"] = (
+            "tests.code_to_optimize.tests.pytest.test_async_edge_temp"
+        )
         test_env["CODEFLASH_TEST_CLASS"] = ""
         test_env["CODEFLASH_TEST_FUNCTION"] = "test_async_edge_cases"
         test_env["CODEFLASH_CURRENT_LINE_ID"] = "0"
@@ -715,23 +828,30 @@ async def test_async_edge_cases():
         assert test_results is not None
         assert test_results.test_results is not None
         assert len(test_results.test_results) >= 3  # 3 function calls for edge cases
-        
+
         results_list = test_results.test_results
-        function_calls = [r for r in results_list if r.id.function_getting_tested == "async_sorter"]
+        function_calls = [
+            r for r in results_list if r.id.function_getting_tested == "async_sorter"
+        ]
         assert len(function_calls) == 3
-        
+
         # Verify all calls passed
         for call in function_calls:
             assert call.did_pass
             assert call.runtime is None or call.runtime >= 0
-        
+
         empty_call = function_calls[0]
         single_call = function_calls[1]
         sorted_call = function_calls[2]
-        
+
         assert empty_call.stdout == "codeflash stdout: Async sorting list\nresult: []\n"
-        assert single_call.stdout == "codeflash stdout: Async sorting list\nresult: [42]\n"
-        assert sorted_call.stdout == "codeflash stdout: Async sorting list\nresult: [1, 2, 3, 4]\n"
+        assert (
+            single_call.stdout == "codeflash stdout: Async sorting list\nresult: [42]\n"
+        )
+        assert (
+            sorted_call.stdout
+            == "codeflash stdout: Async sorting list\nresult: [1, 2, 3, 4]\n"
+        )
 
     finally:
         fto_path.write_text(original_code, "utf-8")
@@ -741,7 +861,9 @@ async def test_async_edge_cases():
             test_path_perf.unlink()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_sync_function_behavior_in_async_test_environment() -> None:
     sync_sorter_code = """def sync_sorter(lst):
     \"\"\"Synchronous bubble sort for comparison.\"\"\"
@@ -755,7 +877,7 @@ def test_sync_function_behavior_in_async_test_environment() -> None:
     print(f"result: {result}")
     return result
 """
-    
+
     test_code = """from tests.code_to_optimize.sync_bubble_sort import sync_sorter
 
 
@@ -768,38 +890,56 @@ def test_sync_sort():
     output = sync_sorter(input)
     assert output == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]"""
 
-    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_sync_in_async_temp.py").resolve()
-    test_path_perf = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_sync_in_async_perf_temp.py").resolve()
-    sync_fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/sync_bubble_sort.py").resolve()
-    
+    test_path = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_sync_in_async_temp.py"
+    ).resolve()
+    test_path_perf = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_sync_in_async_perf_temp.py"
+    ).resolve()
+    sync_fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/sync_bubble_sort.py"
+    ).resolve()
+
     try:
         with sync_fto_path.open("w") as f:
             f.write(sync_sorter_code)
-            
+
         with test_path.open("w") as f:
             f.write(test_code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
 
-        func = FunctionToOptimize(function_name="sync_sorter", parents=[], file_path=Path(sync_fto_path), is_async=False)
+        func = FunctionToOptimize(
+            function_name="sync_sorter",
+            parents=[],
+            file_path=Path(sync_fto_path),
+            is_async=False,
+        )
 
         original_cwd = os.getcwd()
         run_cwd = project_root_path
         os.chdir(run_cwd)
-        
+
         success, instrumented_test = inject_profiling_into_existing_test(
             test_path,
-            [CodePosition(6, 13), CodePosition(10, 13)],  # Lines where sync_sorter is called
+            [
+                CodePosition(6, 13),
+                CodePosition(10, 13),
+            ],  # Lines where sync_sorter is called
             func,
             project_root_path,
             mode=TestingMode.BEHAVIOR,
         )
         os.chdir(original_cwd)
-        
+
         assert success
         assert instrumented_test is not None
-        
+
         with test_path.open("w") as f:
             f.write(instrumented_test)
 
@@ -819,7 +959,9 @@ def test_sync_sort():
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
-        test_env["CODEFLASH_TEST_MODULE"] = "tests.code_to_optimize.tests.pytest.test_sync_in_async_temp"
+        test_env["CODEFLASH_TEST_MODULE"] = (
+            "tests.code_to_optimize.tests.pytest.test_sync_in_async_temp"
+        )
         test_env["CODEFLASH_TEST_CLASS"] = ""
         test_env["CODEFLASH_TEST_FUNCTION"] = "test_sync_sort"
         test_env["CODEFLASH_CURRENT_LINE_ID"] = "0"
@@ -849,7 +991,7 @@ def test_sync_sort():
 
         assert test_results is not None
         assert test_results.test_results is not None
-        
+
         results_list = test_results.test_results
         assert results_list[0].id.function_getting_tested == "sync_sorter"
         assert results_list[0].id.iteration_id == "1_0"
@@ -858,7 +1000,9 @@ def test_sync_sort():
         assert results_list[0].did_pass
         assert results_list[0].runtime > 0
 
-        expected_stdout = "codeflash stdout: Sync sorting list\nresult: [0, 1, 2, 3, 4, 5]\n"
+        expected_stdout = (
+            "codeflash stdout: Sync sorting list\nresult: [0, 1, 2, 3, 4, 5]\n"
+        )
         assert expected_stdout == results_list[0].stdout
 
         if len(results_list) > 1:
@@ -879,7 +1023,9 @@ def test_sync_sort():
             test_path_perf.unlink()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="pending support for asyncio on windows")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="pending support for asyncio on windows"
+)
 def test_mixed_async_sync_function_calls() -> None:
     mixed_module_code = """import asyncio
 from typing import List, Union
@@ -928,7 +1074,7 @@ async def async_merge_sort(lst: List[Union[int, float]]) -> List[Union[int, floa
     return result
 
 """
-    
+
     test_code = """import asyncio
 import pytest
 from tests.code_to_optimize.mixed_sort import sync_quick_sort, async_merge_sort
@@ -946,33 +1092,50 @@ async def test_mixed_sorting():
     async_output = await async_merge_sort(async_input)
     assert async_output == [2, 3, 5, 6, 9]"""
 
-    test_path = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_mixed_sort_temp.py").resolve()
-    test_path_perf = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/test_mixed_sort_perf_temp.py").resolve()
-    mixed_fto_path = (Path(__file__).parent.resolve() / "code_to_optimize/mixed_sort.py").resolve()
-    
+    test_path = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_mixed_sort_temp.py"
+    ).resolve()
+    test_path_perf = (
+        Path(__file__).parent.resolve()
+        / "code_to_optimize/tests/pytest/test_mixed_sort_perf_temp.py"
+    ).resolve()
+    mixed_fto_path = (
+        Path(__file__).parent.resolve() / "code_to_optimize/mixed_sort.py"
+    ).resolve()
+
     try:
         with mixed_fto_path.open("w") as f:
             f.write(mixed_module_code)
-            
+
         with test_path.open("w") as f:
             f.write(test_code)
 
-        tests_root = (Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/").resolve()
+        tests_root = (
+            Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        ).resolve()
         project_root_path = (Path(__file__).parent / "..").resolve()
 
-        async_func = FunctionToOptimize(function_name="async_merge_sort", parents=[], file_path=Path(mixed_fto_path), is_async=True)
+        async_func = FunctionToOptimize(
+            function_name="async_merge_sort",
+            parents=[],
+            file_path=Path(mixed_fto_path),
+            is_async=True,
+        )
 
         source_success = add_async_decorator_to_function(
-            mixed_fto_path, async_func, TestingMode.BEHAVIOR
+            mixed_fto_path, async_func.BEHAVIOR
         )
 
         assert source_success
-        
+
         # Verify the file was modified
         instrumented_source = mixed_fto_path.read_text("utf-8")
         assert "@codeflash_behavior_async" in instrumented_source
         assert "async def async_merge_sort" in instrumented_source
-        assert "def sync_quick_sort" in instrumented_source  # Should preserve sync function
+        assert (
+            "def sync_quick_sort" in instrumented_source
+        )  # Should preserve sync function
         instrument_codeflash_capture(async_func, {}, tests_root)
 
         opt = Optimizer(
@@ -989,7 +1152,9 @@ async def test_mixed_sorting():
         test_env = os.environ.copy()
         test_env["CODEFLASH_TEST_ITERATION"] = "0"
         test_env["CODEFLASH_LOOP_INDEX"] = "1"
-        test_env["CODEFLASH_TEST_MODULE"] = "tests.code_to_optimize.tests.pytest.test_mixed_sort_temp"
+        test_env["CODEFLASH_TEST_MODULE"] = (
+            "tests.code_to_optimize.tests.pytest.test_mixed_sort_temp"
+        )
         test_env["CODEFLASH_TEST_CLASS"] = ""
         test_env["CODEFLASH_TEST_FUNCTION"] = "test_mixed_sorting"
         test_env["CODEFLASH_CURRENT_LINE_ID"] = "0"
@@ -1019,11 +1184,15 @@ async def test_mixed_sorting():
 
         assert test_results is not None
         assert test_results.test_results is not None
-        
+
         results_list = test_results.test_results
-        async_calls = [r for r in results_list if r.id.function_getting_tested == "async_merge_sort"]
+        async_calls = [
+            r
+            for r in results_list
+            if r.id.function_getting_tested == "async_merge_sort"
+        ]
         assert len(async_calls) >= 1
-        
+
         for call in async_calls:
             assert call.did_pass
             assert call.runtime is None or call.runtime >= 0

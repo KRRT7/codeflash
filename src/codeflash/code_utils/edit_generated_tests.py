@@ -12,11 +12,11 @@ from libcst.metadata import PositionProvider
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.time_utils import format_perf, format_time
-from codeflash.models.models import GeneratedTests, GeneratedTestsList
+from codeflash.models.domain import GeneratedTests, GeneratedTestsList
 from codeflash.result.critic import performance_gain
 
 if TYPE_CHECKING:
-    from codeflash.models.models import InvocationId
+    from codeflash.models.domain import InvocationId
 
 
 class CommentMapper(ast.NodeVisitor):

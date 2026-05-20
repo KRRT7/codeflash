@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Unit tests for inject_profiling_into_existing_test with different used_frameworks values.
 
 These tests verify that the wrapper function is correctly generated with GPU device
@@ -9,14 +10,14 @@ synchronization code for different framework imports (torch, tensorflow, jax).
 import re
 from pathlib import Path
 
-import pytest
 
 from codeflash.code_utils.instrument_existing_tests import (
     detect_frameworks_from_code,
     inject_profiling_into_existing_test,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import CodePosition, TestingMode
+from codeflash.models.coverage import TestingMode
+from codeflash.models.domain import CodePosition
 
 
 def normalize_instrumented_code(code: str) -> str:
@@ -29,18 +30,12 @@ def normalize_instrumented_code(code: str) -> str:
     """
     # Normalize database path
     code = re.sub(
-        r"sqlite3\.connect\(f'[^']+'",
-        "sqlite3.connect(f'{CODEFLASH_DB_PATH}'",
-        code
+        r"sqlite3\.connect\(f'[^']+'", "sqlite3.connect(f'{CODEFLASH_DB_PATH}'", code
     )
     # Normalize f-string that contains the test_stdout_tag assignment
     # This specific f-string has internal single quotes, so libcst uses double quotes
     # on Python < 3.12, but single quotes on Python 3.12+
-    code = re.sub(
-        r'test_stdout_tag = f"([^"]+)"',
-        r"test_stdout_tag = f'\1'",
-        code
-    )
+    code = re.sub(r'test_stdout_tag = f"([^"]+)"', r"test_stdout_tag = f'\1'", code)
     return code
 
 

@@ -2,8 +2,9 @@ from textwrap import dedent
 
 import pytest
 
-from codeflash.models.models import CodeContextType
+from codeflash.models.domain import CodeContextType
 from codeflash.context.code_context_extractor import parse_code_and_prune_cst
+
 
 def test_simple_function() -> None:
     code = """
@@ -12,7 +13,9 @@ def test_simple_function() -> None:
         y = 2
         return x + y
     """
-    result = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"target_function"}, set())
+    result = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"target_function"}, set()
+    )
 
     expected = """
     def target_function():
@@ -21,6 +24,7 @@ def test_simple_function() -> None:
         return x + y
     """
     assert dedent(expected).strip() == result.strip()
+
 
 def test_basic_class() -> None:
     code = """
@@ -42,8 +46,11 @@ def test_basic_class() -> None:
             print("This should be included")
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
+
 
 def test_dunder_methods() -> None:
     code = """
@@ -70,7 +77,9 @@ def test_dunder_methods() -> None:
             print("include me")
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -102,7 +111,13 @@ def test_dunder_methods_remove_docstring() -> None:
             print("include me")
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set(), remove_docstrings=True)
+    output = parse_code_and_prune_cst(
+        dedent(code),
+        CodeContextType.TESTGEN,
+        {"TestClass.target_method"},
+        set(),
+        remove_docstrings=True,
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -132,7 +147,13 @@ def test_class_remove_docstring() -> None:
             print("include me")
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set(), remove_docstrings=True)
+    output = parse_code_and_prune_cst(
+        dedent(code),
+        CodeContextType.TESTGEN,
+        {"TestClass.target_method"},
+        set(),
+        remove_docstrings=True,
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -149,8 +170,13 @@ def test_target_in_nested_class() -> None:
                 print("include this")
     """
 
-    with pytest.raises(ValueError, match="No target functions found in the provided code"):
-        parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"Outer.Inner.target_method"}, set())
+    with pytest.raises(
+        ValueError, match="No target functions found in the provided code"
+    ):
+        parse_code_and_prune_cst(
+            dedent(code), CodeContextType.TESTGEN, {"Outer.Inner.target_method"}, set()
+        )
+
 
 def test_method_signatures() -> None:
     code = """
@@ -173,8 +199,12 @@ def test_method_signatures() -> None:
             return "value"
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
+
+
 def test_multiple_top_level_targets() -> None:
     code = """
     class TestClass:
@@ -203,7 +233,12 @@ def test_multiple_top_level_targets() -> None:
             self.x = 42
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target1", "TestClass.target2"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code),
+        CodeContextType.TESTGEN,
+        {"TestClass.target1", "TestClass.target2"},
+        set(),
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -226,8 +261,11 @@ def test_class_annotations() -> None:
             self.var2 = "test"
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
+
 
 def test_class_annotations_if() -> None:
     code = """
@@ -250,7 +288,9 @@ def test_class_annotations_if() -> None:
                 self.var2 = "test"
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -291,7 +331,9 @@ def test_conditional_class_definitions() -> None:
                 print("other")
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"PlatformClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"PlatformClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -320,7 +362,9 @@ def test_try_except_structure() -> None:
                 print("error")
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TargetClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"TargetClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -342,8 +386,11 @@ def test_module_var() -> None:
     x = 5
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"target_function"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"target_function"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
+
 
 def test_module_var_if() -> None:
     code = """
@@ -371,8 +418,11 @@ def test_module_var_if() -> None:
         z = 10
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"target_function"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"target_function"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
+
 
 def test_multiple_classes() -> None:
     code = """
@@ -399,7 +449,12 @@ def test_multiple_classes() -> None:
             return "C"
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"ClassA.process", "ClassC.process"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code),
+        CodeContextType.TESTGEN,
+        {"ClassA.process", "ClassC.process"},
+        set(),
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -460,7 +515,9 @@ def test_with_statement_and_loops() -> None:
                         print("cleanup")
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -515,8 +572,11 @@ def test_async_with_try_except() -> None:
                     await self.cleanup()
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code), CodeContextType.TESTGEN, {"TestClass.target_method"}, set()
+    )
     assert dedent(expected).strip() == output.strip()
+
 
 def test_simplified_complete_implementation() -> None:
     code = """
@@ -639,7 +699,12 @@ def test_simplified_complete_implementation() -> None:
                 raise RuntimeError(f"Failed to initialize: {self.error}")
     """
 
-    output = parse_code_and_prune_cst(dedent(code), CodeContextType.TESTGEN, {"DataProcessor.target_method", "ResultHandler.target_method"}, set())
+    output = parse_code_and_prune_cst(
+        dedent(code),
+        CodeContextType.TESTGEN,
+        {"DataProcessor.target_method", "ResultHandler.target_method"},
+        set(),
+    )
     assert dedent(expected).strip() == output.strip()
 
 
@@ -740,6 +805,10 @@ def test_simplified_complete_implementation_no_docstring() -> None:
     """
 
     output = parse_code_and_prune_cst(
-        dedent(code), CodeContextType.TESTGEN, {"DataProcessor.target_method", "ResultHandler.target_method"}, set(), remove_docstrings=True
+        dedent(code),
+        CodeContextType.TESTGEN,
+        {"DataProcessor.target_method", "ResultHandler.target_method"},
+        set(),
+        remove_docstrings=True,
     )
     assert dedent(expected).strip() == output.strip()

@@ -17,7 +17,7 @@ from codeflash.code_utils.instrument_existing_tests import (
     inject_profiling_into_existing_test,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import (
+from codeflash.models.domain import (
     CodePosition,
     TestFile,
     TestFiles,

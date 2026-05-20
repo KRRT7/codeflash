@@ -1,5 +1,6 @@
 from codeflash.benchmarking.codeflash_trace import codeflash_trace
 
+
 @codeflash_trace
 def bubble_sort_with_used_socket(data_container):
     """
@@ -14,8 +15,8 @@ def bubble_sort_with_used_socket(data_container):
         list: The sorted list of numbers
     """
     # Extract the list to sort and socket
-    numbers = data_container.get('numbers', []).copy()
-    socket = data_container.get('socket')
+    numbers = data_container.get("numbers", []).copy()
+    socket = data_container.get("socket")
 
     # Track swap count
     swap_count = 0

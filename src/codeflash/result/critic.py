@@ -12,7 +12,7 @@ from codeflash.code_utils.config_consts import (
 from codeflash.models import models
 
 if TYPE_CHECKING:
-    from codeflash.models.models import (
+    from codeflash.models.domain import (
         CoverageData,
         OptimizedCandidateResult,
         OriginalCodeBaseline,

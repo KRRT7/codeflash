@@ -3,9 +3,13 @@
 from collections import Counter
 from pathlib import Path
 
-import pytest
 
-from codeflash.models.models import FunctionTestInvocation, InvocationId, TestResults, TestType
+from codeflash.models.domain import (
+    FunctionTestInvocation,
+    InvocationId,
+    TestResults,
+    TestType,
+)
 
 
 class TestFileToNoOfTests:
@@ -211,7 +215,9 @@ class TestFileToNoOfTests:
             )
 
         counter = test_results.file_to_no_of_tests(["test_remove_1", "test_remove_2"])
-        assert counter == Counter({Path("/tmp/test_file.py"): 2})  # Only test_keep_1 and test_keep_2
+        assert counter == Counter(
+            {Path("/tmp/test_file.py"): 2}
+        )  # Only test_keep_1 and test_keep_2
 
     def test_none_test_function_name(self):
         """Test with None test_function_name."""
@@ -274,7 +280,9 @@ class TestFileToNoOfTests:
         test_results = TestResults()
 
         # File 1: Mix of test types
-        for i, test_type in enumerate([TestType.GENERATED_REGRESSION, TestType.EXISTING_UNIT_TEST]):
+        for i, test_type in enumerate(
+            [TestType.GENERATED_REGRESSION, TestType.EXISTING_UNIT_TEST]
+        ):
             test_results.add(
                 FunctionTestInvocation(
                     id=InvocationId(
@@ -340,11 +348,13 @@ class TestFileToNoOfTests:
             )
 
         counter = test_results.file_to_no_of_tests(["test_remove"])
-        expected = Counter({
-            Path("/tmp/file1.py"): 1,  # Only 1 GENERATED_REGRESSION test
-            Path("/tmp/file2.py"): 1,  # Only test_keep (test_remove is excluded)
-            Path("/tmp/file3.py"): 3,  # All 3 tests
-        })
+        expected = Counter(
+            {
+                Path("/tmp/file1.py"): 1,  # Only 1 GENERATED_REGRESSION test
+                Path("/tmp/file2.py"): 1,  # Only test_keep (test_remove is excluded)
+                Path("/tmp/file3.py"): 3,  # All 3 tests
+            }
+        )
         assert counter == expected
 
     def test_case_sensitivity(self):
@@ -470,4 +480,6 @@ class TestFileToNoOfTests:
             )
 
         counter = test_results.file_to_no_of_tests(removal_list)
-        assert counter == Counter({Path("/tmp/test_file.py"): 50})  # 50 kept, 50 removed
+        assert counter == Counter(
+            {Path("/tmp/test_file.py"): 50}
+        )  # 50 kept, 50 removed

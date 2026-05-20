@@ -13,12 +13,13 @@ from codeflash._constants import TEST_RESULTS_TABLE_SCHEMA
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.formatter import sort_imports
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
-from codeflash.models.models import FunctionParent, TestingMode, VerificationType
+from codeflash.models.domain import FunctionParent, VerificationType
+from codeflash.models.coverage import TestingMode
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from codeflash.models.models import CodePosition
+    from codeflash.models.domain import CodePosition
 
 
 @dataclass(frozen=True)

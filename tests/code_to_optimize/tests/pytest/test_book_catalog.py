@@ -1,10 +1,10 @@
 from typing import Generator
 
 import pytest
-from sqlalchemy import Engine, create_engine, delete, update
+from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from tests.code_to_optimize.book_catalog import Author, Book, get_authors
+from tests.code_to_optimize.book_catalog import Book, get_authors
 
 POSTGRES_CONNECTION_STRING = (
     "postgresql://cf_developer:XJcbU37MBYeh4dDK6PTV5n@sqlalchemy-experiments.postgres"
@@ -36,4 +36,6 @@ def test_get_authors_basic(session: Session) -> None:
     assert len(authors) == 50, "Should return 50 authors"
     author_names = [author.name for author in authors]
     for i in range(50):
-        assert f"author{i}" in author_names, f"author{i} should be in the list of authors"
+        assert f"author{i}" in author_names, (
+            f"author{i} should be in the list of authors"
+        )

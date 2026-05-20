@@ -15,10 +15,10 @@ from codeflash.code_utils.compat import IS_POSIX, SAFE_SYS_EXECUTABLE
 from codeflash.code_utils.config_consts import TOTAL_LOOPING_TIME_EFFECTIVE
 from codeflash.verification.coverage_utils import prepare_coverage_files
 from codeflash.code_utils.shell_utils import get_cross_platform_subprocess_run_args
-from codeflash.models.models import TestFiles, TestType
+from codeflash.models.domain import TestFiles, TestType
 
 if TYPE_CHECKING:
-    from codeflash.models.models import TestFiles
+    from codeflash.models.domain import TestFiles
 
 BEHAVIORAL_BLOCKLISTED_PLUGINS = ["benchmark", "codspeed", "xdist", "sugar"]
 BENCHMARKING_BLOCKLISTED_PLUGINS = [

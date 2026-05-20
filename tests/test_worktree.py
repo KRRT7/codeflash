@@ -8,9 +8,17 @@ from codeflash.optimization.optimizer import Optimizer
 
 def test_mirror_paths_for_worktree_mode(monkeypatch: pytest.MonkeyPatch):
     repo_root = Path(__file__).resolve().parent.parent
-    project_root = repo_root / "tests" / "code_to_optimize" / "code_directories" / "nested_module_root"
+    project_root = (
+        repo_root
+        / "tests"
+        / "code_to_optimize"
+        / "code_directories"
+        / "nested_module_root"
+    )
 
-    monkeypatch.setattr("codeflash.optimization.optimizer.git_root_dir", lambda: project_root)
+    monkeypatch.setattr(
+        "codeflash.optimization.optimizer.git_root_dir", lambda: project_root
+    )
 
     args = Namespace()
     args.benchmark = False
@@ -35,11 +43,17 @@ def test_mirror_paths_for_worktree_mode(monkeypatch: pytest.MonkeyPatch):
     assert optimizer.args.file == worktree_dir / "src" / "app" / "main.py"
 
     assert optimizer.test_cfg.tests_root == worktree_dir / "src" / "tests"
-    assert optimizer.test_cfg.project_root_path == worktree_dir / "src" # same as project_root
-    assert optimizer.test_cfg.tests_project_rootdir == worktree_dir / "src" # same as test_project_root
+    assert (
+        optimizer.test_cfg.project_root_path == worktree_dir / "src"
+    )  # same as project_root
+    assert (
+        optimizer.test_cfg.tests_project_rootdir == worktree_dir / "src"
+    )  # same as test_project_root
 
     # test on our repo
-    monkeypatch.setattr("codeflash.optimization.optimizer.git_root_dir", lambda: repo_root)
+    monkeypatch.setattr(
+        "codeflash.optimization.optimizer.git_root_dir", lambda: repo_root
+    )
     args = Namespace()
     args.benchmark = False
     args.benchmarks_root = None
@@ -60,7 +74,9 @@ def test_mirror_paths_for_worktree_mode(monkeypatch: pytest.MonkeyPatch):
     assert optimizer.args.test_project_root == worktree_dir
     assert optimizer.args.module_root == worktree_dir / "src" / "codeflash"
     assert optimizer.args.tests_root == worktree_dir / "tests"
-    assert optimizer.args.file == worktree_dir / "src/codeflash/optimization/optimizer.py"
+    assert (
+        optimizer.args.file == worktree_dir / "src/codeflash/optimization/optimizer.py"
+    )
 
     assert optimizer.test_cfg.tests_root == worktree_dir / "tests"
     assert optimizer.test_cfg.project_root_path == worktree_dir / "src"

@@ -22,7 +22,7 @@ from codeflash.github.pr_comment import FileDiffContent, PrComment
 from codeflash.result.critic import performance_gain
 
 if TYPE_CHECKING:
-    from codeflash.models.models import FunctionCalledInTest, InvocationId
+    from codeflash.models.domain import FunctionCalledInTest, InvocationId
     from codeflash.result.explanation import Explanation
     from codeflash.verification.verification_utils import TestConfig
 

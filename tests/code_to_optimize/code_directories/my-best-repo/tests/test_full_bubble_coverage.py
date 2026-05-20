@@ -1,5 +1,10 @@
-import pytest
-from bubble_sort import sorter, sorter_one_level_depth, add_one_level_depth, add, multiply_and_add
+from bubble_sort import (
+    sorter,
+    sorter_one_level_depth,
+    add_one_level_depth,
+    add,
+    multiply_and_add,
+)
 
 
 def test_sort():
@@ -14,6 +19,7 @@ def test_sort():
     input = list(reversed(range(5000)))
     output = sorter(input)
     assert output == list(range(5000))
+
 
 def test_sorter_one_level_depth():
     input = [3, 2, 1]
