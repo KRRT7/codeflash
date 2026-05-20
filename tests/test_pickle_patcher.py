@@ -29,11 +29,7 @@ from codeflash.optimization.optimizer import Optimizer
 from codeflash.verification.equivalence import compare_test_results
 import time
 
-if __import__("importlib").util.find_spec("sqlalchemy"):
-
-    HAS_SQLALCHEMY = True
-else:
-    HAS_SQLALCHEMY = False
+HAS_SQLALCHEMY = True
 
 from codeflash.picklepatch.pickle_patcher import PicklePatcher
 from codeflash.picklepatch.pickle_placeholder import (
