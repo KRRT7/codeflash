@@ -95,6 +95,11 @@ from codeflash.context.unused_definition_remover import (
 )
 from codeflash.discovery.functions_to_optimize import was_function_previously_optimized
 from codeflash.danom import Err, Ok
+from codeflash.optimization.candidate_processor import (
+    CandidateForest,
+    CandidateNode,
+    CandidateProcessor,
+)
 from codeflash.models.api import OptimizationReviewResult
 from codeflash.models.domain import ExperimentMetadata
 from codeflash.models.api import (
@@ -211,56 +216,6 @@ def log_optimization_context(
         print(code_context.read_only_context_code)
         rule()
 
-
-class CandidateNode:
-    __slots__ = ("candidate", "children", "parent")
-
-    def __init__(self, candidate: OptimizedCandidate) -> None:
-        self.candidate = candidate
-        self.parent: CandidateNode | None = None
-        self.children: list[CandidateNode] = []
-
-    def is_leaf(self) -> bool:
-        return not self.children
-
-    def path_to_root(self) -> list[OptimizedCandidate]:
-        path = []
-        node: CandidateNode | None = self
-        while node:
-            path.append(node.candidate)
-            node = node.parent
-        return path[::-1]
-
-
-class CandidateForest:
-    def __init__(self) -> None:
-        self.nodes: dict[str, CandidateNode] = {}
-
-    def add(self, candidate: OptimizedCandidate) -> CandidateNode:
-        cid = candidate.optimization_id
-        pid = candidate.parent_id
-
-        node = self.nodes.get(cid)
-        if node is None:
-            node = CandidateNode(candidate)
-            self.nodes[cid] = node
-
-        if pid is not None:
-            parent = self.nodes.get(pid)
-            if parent is None:
-                parent = CandidateNode(candidate=None)  # placeholder
-                self.nodes[pid] = parent
-
-            node.parent = parent
-            parent.children.append(node)
-
-        return node
-
-    def get_node(self, cid: str) -> CandidateNode | None:
-        return self.nodes.get(cid)
-
-
-class CandidateProcessor:
     """Handles candidate processing using a queue-based approach."""
 
     def __init__(
