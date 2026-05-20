@@ -105,7 +105,7 @@ class Graph:
         visited[v] = True
 
         for i in self.graph[v]:
-            if visited[i] == False:
+            if not visited[i]:
                 self.topologicalSortUtil(i, visited, stack)
 
         stack.insert(0, v)
@@ -115,7 +115,7 @@ class Graph:
         stack = []
 
         for i in range(self.V):
-            if visited[i] == False:
+            if not visited[i]:
                 self.topologicalSortUtil(i, visited, stack)
 
         # Print contents of stack
@@ -143,7 +143,7 @@ def test_class_method_dependencies() -> None:
         ),
     )
     with open(file_path) as f:
-        original_code = f.read()
+        f.read()
     ctx_result = func_optimizer.get_code_optimization_context()
     if not is_successful(ctx_result):
         pytest.fail()
@@ -217,7 +217,7 @@ def test_recursive_function_context() -> None:
         ),
     )
     with open(file_path) as f:
-        original_code = f.read()
+        f.read()
 
     ctx_result = func_optimizer.get_code_optimization_context()
     if not is_successful(ctx_result):

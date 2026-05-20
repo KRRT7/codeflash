@@ -65,7 +65,7 @@ class TestGitUtils(unittest.TestCase):
         self, mock_confirm, mock_isatty, mock_repo
     ):
         mock_repo.side_effect = git.InvalidGitRepositoryError  # type: ignore
-        assert check_running_in_git_repo("/path/to/non-repo") == False
+        assert not check_running_in_git_repo("/path/to/non-repo")
 
     @patch("codeflash.code_utils.git_utils.git.Repo")
     @patch("codeflash.code_utils.git_utils.sys.__stdin__.isatty", return_value=False)

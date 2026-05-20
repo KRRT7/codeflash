@@ -65,7 +65,7 @@ class Graph:
         visited[v] = True
 
         for i in self.graph[v]:
-            if visited[i] == False:
+            if not visited[i]:
                 self.topologicalSortUtil(i, visited, stack)
 
         stack.insert(0, v)
@@ -75,7 +75,7 @@ class Graph:
         stack = []
 
         for i in range(self.V):
-            if visited[i] == False:
+            if not visited[i]:
                 self.topologicalSortUtil(i, visited, stack)
 
         # Print contents of stack
@@ -1049,7 +1049,7 @@ class HelperClass:
     with pytest.raises(
         ValueError, match="Read-writable code has exceeded token limit, cannot proceed"
     ):
-        code_ctx = get_code_optimization_context(
+        get_code_optimization_context(
             function_to_optimize, opt.args.project_root
         )
 
@@ -1108,7 +1108,7 @@ class HelperClass:
     with pytest.raises(
         ValueError, match="Read-writable code has exceeded token limit, cannot proceed"
     ):
-        code_ctx = get_code_optimization_context(
+        get_code_optimization_context(
             function_to_optimize, opt.args.project_root
         )
 
@@ -1826,9 +1826,6 @@ def test_direct_module_import() -> None:
         / "code_directories"
         / "retriever"
     )
-    project_root = (
-        code_to_optimize_dir.parent.parent.parent
-    )  # Main project root (parent of tests)
     path_to_main = code_to_optimize_dir / "main.py"
     path_to_fto = code_to_optimize_dir / "import_test.py"
     function_to_optimize = FunctionToOptimize(
@@ -2079,7 +2076,7 @@ def get_system_details():
         hashing_context = code_ctx.hashing_code_context
         # The expected contexts
         # Resolve both paths to handle symlink issues on macOS
-        relative_path = file_path.relative_to(project_root)
+        file_path.relative_to(project_root)
         expected_read_write_context = f"""
 ```python:{main_file_path.resolve().relative_to(opt.args.project_root.resolve())}
 import utility_module
@@ -2331,7 +2328,7 @@ def get_system_details():
             code_ctx.read_only_context_code,
         )
         # The expected contexts
-        relative_path = file_path.relative_to(project_root)
+        file_path.relative_to(project_root)
         expected_read_write_context = f"""
 ```python:utility_module.py
 DEFAULT_PRECISION = "medium"

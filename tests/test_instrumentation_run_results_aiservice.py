@@ -179,7 +179,7 @@ def test_single_element_list():
                 )
             ]
         )
-        a = BubbleSorter()
+        BubbleSorter()
         function_to_optimize = FunctionToOptimize(
             "sorter", fto_path, [FunctionParent("BubbleSorter", "ClassDef")]
         )

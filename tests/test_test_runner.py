@@ -114,7 +114,7 @@ def test_sort():
         )
         result_file = result.result_file_path
         process = result.run_result
-        results = parse_test_xml(
+        parse_test_xml(
             test_xml_file_path=result_file,
             test_files=test_files,
             test_config=config,
@@ -170,7 +170,7 @@ def test_sort():
         )
         result_file = result.result_file_path
         process = result.run_result
-        results = parse_test_xml(
+        parse_test_xml(
             test_xml_file_path=result_file,
             test_files=test_files,
             test_config=config,

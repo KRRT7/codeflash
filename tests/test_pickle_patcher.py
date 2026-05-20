@@ -418,7 +418,7 @@ def test_run_and_parse_picklepatch() -> None:
             time.sleep(1)
 
         # Generate replay test
-        count = generate_replay_test(output_file, replay_tests_dir)
+        generate_replay_test(output_file, replay_tests_dir)
         replay_test_path = replay_tests_dir / Path(
             "test_tests_code_to_optimize_tests_pytest_benchmarks_socket_test_test_socket__replay_test_0.py"
         )
@@ -502,7 +502,7 @@ def test_run_and_parse_picklepatch() -> None:
             test_results_unused_socket.test_results[0].id.test_function_name
             == "test_tests_code_to_optimize_bubble_sort_picklepatch_test_unused_socket_bubble_sort_with_unused_socket_test_socket_picklepatch"
         )
-        assert test_results_unused_socket.test_results[0].did_pass == True
+        assert test_results_unused_socket.test_results[0].did_pass
 
         # Replace with optimized candidate
         fto_unused_socket_path.write_text("""

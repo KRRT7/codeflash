@@ -359,30 +359,6 @@ def test_function():
     return dumper.dump()
 """
 
-    expected = """
-class LayoutDumper:
-    def dump(self):
-        raise NotImplementedError
-
-class ObjectDetectionLayoutDumper(LayoutDumper):
-    def __init__(self, data):
-        self.data = data
-    def dump(self):
-        return self.data
-
-class ExtractedLayoutDumper(LayoutDumper):
-    def __init__(self, data):
-        self.data = data
-    def dump(self):
-        return self.data
-
-class UnusedClass:
-    pass
-
-def test_function():
-    dumper = ObjectDetectionLayoutDumper({})
-    return dumper.dump()
-"""
 
     qualified_functions = {"test_function"}
     result = remove_unused_definitions_by_function_names(code, qualified_functions)

@@ -127,7 +127,6 @@ def test_quick_sort():
 def helper_function():
     return "not a test"
 """
-        qualified_name = "quick_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -195,7 +194,6 @@ def helper_function():
     codeflash_output = some_function()
     assert codeflash_output is not None
 """
-            qualified_name = "some_function"
             generated_test = GeneratedTests(
                 generated_original_test_source=test_source,
                 instrumented_behavior_test_source="",
@@ -242,7 +240,6 @@ def helper_function():
     assert codeflash_output == [1, 2, 3]
 """
 
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -277,7 +274,6 @@ def helper_function():
     assert codeflash_output == [1, 2, 3]
 """
 
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -314,7 +310,6 @@ def helper_function():
     codeflash_output = bubble_sort([3, 1, 2])
     assert codeflash_output == [1, 2, 3]
 """
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -380,7 +375,6 @@ def helper_function():
     result = bubble_sort([3, 1, 2])
     assert result == [1, 2, 3]
 """
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -429,7 +423,6 @@ def helper_function():
             behavior_file_path=test_config.tests_root / "test_module__unit_test_0.py",
             perf_file_path=test_config.tests_root / "test_perf.py",
         )
-        qualified_name = "bubble_sort"
         generated_tests = GeneratedTestsList(generated_tests=[generated_test])
 
         # Create test results
@@ -470,7 +463,6 @@ def helper_function():
     codeflash_output = quick_sort([5, 2, 8])
     assert codeflash_output == [2, 5, 8]
 """
-        qualified_name = "quick_sort"
         generated_test_1 = GeneratedTests(
             generated_original_test_source=test_source_1,
             instrumented_behavior_test_source="",
@@ -531,7 +523,6 @@ def helper_function():
     codeflash_output = bubble_sort([3, 1, 2])
     assert codeflash_output == [1, 2, 3]
 """
-        qualified_name = "bubble_sort"
         original_behavior_source = "behavior test source"
         original_perf_source = "perf test source"
         original_behavior_path = test_config.tests_root / "test_module__unit_test_0.py"
@@ -587,7 +578,6 @@ def helper_function():
     assert result == [1, 2, 3]
     assert arr == [1, 2, 3]  # Input should be mutated
 """
-        qualified_name = "sorter"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -694,7 +684,6 @@ def helper_function():
         codeflash_output = some_function()
         assert codeflash_output == expected
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -743,7 +732,6 @@ def helper_function():
     codeflash_output = some_function()
     assert codeflash_output == expected2
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -804,7 +792,6 @@ def helper_function():
     codeflash_output = some_function()
     assert codeflash_output == expected
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -842,7 +829,6 @@ def helper_function():
     result = some_function()
     assert result == expected
 """
-        qualified_name = "some_function"
         expected = """def test_function():
     result = some_function() # 1.00s -> 500ms (100% faster)
     assert result == expected
@@ -888,7 +874,6 @@ def helper_function():
     codeflash_output = some_function()
     assert codeflash_output == expected
 """
-        qualified_name = "some_function"
         generated_test1 = GeneratedTests(
             generated_original_test_source=test_source1,
             instrumented_behavior_test_source="",
@@ -965,7 +950,6 @@ def helper_function():
     codeflash_output = some_function()
     assert codeflash_output == expected
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1023,7 +1007,6 @@ def helper_function():
     assert result == [1, 2, 3]
 """
 
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1072,7 +1055,6 @@ def test_quick_sort():
 def helper_function():
     return "not a test"
 """
-        qualified_name = "quick_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1139,7 +1121,6 @@ def helper_function():
     #this comment will be removed in ast form
     result = some_function(); assert result is not None
 """
-            qualified_name = "some_function"
             generated_test = GeneratedTests(
                 generated_original_test_source=test_source,
                 instrumented_behavior_test_source="",
@@ -1186,7 +1167,6 @@ def helper_function():
     assert result == [1, 2, 3]
 """
 
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1221,7 +1201,6 @@ def helper_function():
     assert result == [1, 2, 3]
 """
 
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1258,7 +1237,6 @@ def helper_function():
     result = bubble_sort([3, 1, 2])
     assert result == [1, 2, 3]
 """
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1324,7 +1302,6 @@ def helper_function():
     result = bubble_sort([3, 1, 2])
     assert result == [1, 2, 3]
 """
-        qualified_name = "bubble_sort"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1373,7 +1350,6 @@ def helper_function():
             behavior_file_path=test_config.tests_root / "test_module__unit_test_0.py",
             perf_file_path=test_config.tests_root / "test_perf.py",
         )
-        qualified_name = "bubble_sort"
         generated_tests = GeneratedTestsList(generated_tests=[generated_test])
 
         # Create test results
@@ -1413,7 +1389,6 @@ def helper_function():
     result = quick_sort([5, 2, 8])
     assert result == [2, 5, 8]
 """
-        qualified_name = "quick_sort"
         generated_test_1 = GeneratedTests(
             generated_original_test_source=test_source_1,
             instrumented_behavior_test_source="",
@@ -1474,7 +1449,6 @@ def helper_function():
     result = bubble_sort([3, 1, 2])
     assert result == [1, 2, 3]
 """
-        qualified_name = "bubble_sort"
         original_behavior_source = "behavior test source"
         original_perf_source = "perf test source"
         original_behavior_path = test_config.tests_root / "test_module__unit_test_0.py"
@@ -1530,7 +1504,6 @@ def helper_function():
     assert result == [1, 2, 3]
     assert arr == [1, 2, 3]  # Input should be mutated
 """
-        qualified_name = "sorter"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1589,7 +1562,6 @@ def helper_function():
         test_source = """def test_function():
     result = some_function(); assert result == expected
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1636,7 +1608,6 @@ def helper_function():
         result = some_function()
         assert result == expected
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1683,7 +1654,6 @@ def helper_function():
     codeflash_output = some_function()
     assert codeflash_output == expected2
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1742,7 +1712,6 @@ def helper_function():
     result = some_function()
     assert result == expected
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",
@@ -1785,7 +1754,6 @@ def helper_function():
     result = some_function()
     assert result == expected
 """
-        qualified_name = "some_function"
         generated_test1 = GeneratedTests(
             generated_original_test_source=test_source1,
             instrumented_behavior_test_source="",
@@ -1861,7 +1829,6 @@ def helper_function():
     codeflash_output = some_function()
     assert codeflash_output == expected
 """
-        qualified_name = "some_function"
         generated_test = GeneratedTests(
             generated_original_test_source=test_source,
             instrumented_behavior_test_source="",

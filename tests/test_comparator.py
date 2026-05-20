@@ -298,21 +298,21 @@ def test_numpy():
     assert not comparator(h, j)
     assert comparator(j, k)
 
-    l = np.int32(1)
+    _l = np.int32(1)
     m = np.int32(1)
-    assert comparator(l, m)
-    assert not comparator(l, h)
-    assert not comparator(l, j)
+    assert comparator(_l, m)
+    assert not comparator(_l, h)
+    assert not comparator(_l, j)
 
     n = np.int64(1)
     o = np.int64(1)
-    assert not comparator(n, l)
+    assert not comparator(n, _l)
     assert comparator(n, o)
 
     p = np.uint32(1)
     q = np.uint32(1)
     assert comparator(p, q)
-    assert not comparator(p, l)
+    assert not comparator(p, _l)
 
     r = np.uint64(1)
     s = np.uint64(1)
@@ -485,9 +485,9 @@ def test_scipy():
 
     j = sp.sparse.dok_matrix([[1, 0, 0], [0, 0, 3], [4, 0, 5]])
     k = sp.sparse.dok_matrix([[1, 0, 0], [0, 0, 3], [4, 0, 5]])
-    l = sp.sparse.dok_matrix([[1, 0, 0], [0, 0, 3], [4, 0, 6]])
+    _l = sp.sparse.dok_matrix([[1, 0, 0], [0, 0, 3], [4, 0, 6]])
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
     assert not comparator(a, j)
 
     m = sp.sparse.dia_matrix([[1, 0, 0], [0, 0, 3], [4, 0, 5]])
@@ -581,9 +581,9 @@ def test_pandas():
 
     j = pd.MultiIndex.from_tuples([(1, 2), (3, 4)])
     k = pd.MultiIndex.from_tuples([(1, 2), (3, 4)])
-    l = pd.MultiIndex.from_tuples([(1, 2), (3, 5)])
+    _l = pd.MultiIndex.from_tuples([(1, 2), (3, 5)])
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
 
     m = pd.Categorical([1, 2, 3])
     n = pd.Categorical([1, 2, 3])
@@ -701,9 +701,9 @@ def test_pyrsistent():
 
     j = TestRecord()
     k = TestRecord()
-    l = TestRecord(a=2, b=3)
+    _l = TestRecord(a=2, b=3)
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
 
     class TestClass(PClass):
         a = field()
@@ -765,9 +765,9 @@ def test_torch_dtype():
 
     # Test bool dtype
     k = torch.bool
-    l = torch.bool
+    _l = torch.bool
     m = torch.int8
-    assert comparator(k, l)
+    assert comparator(k, _l)
     assert not comparator(k, m)
 
 
@@ -799,9 +799,9 @@ def test_torch():
     # Test 3D tensors
     j = torch.tensor([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
     k = torch.tensor([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
-    l = torch.tensor([[[1, 2], [3, 4]], [[5, 6], [7, 9]]])
+    _l = torch.tensor([[[1, 2], [3, 4]], [[5, 6], [7, 9]]])
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
 
     # Test tensors with different shapes
     m = torch.tensor([1, 2, 3])
@@ -896,11 +896,11 @@ def test_torch_device():
         assert comparator(j, k)
 
     # Test meta device
-    l = torch.device("meta")
+    _l = torch.device("meta")
     m = torch.device("meta")
     n = torch.device("cpu")
-    assert comparator(l, m)
-    assert not comparator(l, n)
+    assert comparator(_l, m)
+    assert not comparator(_l, n)
 
 
 def test_jax():
@@ -933,9 +933,9 @@ def test_jax():
     # Test 3D arrays
     j = jnp.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
     k = jnp.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
-    l = jnp.array([[[1, 2], [3, 4]], [[5, 6], [7, 9]]])
+    _l = jnp.array([[[1, 2], [3, 4]], [[5, 6], [7, 9]]])
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
 
     # Test arrays with different shapes
     m = jnp.array([1, 2, 3])
@@ -1009,9 +1009,9 @@ def test_xarray():
     # Test 2D DataArray
     j = xr.DataArray([[1, 2, 3], [4, 5, 6]], dims=["x", "y"])
     k = xr.DataArray([[1, 2, 3], [4, 5, 6]], dims=["x", "y"])
-    l = xr.DataArray([[1, 2, 3], [4, 5, 7]], dims=["x", "y"])
+    _l = xr.DataArray([[1, 2, 3], [4, 5, 7]], dims=["x", "y"])
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
 
     # Test DataArray with different dimensions
     m = xr.DataArray([1, 2, 3], dims=["x"])
@@ -2087,12 +2087,12 @@ def test_tensorflow_tensor() -> None:
     assert not comparator(i, k)
 
     # Test 3D tensors
-    l = tf.constant([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+    _l = tf.constant([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
     m = tf.constant([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
     n = tf.constant([[[1, 2], [3, 4]], [[5, 6], [7, 9]]])
 
-    assert comparator(l, m)
-    assert not comparator(l, n)
+    assert comparator(_l, m)
+    assert not comparator(_l, n)
 
     # Test empty tensors
     o = tf.constant([])
@@ -2177,10 +2177,10 @@ def test_tensorflow_dtype() -> None:
     # Test complex dtypes
     j = tf.complex64
     k = tf.complex64
-    l = tf.complex128
+    _l = tf.complex128
 
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
 
     # Test bool dtype
     m = tf.bool
@@ -2273,12 +2273,12 @@ def test_tensorflow_tensor_shape() -> None:
     assert not comparator(i, k)
 
     # Test fully unknown shapes
-    l = tf.TensorShape(None)
+    _l = tf.TensorShape(None)
     m = tf.TensorShape(None)
     n = tf.TensorShape([1, 2])
 
-    assert comparator(l, m)
-    assert not comparator(l, n)
+    assert comparator(_l, m)
+    assert not comparator(_l, n)
 
 
 def test_tensorflow_sparse_tensor() -> None:
@@ -2405,11 +2405,11 @@ def test_slice() -> None:
     assert not comparator(i, k)
 
     # Test slices with only stop
-    l = slice(5)
+    _l = slice(5)
     m = slice(5)
     n = slice(6)
-    assert comparator(l, m)
-    assert not comparator(l, n)
+    assert comparator(_l, m)
+    assert not comparator(_l, n)
 
     # Test slices with negative values
     o = slice(-5, -1, 1)
@@ -2442,7 +2442,7 @@ def test_numpy_datetime64() -> None:
     # Test datetime64 with different units
     d = np.datetime64("2021-01-01", "D")
     e = np.datetime64("2021-01-01", "D")
-    f = np.datetime64("2021-01-01", "s")  # Different unit (seconds)
+    np.datetime64("2021-01-01", "s")  # Different unit (seconds)
 
     assert comparator(d, e)
     # Note: datetime64 with different units but same moment may or may not be equal
@@ -2459,15 +2459,15 @@ def test_numpy_datetime64() -> None:
     # Test timedelta64 equality
     j = np.timedelta64(1, "D")
     k = np.timedelta64(1, "D")
-    l = np.timedelta64(2, "D")
+    _l = np.timedelta64(2, "D")
 
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
 
     # Test timedelta64 with different units
     m = np.timedelta64(1, "h")
     n = np.timedelta64(1, "h")
-    o = np.timedelta64(60, "m")  # Same duration, different unit
+    np.timedelta64(60, "m")  # Same duration, different unit
 
     assert comparator(m, n)
     # 1 hour == 60 minutes, but they have different units
@@ -2537,10 +2537,10 @@ def test_numpy_0d_array() -> None:
     # Test 0-d string array
     j = np.array("hello")
     k = np.array("hello")
-    l = np.array("world")
+    _l = np.array("world")
 
     assert comparator(j, k)
-    assert not comparator(j, l)
+    assert not comparator(j, _l)
 
     # Test 0-d boolean array
     m = np.array(True)

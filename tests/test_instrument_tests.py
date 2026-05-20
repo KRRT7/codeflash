@@ -2981,7 +2981,7 @@ def test_common_tags_1():
         with test_path.open("w") as f:
             f.write(code)
 
-        tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
         project_root_path = Path(__file__).parent.resolve() / "code_to_optimize/"
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
@@ -3055,7 +3055,7 @@ def test_sort():
         with open(test_path, "w") as f:
             f.write(code)
 
-        tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
         project_root_path = Path(__file__).parent.resolve() / "code_to_optimize/"
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()
@@ -3145,7 +3145,7 @@ def test_sort():
     try:
         with test_path.open("w") as f:
             f.write(code)
-        tests_root = Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
+        Path(__file__).parent.resolve() / "code_to_optimize/tests/pytest/"
         project_root_path = Path(__file__).parent.resolve() / "code_to_optimize/"
         run_cwd = Path(__file__).parent.parent.resolve()
         original_cwd = Path.cwd()

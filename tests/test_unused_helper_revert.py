@@ -231,7 +231,7 @@ def helper_function_2(x):
 
     # Store original helper code
     original_helper_code = {main_file: main_file.read_text()}
-    original_content = main_file.read_text()
+    main_file.read_text()
 
     # Test the new functionality - this should:
     # 1. Apply the optimization

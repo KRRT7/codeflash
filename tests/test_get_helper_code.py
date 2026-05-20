@@ -48,7 +48,7 @@ def test_get_outside_method_helper() -> None:
     )
     if not is_successful(ctx_result):
         pytest.fail()
-    code_context = ctx_result.unwrap()
+    ctx_result.unwrap()
     print("hi")
 
 
@@ -242,7 +242,7 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
             function_to_optimize=function_to_optimize, test_cfg=test_config
         )
         with open(file_path) as f:
-            original_code = f.read()
+            f.read()
         ctx_result = func_optimizer.get_code_optimization_context()
         if not is_successful(ctx_result):
             pytest.fail()
@@ -426,7 +426,7 @@ def test_bubble_sort_deps() -> None:
         function_to_optimize=function_to_optimize, test_cfg=test_config
     )
     with open(file_path) as f:
-        original_code = f.read()
+        f.read()
     ctx_result = func_optimizer.get_code_optimization_context()
     if not is_successful(ctx_result):
         pytest.fail()

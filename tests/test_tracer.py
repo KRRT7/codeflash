@@ -360,9 +360,9 @@ ignore-paths = []
 
         with tracer:
             obj = TestClass()
-            instance_result = obj.instance_method()
-            class_result = TestClass.class_method()
-            static_result = TestClass.static_method()
+            obj.instance_method()
+            TestClass.class_method()
+            TestClass.static_method()
 
         if tracer.output_file.exists():
             con = sqlite3.connect(tracer.output_file)
@@ -422,7 +422,8 @@ ignore-paths = []
 
         expected_dict = {"key": "value", "nested": {"inner": "data"}}
         expected_list = [[1, 2], [3, 4], [5, 6]]
-        expected_func = lambda x: x * 2
+        def expected_func(x):
+            return x * 2
 
         with tracer:
             complex_function(expected_dict, expected_list, func_arg=expected_func)

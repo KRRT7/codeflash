@@ -43,7 +43,7 @@ def test_benchmark_test_discovery_pytest():
 
 def test_unit_test_discovery_unittest():
     project_path = Path(__file__).parent.resolve() / "code_to_optimize"
-    test_path = project_path / "tests" / "unittest"
+    project_path / "tests" / "unittest"
     test_config = TestConfig(
         tests_root=project_path,
         project_root_path=project_path,
