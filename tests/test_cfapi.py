@@ -180,7 +180,7 @@ class TestSuggestChanges:
             mock_response.status_code = 200
             mock_request.return_value = mock_response
 
-            from codeflash.api.cfapi import suggest_changes
+            from codeflash.api.pr_api import suggest_changes
 
 from codeflash.models.test_results import TestResults
 
@@ -216,7 +216,7 @@ from codeflash.models.test_results import TestResults
 class TestCreatePr:
     def test_basic(self, mock_api_key: MagicMock) -> None:
         with patch("codeflash.api.cfapi.make_cfapi_request") as mock_request:
-            from codeflash.api.cfapi import create_pr
+            from codeflash.api.pr_api import create_pr
 
             mock_request.return_value.status_code = 200
             mock_request.return_value.ok = True

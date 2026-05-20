@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import git
 
-from codeflash.api import cfapi
+from codeflash.api import pr_api
 from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_replacer import is_zero_diff
@@ -57,7 +57,7 @@ def check_create_pr(
         if not build_file_changes:
             logger.info("No changes to suggest to PR.")
             return
-        response = cfapi.suggest_changes(
+        response = pr_api.suggest_changes(
             owner=owner,
             repo=repo,
             pr_number=pr_number,
@@ -114,7 +114,7 @@ def check_create_pr(
             for p in original_code
         }
 
-        response = cfapi.create_pr(
+        response = pr_api.create_pr(
             owner=owner,
             repo=repo,
             base_branch=base_branch,

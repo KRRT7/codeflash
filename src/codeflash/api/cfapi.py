@@ -18,14 +18,12 @@ from codeflash.code_utils.env_utils import (
     get_codeflash_api_key,
     get_pr_number,
 )
-from codeflash.code_utils.git_utils import get_current_branch, get_repo_owner_and_name
-from codeflash.github.pr_comment import FileDiffContent, PrComment
+from codeflash.code_utils.git_utils import get_repo_owner_and_name
 from codeflash.version import __version__
 
 if TYPE_CHECKING:
     from requests import Response
 
-    from codeflash.result.explanation import Explanation
 
 from packaging import version
 
@@ -160,178 +158,6 @@ def get_user_id(api_key: str | None = None) -> str | None:  # noqa: PLR0911
         f"Failed to look up your userid; is your CF API key valid? ({response.reason})"
     )
     return None
-
-
-def suggest_changes(
-    owner: str,
-    repo: str,
-    pr_number: int,
-    file_changes: dict[str, FileDiffContent],
-    pr_comment: PrComment,
-    existing_tests: str,
-    generated_tests: str,
-    trace_id: str,
-    coverage_message: str,
-    replay_tests: str = "",
-    concolic_tests: str = "",
-    optimization_review: str = "",
-) -> Response:
-    """Suggest changes to a pull request.
-
-    Will make a review suggestion when possible;
-    or create a new dependent pull request with the suggested changes.
-    :param owner: The owner of the repository.
-    :param repo: The name of the repository.
-    :param pr_number: The number of the pull request.
-    :param file_changes: A dictionary of file changes.
-    :param pr_comment: The pull request comment object, containing the optimization explanation, best runtime, etc.
-    :param generated_tests: The generated tests.
-    :return: The response object.
-    """
-    payload = {
-        "owner": owner,
-        "repo": repo,
-        "pullNumber": pr_number,
-        "diffContents": file_changes,
-        "prCommentFields": pr_comment.to_json(),
-        "existingTests": existing_tests,
-        "generatedTests": generated_tests,
-        "traceId": trace_id,
-        "coverage_message": coverage_message,
-        "replayTests": replay_tests,
-        "concolicTests": concolic_tests,
-        "optimizationReview": optimization_review,  # impact keyword left for legacy reasons, touches js/ts code
-    }
-    return make_cfapi_request(
-        endpoint="/suggest-pr-changes", method="POST", payload=payload
-    )
-
-
-def create_pr(
-    owner: str,
-    repo: str,
-    base_branch: str,
-    file_changes: dict[str, FileDiffContent],
-    pr_comment: PrComment,
-    existing_tests: str,
-    generated_tests: str,
-    trace_id: str,
-    coverage_message: str,
-    replay_tests: str = "",
-    concolic_tests: str = "",
-    optimization_review: str = "",
-) -> Response:
-    """Create a pull request, targeting the specified branch. (usually 'main').
-
-    :param owner: The owner of the repository.
-    :param repo: The name of the repository.
-    :param base_branch: The base branch to target.
-    :param file_changes: A dictionary of file changes.
-    :param pr_comment: The pull request comment object, containing the optimization explanation, best runtime, etc.
-    :param generated_tests: The generated tests.
-    :return: The response object.
-    """
-    # convert Path objects to strings
-    payload = {
-        "owner": owner,
-        "repo": repo,
-        "baseBranch": base_branch,
-        "diffContents": file_changes,
-        "prCommentFields": pr_comment.to_json(),
-        "existingTests": existing_tests,
-        "generatedTests": generated_tests,
-        "traceId": trace_id,
-        "coverage_message": coverage_message,
-        "replayTests": replay_tests,
-        "concolicTests": concolic_tests,
-        "optimizationReview": optimization_review,  # Impact keyword left for legacy reasons, it touches js/ts codebase
-    }
-    return make_cfapi_request(endpoint="/create-pr", method="POST", payload=payload)
-
-
-def setup_github_actions(
-    owner: str, repo: str, base_branch: str, workflow_content: str
-) -> Response:
-    """Set up GitHub Actions workflow by creating a PR with the workflow file.
-
-    :param owner: Repository owner (username or organization)
-    :param repo: Repository name
-    :param base_branch: Base branch to create PR against (e.g., "main", "master")
-    :param workflow_content: Content of the GitHub Actions workflow file (YAML)
-    :return: Response object with pr_url and pr_number on success
-    """
-    payload = {
-        "owner": owner,
-        "repo": repo,
-        "baseBranch": base_branch,
-        "workflowContent": workflow_content,
-    }
-
-    return make_cfapi_request(
-        endpoint="/setup-github-actions", method="POST", payload=payload
-    )
-
-
-def create_staging(
-    original_code: dict[Path, str],
-    new_code: dict[Path, str],
-    explanation: Explanation,
-    existing_tests_source: str,
-    generated_original_test_source: str,
-    function_trace_id: str,
-    coverage_message: str,
-    replay_tests: str,
-    concolic_tests: str,
-    root_dir: Path,
-    optimization_review: str = "",
-) -> Response:
-    """Create a staging pull request, targeting the specified branch. (usually 'staging').
-
-    :param original_code: A mapping of file paths to original source code.
-    :param new_code: A mapping of file paths to optimized source code.
-    :param explanation: An Explanation object with optimization details.
-    :param existing_tests_source: Existing test code.
-    :param generated_original_test_source: Generated tests for the original function.
-    :param function_trace_id: Unique identifier for this optimization trace.
-    :param coverage_message: Coverage report or summary.
-    :return: The response object from the backend.
-    """
-    relative_path = explanation.file_path.relative_to(root_dir).as_posix()
-
-    build_file_changes = {
-        Path(p).relative_to(root_dir).as_posix(): FileDiffContent(
-            oldContent=original_code[p], newContent=new_code[p]
-        )
-        for p in original_code
-    }
-
-    payload = {
-        "baseBranch": get_current_branch(),
-        "diffContents": build_file_changes,
-        "prCommentFields": PrComment(
-            optimization_explanation=explanation.explanation_message(),
-            best_runtime=explanation.best_runtime_ns,
-            original_runtime=explanation.original_runtime_ns,
-            function_name=explanation.function_name,
-            relative_file_path=relative_path,
-            speedup_x=explanation.speedup_x,
-            speedup_pct=explanation.speedup_pct,
-            winning_behavior_test_results=explanation.winning_behavior_test_results,
-            winning_benchmarking_test_results=explanation.winning_benchmarking_test_results,
-            benchmark_details=explanation.benchmark_details,
-        ).to_json(),
-        "existingTests": existing_tests_source,
-        "generatedTests": generated_original_test_source,
-        "traceId": function_trace_id,
-        "coverage_message": coverage_message,
-        "replayTests": replay_tests,
-        "concolicTests": concolic_tests,
-        "optimizationReview": optimization_review,  # Impact keyword left for legacy reasons, it touches js/ts codebase
-    }
-
-    return make_cfapi_request(
-        endpoint="/create-staging", method="POST", payload=payload
-    )
 
 
 def is_github_app_installed_on_repo(

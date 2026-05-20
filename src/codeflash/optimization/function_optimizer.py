@@ -38,10 +38,10 @@ from codeflash.api.aiservice import (
 )
 from codeflash.api.cfapi import (
     add_code_context_hash,
-    create_staging,
     get_cfapi_base_urls,
     mark_optimization_success,
 )
+from codeflash.api.pr_api import create_staging
 from codeflash.benchmarking.utils import process_benchmark_data
 from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils import env_utils

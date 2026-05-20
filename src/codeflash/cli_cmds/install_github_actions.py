@@ -6,7 +6,7 @@ from pathlib import Path
 import git
 from git import Repo
 
-from codeflash.api.cfapi import setup_github_actions
+from codeflash.api.pr_api import setup_github_actions
 from codeflash.cli_cmds.cli_common import apologize_and_exit, confirm
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.cli_cmds.workflow_generator import generate_dynamic_workflow_content
