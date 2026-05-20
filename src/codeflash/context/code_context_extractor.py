@@ -1,26 +1,16 @@
 from __future__ import annotations
-from codeflash.code_utils.diff_utils import encoded_tokens_len
 from codeflash.code_utils.config_utils import get_qualified_name
 from codeflash.code_utils.path_utils import path_belongs_to_site_packages
 
 import ast
-import hashlib
 import os
 from collections import defaultdict
-from itertools import chain
 from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 
 from codeflash.cli_cmds.logging_config import logger
-from codeflash.code_utils.code_extractor import (
-    add_needed_imports_from_module,
-    find_preexisting_objects,
-)
-from codeflash.code_utils.config_consts import (
-    OPTIMIZATION_CONTEXT_TOKEN_LIMIT,
-    TESTGEN_CONTEXT_TOKEN_LIMIT,
-)
+from codeflash.code_utils.code_extractor import add_needed_imports_from_module
 from codeflash.context.unused_definition_remover import (
     collect_top_level_defs_with_usages,
     extract_names_from_targets,
@@ -29,7 +19,6 @@ from codeflash.context.unused_definition_remover import (
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize  # noqa: TC001
 from codeflash.models.domain import (
     CodeContextType,
-    CodeOptimizationContext,
     CodeString,
     CodeStringsMarkdown,
     FunctionSource,
@@ -43,184 +32,6 @@ if TYPE_CHECKING:
     from libcst import CSTNode
 
     from codeflash.context.unused_definition_remover import UsageInfo
-
-
-def get_code_optimization_context(
-    function_to_optimize: FunctionToOptimize,
-    project_root_path: Path,
-    optim_token_limit: int = OPTIMIZATION_CONTEXT_TOKEN_LIMIT,
-    testgen_token_limit: int = TESTGEN_CONTEXT_TOKEN_LIMIT,
-) -> CodeOptimizationContext:
-    # Get FunctionSource representation of helpers of FTO
-    helpers_of_fto_dict, helpers_of_fto_list = get_function_sources_from_jedi(
-        {function_to_optimize.file_path: {function_to_optimize.qualified_name}},
-        project_root_path,
-    )
-
-    # Add function to optimize into helpers of FTO dict, as they'll be processed together
-    fto_as_function_source = get_function_to_optimize_as_function_source(
-        function_to_optimize, project_root_path
-    )
-    helpers_of_fto_dict[function_to_optimize.file_path].add(fto_as_function_source)
-
-    # Format data to search for helpers of helpers using get_function_sources_from_jedi
-    helpers_of_fto_qualified_names_dict = {
-        file_path: {source.qualified_name for source in sources}
-        for file_path, sources in helpers_of_fto_dict.items()
-    }
-
-    # __init__ functions are automatically considered as helpers of FTO, so we add them to the dict (regardless of whether they exist)
-    # This helps us to search for helpers of __init__ functions of classes that contain helpers of FTO
-    for qualified_names in helpers_of_fto_qualified_names_dict.values():
-        qualified_names.update(
-            {f"{qn.rsplit('.', 1)[0]}.__init__" for qn in qualified_names if "." in qn}
-        )
-
-    # Get FunctionSource representation of helpers of helpers of FTO
-    helpers_of_helpers_dict, helpers_of_helpers_list = get_function_sources_from_jedi(
-        helpers_of_fto_qualified_names_dict, project_root_path
-    )
-
-    # Extract code context for optimization
-    final_read_writable_code = extract_code_markdown_context_from_files(
-        helpers_of_fto_dict,
-        {},
-        project_root_path,
-        remove_docstrings=False,
-        code_context_type=CodeContextType.READ_WRITABLE,
-    )
-
-    read_only_code_markdown = extract_code_markdown_context_from_files(
-        helpers_of_fto_dict,
-        helpers_of_helpers_dict,
-        project_root_path,
-        remove_docstrings=False,
-        code_context_type=CodeContextType.READ_ONLY,
-    )
-    hashing_code_context = extract_code_markdown_context_from_files(
-        helpers_of_fto_dict,
-        helpers_of_helpers_dict,
-        project_root_path,
-        remove_docstrings=True,
-        code_context_type=CodeContextType.HASHING,
-    )
-
-    # Handle token limits
-    final_read_writable_tokens = encoded_tokens_len(final_read_writable_code.markdown)
-    if final_read_writable_tokens > optim_token_limit:
-        raise ValueError("Read-writable code has exceeded token limit, cannot proceed")
-
-    # Setup preexisting objects for code replacer
-    preexisting_objects = set(
-        chain(
-            *(
-                find_preexisting_objects(codestring.code)
-                for codestring in final_read_writable_code.code_strings
-            ),
-            *(
-                find_preexisting_objects(codestring.code)
-                for codestring in read_only_code_markdown.code_strings
-            ),
-        )
-    )
-    read_only_context_code = read_only_code_markdown.markdown
-
-    read_only_code_markdown_tokens = encoded_tokens_len(read_only_context_code)
-    total_tokens = final_read_writable_tokens + read_only_code_markdown_tokens
-    if total_tokens > optim_token_limit:
-        logger.debug(
-            "Code context has exceeded token limit, removing docstrings from read-only code"
-        )
-        # Extract read only code without docstrings
-        read_only_code_no_docstring_markdown = extract_code_markdown_context_from_files(
-            helpers_of_fto_dict,
-            helpers_of_helpers_dict,
-            project_root_path,
-            remove_docstrings=True,
-        )
-        read_only_context_code = read_only_code_no_docstring_markdown.markdown
-        read_only_code_no_docstring_markdown_tokens = encoded_tokens_len(
-            read_only_context_code
-        )
-        total_tokens = (
-            final_read_writable_tokens + read_only_code_no_docstring_markdown_tokens
-        )
-        if total_tokens > optim_token_limit:
-            logger.debug(
-                "Code context has exceeded token limit, removing read-only code"
-            )
-            read_only_context_code = ""
-
-    # Extract code context for testgen
-    testgen_context = extract_code_markdown_context_from_files(
-        helpers_of_fto_dict,
-        helpers_of_helpers_dict,
-        project_root_path,
-        remove_docstrings=False,
-        code_context_type=CodeContextType.TESTGEN,
-    )
-
-    # Extract class definitions for imported types from project modules
-    # This helps the LLM understand class constructors and structure
-    imported_class_context = get_imported_class_definitions(
-        testgen_context, project_root_path
-    )
-    if imported_class_context.code_strings:
-        # Merge imported class definitions into testgen context
-        testgen_context = CodeStringsMarkdown(
-            code_strings=testgen_context.code_strings
-            + imported_class_context.code_strings
-        )
-
-    testgen_markdown_code = testgen_context.markdown
-    testgen_code_token_length = encoded_tokens_len(testgen_markdown_code)
-    if testgen_code_token_length > testgen_token_limit:
-        # First try removing docstrings
-        testgen_context = extract_code_markdown_context_from_files(
-            helpers_of_fto_dict,
-            helpers_of_helpers_dict,
-            project_root_path,
-            remove_docstrings=True,
-            code_context_type=CodeContextType.TESTGEN,
-        )
-        # Re-extract imported classes (they may still fit)
-        imported_class_context = get_imported_class_definitions(
-            testgen_context, project_root_path
-        )
-        if imported_class_context.code_strings:
-            testgen_context = CodeStringsMarkdown(
-                code_strings=testgen_context.code_strings
-                + imported_class_context.code_strings
-            )
-        testgen_markdown_code = testgen_context.markdown
-        testgen_code_token_length = encoded_tokens_len(testgen_markdown_code)
-        if testgen_code_token_length > testgen_token_limit:
-            # If still over limit, try without imported class definitions
-            testgen_context = extract_code_markdown_context_from_files(
-                helpers_of_fto_dict,
-                helpers_of_helpers_dict,
-                project_root_path,
-                remove_docstrings=True,
-                code_context_type=CodeContextType.TESTGEN,
-            )
-            testgen_markdown_code = testgen_context.markdown
-            testgen_code_token_length = encoded_tokens_len(testgen_markdown_code)
-            if testgen_code_token_length > testgen_token_limit:
-                raise ValueError(
-                    "Testgen code context has exceeded token limit, cannot proceed"
-                )
-    code_hash_context = hashing_code_context.markdown
-    code_hash = hashlib.sha256(code_hash_context.encode("utf-8")).hexdigest()
-
-    return CodeOptimizationContext(
-        testgen_context=testgen_context,
-        read_writable_code=final_read_writable_code,
-        read_only_context_code=read_only_context_code,
-        hashing_code_context=code_hash_context,
-        hashing_code_context_hash=code_hash,
-        helper_functions=helpers_of_fto_list,
-        preexisting_objects=preexisting_objects,
-    )
 
 
 def extract_code_string_context_from_files(

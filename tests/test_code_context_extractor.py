@@ -7,10 +7,8 @@ from collections import defaultdict
 from pathlib import Path
 
 import pytest
-from codeflash.context.code_context_extractor import (
-    get_code_optimization_context,
-    get_imported_class_definitions,
-)
+from codeflash.context.code_context_extractor import get_imported_class_definitions
+from codeflash.context.optimization_context import get_code_optimization_context
 from codeflash.models.domain import CodeString, CodeStringsMarkdown
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.domain import FunctionParent

@@ -85,7 +85,7 @@ from codeflash.code_utils.static_analysis import (
     get_first_top_level_function_or_method_ast,
 )
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.context import code_context_extractor
+from codeflash.context import optimization_context
 from codeflash.context.unused_definition_remover import (
     detect_unused_helper_functions,
     revert_unused_helper_functions,
@@ -1263,7 +1263,7 @@ class FunctionOptimizer:
 
     def get_code_optimization_context(self) -> Result[CodeOptimizationContext, str]:
         try:
-            new_code_ctx = code_context_extractor.get_code_optimization_context(
+            new_code_ctx = optimization_context.get_code_optimization_context(
                 self.function_to_optimize, self.project_root
             )
         except ValueError as e:

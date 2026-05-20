@@ -1,7 +1,7 @@
 from codeflash.models.config import AppConfig
 from pathlib import Path
 
-from codeflash.context.code_context_extractor import get_code_optimization_context
+from codeflash.context.optimization_context import get_code_optimization_context
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.domain import FunctionParent
 from codeflash.optimization.optimizer import Optimizer
