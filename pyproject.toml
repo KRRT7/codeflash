@@ -75,6 +75,10 @@ enable = true
 style = "pep440"
 vcs = "git"
 
+[dependency-groups]
+dev = ["ruff", { include-group = "test" }]
+test = ["black"]
+
 [build-system]
 requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"

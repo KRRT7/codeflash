@@ -29,14 +29,10 @@ from codeflash.optimization.optimizer import Optimizer
 from codeflash.verification.equivalence import compare_test_results
 import time
 
-try:
-    import sqlalchemy
-    from sqlalchemy import Column, Integer, String, create_engine
-    from sqlalchemy.ext.declarative import declarative_base
-    from sqlalchemy.orm import Session
+if __import__("importlib").util.find_spec("sqlalchemy"):
 
     HAS_SQLALCHEMY = True
-except ImportError:
+else:
     HAS_SQLALCHEMY = False
 
 from codeflash.picklepatch.pickle_patcher import PicklePatcher

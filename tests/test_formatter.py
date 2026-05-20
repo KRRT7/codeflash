@@ -124,11 +124,6 @@ ignore-paths = []
     config, _ = parse_config_file(config_file)
     assert config["formatter_cmds"] == ["black $file"]
 
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
-
     original_code = """
 import os
 import sys
@@ -149,10 +144,6 @@ def foo():
 
 
 def test_formatter_black(temp_dir):
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
     original_code = """
 import os
 import sys    
@@ -173,10 +164,6 @@ def foo():
 
 
 def test_formatter_ruff(temp_dir):
-    try:
-        import ruff  # type: ignore
-    except ImportError:
-        pytest.skip("ruff is not installed")
     original_code = """
 import os
 import sys    
@@ -224,10 +211,6 @@ def _run_formatting_test(
     expected=None,
     optimized_function: str = "",
 ):
-    try:
-        import ruff  # type: ignore
-    except ImportError:
-        pytest.skip("ruff is not installed")
 
     with tempfile.TemporaryDirectory() as test_dir_str:
         test_dir = Path(test_dir_str)
@@ -892,10 +875,6 @@ def test_format_generated_code_empty_string():
 
 def test_format_generated_code_with_black():
     """Test format_generated_code with black formatter."""
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
 
     test_code = """import os,sys
 def test_function(x,y,z):
@@ -916,10 +895,6 @@ def test_function(x, y, z):
 
 def test_format_generated_code_with_inference():
     """Test format_generated_code with ruff formatter."""
-    try:
-        import ruff  # type: ignore
-    except ImportError:
-        pytest.skip("ruff is not installed")
 
     test_code = '''from time import sleep
 from typing import List, Union
@@ -1186,10 +1161,6 @@ from inference.core.models.base import Model
 
 def test_format_generated_code_with_ruff():
     """Test format_generated_code with ruff formatter."""
-    try:
-        import ruff  # type: ignore
-    except ImportError:
-        pytest.skip("ruff is not installed")
 
     test_code = """import os,sys
 def test_function(x,y,z):
@@ -1210,10 +1181,6 @@ def test_function(x, y, z):
 
 def test_format_generated_code_multiple_formatters():
     """Test format_generated_code with multiple formatter commands."""
-    try:
-        import ruff  # type: ignore
-    except ImportError:
-        pytest.skip("ruff is not installed")
 
     test_code = """import sys,os  # wrong order
 def test_function(x,y,z):
@@ -1259,10 +1226,6 @@ def test_format_generated_code_syntax_error():
 
 def test_format_generated_code_already_formatted():
     """Test format_generated_code with already well-formatted code."""
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
 
     test_code = """import os
 import sys
@@ -1280,10 +1243,6 @@ def test_function(x, y, z):
 
 def test_format_generated_code_with_tabs():
     """Test format_generated_code with code containing tabs."""
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
 
     test_code = """def test():
 \tif True:
@@ -1298,10 +1257,6 @@ def test_format_generated_code_with_tabs():
 
 def test_format_generated_code_trailing_whitespace():
     """Test format_generated_code removes trailing whitespace."""
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
 
     test_code = """def test():
     pass
@@ -1315,10 +1270,6 @@ def test_format_generated_code_trailing_whitespace():
 
 def test_format_generated_code_preserves_comments():
     """Test format_generated_code preserves comments."""
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
 
     test_code = """# This is a module comment
 import os  # import os module
@@ -1337,10 +1288,6 @@ def test():
 
 def test_format_generated_code_with_docstrings():
     """Test format_generated_code handles docstrings correctly."""
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
 
     test_code = '''def test():
     """This is a docstring."""
@@ -1385,10 +1332,6 @@ def func2():
 
 def test_format_generated_code_complex_code():
     """Test format_generated_code with complex real-world code."""
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
 
     test_code = """import unittest
 from unittest.mock import patch,Mock,MagicMock
@@ -1437,10 +1380,6 @@ def test_format_generated_code_unicode():
 
 def test_format_generated_code_f_strings():
     """Test format_generated_code with f-strings."""
-    try:
-        import black
-    except ImportError:
-        pytest.skip("black is not installed")
 
     test_code = """def test(name,age):
     return f"Hello {name}, you are {age} years old"

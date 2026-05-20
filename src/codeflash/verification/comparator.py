@@ -91,8 +91,8 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
             return comparator(orig_dict, new_dict, superset_obj)
 
         if HAS_JAX:
-            import jax  # type: ignore  # noqa: PGH003
-            import jax.numpy as jnp  # type: ignore  # noqa: PGH003
+            import jax
+            import jax.numpy as jnp
 
             # Handle JAX arrays first to avoid boolean context errors in other conditions
             if isinstance(orig, jax.Array):
@@ -104,14 +104,14 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
 
         # Handle xarray objects before numpy to avoid boolean context errors
         if HAS_XARRAY:
-            import xarray  # type: ignore  # noqa: PGH003
+            import xarray
 
             if isinstance(orig, (xarray.Dataset, xarray.DataArray)):
                 return orig.identical(new)
 
         # Handle TensorFlow objects early to avoid boolean context errors
         if HAS_TENSORFLOW:
-            import tensorflow as tf  # type: ignore  # noqa: PGH003
+            import tensorflow as tf
 
             if isinstance(orig, tf.Tensor):
                 if orig.dtype != new.dtype:
@@ -151,7 +151,7 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
                 return comparator(orig.to_list(), new.to_list(), superset_obj)
 
         if HAS_SQLALCHEMY:
-            import sqlalchemy  # type: ignore  # noqa: PGH003
+            import sqlalchemy
 
             try:
                 insp = sqlalchemy.inspection.inspect(orig)
@@ -165,13 +165,13 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
                         orig_keys[key], new_keys[key], superset_obj
                     ):
                         return False
-                return True  # noqa: TRY300
+                return True
 
             except sqlalchemy.exc.NoInspectionAvailable:
                 pass
 
         if HAS_SCIPY:
-            import scipy  # type: ignore  # noqa: PGH003
+            import scipy
         # scipy condition because dok_matrix type is also a instance of dict, but dict comparison doesn't work for it
         if isinstance(orig, dict) and not (
             HAS_SCIPY and isinstance(orig, scipy.sparse.spmatrix)
@@ -204,7 +204,7 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
             return comparator(dict(orig), dict(new), superset_obj)
 
         if HAS_NUMPY:
-            import numpy as np  # type: ignore  # noqa: PGH003
+            import numpy as np
 
             if isinstance(orig, (np.datetime64, np.timedelta64)):
                 # Handle NaT (Not a Time) - numpy's equivalent of NaN for datetime
@@ -272,7 +272,7 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
             return (orig != new).nnz == 0
 
         if HAS_PANDAS:
-            import pandas  # type: ignore  # noqa: ICN001, PGH003
+            import pandas
 
             if isinstance(
                 orig,
@@ -307,16 +307,16 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
         try:
             if HAS_NUMPY and np.isnan(orig):
                 return np.isnan(new)
-        except Exception:  # noqa: S110
+        except Exception:
             pass
         try:
             if HAS_NUMPY and np.isinf(orig):
                 return np.isinf(new)
-        except Exception:  # noqa: S110
+        except Exception:
             pass
 
         if HAS_TORCH:
-            import torch  # type: ignore  # noqa: PGH003
+            import torch
 
             if isinstance(orig, torch.Tensor):
                 if orig.dtype != new.dtype:
@@ -336,7 +336,7 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
                 return orig == new
 
         if HAS_PYRSISTENT:
-            import pyrsistent  # type: ignore  # noqa: PGH003
+            import pyrsistent
 
             if isinstance(
                 orig,
@@ -395,7 +395,7 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
         try:
             if hasattr(orig, "__eq__") and str(type(orig.__eq__)) == "<class 'method'>":
                 return orig == new
-        except Exception:  # noqa: S110
+        except Exception:
             pass
 
         # For class objects
@@ -433,7 +433,7 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
             return True
         # TODO : Add other types here
         logger.warning(f"Unknown comparator input type: {type(orig)}")
-        return False  # noqa: TRY300
+        return False
     except RecursionError as e:
         logger.error(f"RecursionError while comparing objects: {e}")
         return False
