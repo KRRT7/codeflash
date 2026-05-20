@@ -8,7 +8,7 @@ import pytest
 import requests
 
 from codeflash.github.pr_comment import FileDiffContent, PrComment
-from codeflash.models.domain import TestResults
+from codeflash.models.test_results import TestResults
 
 _empty_results = TestResults()
 
@@ -182,7 +182,7 @@ class TestSuggestChanges:
 
             from codeflash.api.cfapi import suggest_changes
 
-            from codeflash.models.domain import TestResults
+from codeflash.models.test_results import TestResults
 
             empty_results = TestResults()
             pr_comment = PrComment(

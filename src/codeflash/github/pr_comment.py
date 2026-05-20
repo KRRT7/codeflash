@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from codeflash.code_utils.time_utils import humanize_runtime
-from codeflash.models.domain import TestResults
+from codeflash.models.test_results import TestResults
 from codeflash.models.coverage import BenchmarkDetail
 
 

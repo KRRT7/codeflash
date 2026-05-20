@@ -1,9 +1,9 @@
-from codeflash.models.domain import (
+from codeflash.models.invocation_id import (
     FunctionTestInvocation,
     InvocationId,
-    TestResults,
-    TestType,
 )
+from codeflash.models.test_results import TestResults
+from codeflash.models.test_type import TestType
 from codeflash.verification.parse_test_output import merge_test_results
 
 

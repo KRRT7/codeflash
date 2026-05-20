@@ -16,7 +16,7 @@ from codeflash.models.domain import GeneratedTests, GeneratedTestsList
 from codeflash.result.critic import performance_gain
 
 if TYPE_CHECKING:
-    from codeflash.models.domain import InvocationId
+    from codeflash.models.invocation_id import InvocationId
 
 
 class CommentMapper(ast.NodeVisitor):

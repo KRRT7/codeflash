@@ -12,9 +12,9 @@ from codeflash.code_utils.diff_utils import (
     diff_length,
     unified_diff_strings,
 )
+from codeflash.models.candidate_evaluation_context import CandidateEvaluationContext
 from codeflash.models.domain import (
     BestOptimization,
-    CandidateEvaluationContext,
     ExperimentMetadata,
     OptimizedCandidate,
 )

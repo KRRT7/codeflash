@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING
 from codeflash.cli_cmds.logging_config import logger
 from codeflash._constants import VerificationType
 from codeflash.models.api import TestDiff, TestDiffScope
-from codeflash.models.domain import TestResults
+from codeflash.models.test_results import TestResults
 from codeflash.models.test_type import TestType
 from codeflash.verification.comparator import comparator
 
 if TYPE_CHECKING:
-    from codeflash.models.domain import TestResults
+    from codeflash.models.test_results import TestResults
 
 INCREASED_RECURSION_LIMIT = 5000
 

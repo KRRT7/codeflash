@@ -8,13 +8,13 @@ import dill as pickle
 
 from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils.path_utils import file_path_from_module_name
-from codeflash.models.domain import (
+from codeflash._constants import VerificationType
+from codeflash.models.invocation_id import (
     FunctionTestInvocation,
     InvocationId,
-    TestResults,
-    TestType,
-    VerificationType,
 )
+from codeflash.models.test_results import TestResults
+from codeflash.models.test_type import TestType
 
 if TYPE_CHECKING:
     from codeflash.models.domain import TestFiles

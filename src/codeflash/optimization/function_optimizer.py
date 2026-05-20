@@ -113,9 +113,9 @@ from codeflash.models.coverage import (
     CoverageData,
     TestingMode,
 )
+from codeflash.models.candidate_evaluation_context import CandidateEvaluationContext
 from codeflash.models.domain import (
     BestOptimization,
-    CandidateEvaluationContext,
     CodeOptimizationContext,
     GeneratedTests,
     GeneratedTestsList,
@@ -125,8 +125,8 @@ from codeflash.models.domain import (
     OriginalCodeBaseline,
     TestFile,
     TestFiles,
-    TestResults,
 )
+from codeflash.models.test_results import TestResults
 from codeflash.models.test_type import TestType
 from codeflash.result.create_pr import check_create_pr, existing_tests_source_for
 from codeflash.result.critic import (

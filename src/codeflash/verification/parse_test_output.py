@@ -9,11 +9,9 @@ from typing import TYPE_CHECKING
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.cleanup import get_run_tmp_file
 from codeflash.discovery.discover_unit_tests import discover_parameters_unittest
-from codeflash.models.domain import (
-    FunctionTestInvocation,
-    TestResults,
-    VerificationType,
-)
+from codeflash._constants import VerificationType
+from codeflash.models.invocation_id import FunctionTestInvocation
+from codeflash.models.test_results import TestResults
 from codeflash.verification.coverage_utils import CoverageUtils
 from codeflash.verification.parsers.binary_parser import parse_test_return_values_bin
 from codeflash.verification.parsers.junit_parser import parse_test_xml

@@ -15,11 +15,11 @@ from codeflash.code_utils.path_utils import (
     file_path_from_module_name,
     module_name_from_file_path,
 )
-from codeflash.models.domain import (
+from codeflash.models.invocation_id import (
     FunctionTestInvocation,
     InvocationId,
-    TestResults,
 )
+from codeflash.models.test_results import TestResults
 
 if TYPE_CHECKING:
     from codeflash.models.domain import TestFiles

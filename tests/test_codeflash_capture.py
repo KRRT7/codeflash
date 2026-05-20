@@ -8,12 +8,12 @@ from pathlib import Path
 from codeflash.code_utils.compat import SAFE_SYS_EXECUTABLE
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.coverage import TestingMode
+from codeflash._constants import VerificationType
 from codeflash.models.domain import (
     FunctionParent,
     TestFile,
     TestFiles,
     TestType,
-    VerificationType,
 )
 from codeflash.optimization.function_optimizer import FunctionOptimizer
 from codeflash.verification.equivalence import compare_test_results

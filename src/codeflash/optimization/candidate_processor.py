@@ -6,8 +6,8 @@ from collections.abc import Callable
 
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.config_consts import EffortKeys, get_effort_value
+from codeflash.models.candidate_evaluation_context import CandidateEvaluationContext
 from codeflash.models.domain import (
-    CandidateEvaluationContext,
     OptimizedCandidate,
 )
 
