@@ -46,3 +46,9 @@ src/codeflash/code_utils/cleanup.py
 src/codeflash/code_utils/git_worktree_utils.py
 src/codeflash/code_utils/device_sync_utils.py
 src/codeflash/code_utils/wrapper_gen.py
+src/codeflash/code_utils/instrument_existing_tests.py
+src/codeflash/code_utils/sync_instrumentation.py
+src/codeflash/code_utils/global_assignment_utils.py
+src/codeflash/code_utils/autouse_fixture_utils.py
+src/codeflash/code_utils/oauth_handler.py
+src/codeflash/code_utils/import_merger.py

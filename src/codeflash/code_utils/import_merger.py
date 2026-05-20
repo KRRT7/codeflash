@@ -50,8 +50,10 @@ def add_global_assignments(src_module_code: str, dst_module_code: str) -> str:
     mod_dst_code = dst_module_code
     if unique_global_statements:
         last_import_line = find_last_import_line(dst_module_code)
-        transformer = ImportInserter(unique_global_statements, last_import_line)
-        modified_module = dst_module.visit(transformer)
+        import_transformer: cst.CSTTransformer = ImportInserter(
+            unique_global_statements, last_import_line
+        )
+        modified_module = dst_module.visit(import_transformer)
         mod_dst_code = modified_module.code
         original_module = cst.parse_module(mod_dst_code)
     else:
@@ -60,7 +62,7 @@ def add_global_assignments(src_module_code: str, dst_module_code: str) -> str:
     src_module.visit(new_collector)
     if not new_collector.assignments:
         return mod_dst_code
-    transformer = GlobalAssignmentTransformer(
+    transformer: cst.CSTTransformer = GlobalAssignmentTransformer(
         new_collector.assignments, new_collector.assignment_order
     )
     transformed_module = original_module.visit(transformer)

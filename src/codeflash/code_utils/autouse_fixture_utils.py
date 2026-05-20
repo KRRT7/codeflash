@@ -176,7 +176,7 @@ def disable_autouse(test_path: Path) -> str:
     return file_content
 
 
-def modify_autouse_fixture(test_paths: list[Path]) -> dict[Path, list[str]]:
+def modify_autouse_fixture(test_paths: list[Path]) -> dict[Path, str]:
     file_content_map = {}
     conftest_files = find_conftest_files(test_paths)
     for cf_file in conftest_files:

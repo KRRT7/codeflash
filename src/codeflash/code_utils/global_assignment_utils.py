@@ -107,7 +107,7 @@ class GlobalAssignmentTransformer(cst.CSTTransformer):
     def visit_Else(self, node: cst.Else) -> None:
         pass
 
-    def leave_Assign(
+    def leave_Assign(  # type: ignore[override]
         self, original_node: cst.Assign, updated_node: cst.Assign
     ) -> cst.CSTNode:
         if self.scope_depth > 0 or self.if_else_depth > 0:

@@ -729,8 +729,8 @@ def perform_oauth_signin() -> str | None:
     input_thread.daemon = True
     input_thread.start()
 
-    waited = 0
-    while not oauth.is_complete and waited < 180:
+    waited = 0.0
+    while not oauth.is_complete and waited < 180.0:
         time.sleep(0.5)
         waited += 0.5
 
