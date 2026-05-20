@@ -195,12 +195,14 @@ def unique_inv_id(
         if "__unit_test_" not in abs_path_str or not test_qualified_name:
             continue
         key = test_qualified_name + "#" + abs_path_str
-        parts = inv_id.iteration_id.split("_").__len__()  # type: ignore[union-attr]
+        if inv_id.iteration_id is None:
+            continue
+        parts = len(inv_id.iteration_id.split("_"))
         cur_invid = (
             inv_id.iteration_id.split("_")[0]
             if parts < 3
             else "_".join(inv_id.iteration_id.split("_")[:-1])
-        )  # type: ignore[union-attr]
+        )
         match_key = key + "#" + cur_invid
         if match_key not in unique_inv_ids:
             unique_inv_ids[match_key] = 0

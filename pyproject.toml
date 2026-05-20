@@ -46,6 +46,31 @@ ignore-paths = []
 
 formatter-cmds = ["disabled"]
 
+[tool.ruff]
+exclude = ["tests/code_to_optimize"]
+
+[[tool.mypy.overrides]]
+module = [
+    "libcst",
+    "libcst.*",
+    "jedi",
+    "jedi.*",
+    "dill",
+    "jax",
+    "jax.*",
+    "xarray",
+    "tensorflow",
+    "coverage",
+    "coverage.*",
+    "junitparser",
+    "junitparser.*",
+    "crosshair_tool",
+    "crosshair_tool.*",
+    "line_profiler",
+    "line_profiler.*",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
 markers = ["ci_skip: mark test to skip in CI environment"]
@@ -76,7 +101,11 @@ style = "pep440"
 vcs = "git"
 
 [dependency-groups]
-dev = ["ruff", { include-group = "test" }]
+dev = [
+    "mypy>=1.19.1",
+    "ruff",
+    { include-group = "test" },
+]
 test = [
     "black",
     "jax",
@@ -89,6 +118,13 @@ test = [
     "tensorflow; python_version < '3.14'",
     "torch",
     "xarray",
+]
+typing = [
+    "pandas-stubs",
+    "scipy-stubs; python_version >= '3.10'",
+    "types-requests",
+    "types-tabulate",
+    "types-unidiff",
 ]
 
 [build-system]

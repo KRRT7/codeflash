@@ -21,7 +21,12 @@ benchmark_options = [
     ("--benchmark-max-time", "store", None, "Benchmark maximum time"),
     ("--benchmark-min-rounds", "store", None, "Benchmark minimum rounds"),
     ("--benchmark-timer", "store", None, "Benchmark timer"),
-    ("--benchmark-calibration-precision", "store", None, "Benchmark calibration precision"),
+    (
+        "--benchmark-calibration-precision",
+        "store",
+        None,
+        "Benchmark calibration precision",
+    ),
     ("--benchmark-disable", "store_true", False, "Disable benchmarks"),
     ("--benchmark-skip", "store_true", False, "Skip benchmarks"),
     ("--benchmark-only", "store_true", False, "Only run benchmarks"),
@@ -34,7 +39,10 @@ benchmark_options = [
 
 def pytest_configure(config: pytest.Config) -> None:
     """Register the benchmark marker and disable conflicting plugins."""
-    config.addinivalue_line("markers", "benchmark: mark test as a benchmark that should be run with codeflash tracing")
+    config.addinivalue_line(
+        "markers",
+        "benchmark: mark test as a benchmark that should be run with codeflash tracing",
+    )
 
     if config.getoption("--codeflash-trace"):
         # When --codeflash-trace is used, ignore all benchmark options by resetting them to defaults
@@ -50,13 +58,18 @@ def pytest_configure(config: pytest.Config) -> None:
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
-        "--codeflash-trace", action="store_true", default=False, help="Enable CodeFlash tracing for benchmarks"
+        "--codeflash-trace",
+        action="store_true",
+        default=False,
+        help="Enable CodeFlash tracing for benchmarks",
     )
     # Only add benchmark options if pytest-benchmark is not installed for backward compatibility with existing pytest-benchmark setup
     if not PYTEST_BENCHMARK_INSTALLED:
         for option, action, default, help_text in benchmark_options:
             help_suffix = " (ignored when --codeflash-trace is used)"
-            parser.addoption(option, action=action, default=default, help=help_text + help_suffix)
+            parser.addoption(
+                option, action=action, default=default, help=help_text + help_suffix
+            )
 
 
 @pytest.fixture

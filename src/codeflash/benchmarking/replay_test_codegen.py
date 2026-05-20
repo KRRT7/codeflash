@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 
-
 benchmark_context_cleaner = re.compile(r"[^a-zA-Z0-9_]+")
 
 

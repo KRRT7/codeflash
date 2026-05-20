@@ -7,7 +7,7 @@ import pytest
 
 from codeflash.code_utils.async_decorator_utils import add_async_decorator_to_function
 from codeflash.code_utils.instrument_existing_tests import (
-    inject_profiling_into_existing_test
+    inject_profiling_into_existing_test,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.coverage import TestingMode

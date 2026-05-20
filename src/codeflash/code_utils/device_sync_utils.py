@@ -175,8 +175,6 @@ def create_device_sync_precompute_statements(
     return precompute_statements
 
 
-
-
 def create_device_sync_statements(
     used_frameworks: dict[str, str] | None,
     for_return_value: bool = False,  # noqa: FBT001, FBT002
@@ -306,5 +304,3 @@ def create_device_sync_statements(
         sync_statements.append(tf_sync)
 
     return sync_statements
-
-

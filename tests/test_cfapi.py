@@ -182,9 +182,6 @@ class TestSuggestChanges:
 
             from codeflash.api.pr_api import suggest_changes
 
-from codeflash.models.test_results import TestResults
-
-            empty_results = TestResults()
             pr_comment = PrComment(
                 optimization_explanation="test",
                 best_runtime=100,
@@ -193,8 +190,8 @@ from codeflash.models.test_results import TestResults
                 relative_file_path="src/foo.py",
                 speedup_x="2x",
                 speedup_pct="50%",
-                winning_behavior_test_results=empty_results,
-                winning_benchmarking_test_results=empty_results,
+                winning_behavior_test_results=_empty_results,
+                winning_benchmarking_test_results=_empty_results,
             )
 
             response = suggest_changes(

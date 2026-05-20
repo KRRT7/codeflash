@@ -3,7 +3,6 @@ from __future__ import annotations
 import libcst as cst
 
 
-
 class GlobalStatementCollector(cst.CSTVisitor):
     """Visitor that collects all global statements (excluding imports and functions/classes)."""
 

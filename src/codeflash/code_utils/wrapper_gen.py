@@ -3,8 +3,12 @@ from __future__ import annotations
 import ast
 
 from codeflash._constants import VerificationType
-from codeflash.code_utils.device_sync_utils import create_device_sync_precompute_statements, create_device_sync_statements
+from codeflash.code_utils.device_sync_utils import (
+    create_device_sync_precompute_statements,
+    create_device_sync_statements,
+)
 from codeflash.models.coverage import TestingMode
+
 
 def create_wrapper_function(
     mode: TestingMode = TestingMode.BEHAVIOR,
@@ -252,9 +256,7 @@ def create_wrapper_function(
         ast.Try(
             body=[
                 # Pre-sync: synchronize device before starting timer
-                *create_device_sync_statements(
-                    used_frameworks, for_return_value=False
-                ),
+                *create_device_sync_statements(used_frameworks, for_return_value=False),
                 ast.Assign(
                     targets=[ast.Name(id="counter", ctx=ast.Store())],
                     value=ast.Call(
@@ -522,5 +524,3 @@ def create_wrapper_function(
         decorator_list=[],
         returns=None,
     )
-
-

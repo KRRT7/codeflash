@@ -6,7 +6,6 @@ import time as _time_module
 
 
 if platform.system() == "Linux":
-
     _memory_limit_set = False
 
     def _set_linux_memory_limit() -> None:

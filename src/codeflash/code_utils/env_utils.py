@@ -80,7 +80,7 @@ def get_codeflash_api_key() -> str:
                 )
             else:
                 logger.debug(
-                    f"env_utils.py:get_codeflash_api_key - Failed to save API key: {result.failure()}"
+                    f"env_utils.py:get_codeflash_api_key - Failed to save API key: {result}"
                 )
         except Exception as e:
             logger.debug(
