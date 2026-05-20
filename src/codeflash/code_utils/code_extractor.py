@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ast
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -29,7 +28,10 @@ from codeflash.code_utils.call_finder import (
     find_occurances,
     get_fn_references_jedi,
 )
-from codeflash.code_utils.cst_import_utils import extract_global_statements, find_last_import_line
+from codeflash.code_utils.cst_import_utils import (
+    extract_global_statements,
+    find_last_import_line,
+)
 
 if TYPE_CHECKING:
     from libcst.helpers import ModuleNameAndPackage
@@ -501,7 +503,6 @@ def find_preexisting_objects(
     return preexisting_objects
 
 
-@dataclass
 def get_opt_review_metrics(
     source_code: str,
     file_path: Path,

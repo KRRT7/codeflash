@@ -85,7 +85,7 @@ test = [
     "pyrsistent",
     "scipy",
     "sqlalchemy",
-    "tensorflow",
+    "tensorflow; python_version < '3.14'",
     "torch",
     "xarray",
 ]

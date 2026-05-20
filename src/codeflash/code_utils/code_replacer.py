@@ -13,6 +13,8 @@ from codeflash.cli_cmds.logging_config import logger
 from codeflash.code_utils.code_extractor import (
     add_global_assignments,
     add_needed_imports_from_module,
+)
+from codeflash.code_utils.cst_import_utils import (
     find_insertion_index_after_imports,
 )
 from codeflash.code_utils.config_parser import find_conftest_files

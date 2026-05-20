@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 from codeflash.code_utils.config_parser import parse_config_file
-from codeflash.tracing.tracing_new_process import FakeCode, FakeFrame, Tracer
+from codeflash.tracing.tracer import FakeCode, FakeFrame, Tracer
 
 
 class TestFakeCode:
