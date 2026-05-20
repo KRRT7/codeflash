@@ -27,7 +27,9 @@ from codeflash.verification.coverage_utils import (
     prepare_coverage_files,
 )
 from codeflash.models.domain import CodeStringsMarkdown
-from codeflash.verification.parse_test_output import resolve_test_file_from_class_path
+from codeflash.verification.parsers.junit_parser import (
+    resolve_test_file_from_class_path,
+)
 
 
 @pytest.fixture

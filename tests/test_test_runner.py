@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 from codeflash.models.domain import TestFile, TestFiles, TestType
-from codeflash.verification.parse_test_output import parse_test_xml
+from codeflash.verification.parsers.junit_parser import parse_test_xml
 from codeflash.verification.test_runner import run_pytest_tests
 from codeflash.verification.verification_utils import TestConfig
 
