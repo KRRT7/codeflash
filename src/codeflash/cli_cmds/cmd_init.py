@@ -23,7 +23,7 @@ from codeflash.cli_cmds.cli_common import (
 from codeflash.cli_cmds.github_setup import install_github_app, prompt_api_key
 from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.cli_cmds.extension import install_vscode_extension
-from codeflash.cli_cmds.workflow_generator import install_github_actions
+from codeflash.cli_cmds.install_github_actions import install_github_actions
 from codeflash.code_utils.compat import LF
 from codeflash.code_utils.config_parser import parse_config_file
 from codeflash.code_utils.env_utils import check_formatter_installed

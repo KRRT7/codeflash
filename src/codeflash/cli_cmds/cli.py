@@ -7,7 +7,7 @@ from pathlib import Path
 from codeflash.cli_cmds import logging_config
 from codeflash.cli_cmds.cli_common import apologize_and_exit
 from codeflash.cli_cmds.cmd_init import init_codeflash
-from codeflash.cli_cmds.workflow_generator import install_github_actions
+from codeflash.cli_cmds.install_github_actions import install_github_actions
 from codeflash.cli_cmds.logging_config import logger
 from codeflash.cli_cmds.extension import install_vscode_extension
 from codeflash.code_utils import env_utils
