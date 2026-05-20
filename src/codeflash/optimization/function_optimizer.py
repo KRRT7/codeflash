@@ -6,12 +6,10 @@ from codeflash.code_utils.cleanup import (
 )
 from codeflash.code_utils.diff_utils import (
     choose_weights,
-    create_rank_dictionary_compact,
     create_score_dictionary_from_metrics,
     diff_length,
     encoded_tokens_len,
     normalize_by_max,
-    unified_diff_strings,
 )
 from codeflash.code_utils.pytest_utils import extract_unique_errors
 from codeflash.code_utils.path_utils import (
@@ -94,10 +92,11 @@ from codeflash.context.unused_definition_remover import (
 )
 from codeflash.discovery.functions_to_optimize import was_function_previously_optimized
 from codeflash.danom import Err, Ok
+from codeflash.optimization.baseline_manager import setup_and_establish_baseline
+from codeflash.optimization.candidate_evaluator import determine_best_candidate
 from codeflash.optimization.candidate_processor import (
     CandidateForest,
     CandidateNode,
-    CandidateProcessor,
 )
 from codeflash.models.api import OptimizationReviewResult
 from codeflash.models.domain import ExperimentMetadata
@@ -860,124 +859,6 @@ class FunctionOptimizer:
 
         return best_optimization, benchmark_tree
 
-    def select_best_optimization(
-        self,
-        eval_ctx: CandidateEvaluationContext,
-        code_context: CodeOptimizationContext,
-        original_code_baseline: OriginalCodeBaseline,
-        ai_service_client: AiServiceClient,
-        exp_type: str,
-        function_references: str,
-    ) -> BestOptimization | None:
-        """Select the best optimization from valid candidates."""
-        if not eval_ctx.valid_optimizations:
-            return None
-
-        valid_candidates_with_shorter_code = []
-        diff_lens_list = []  # character level diff
-        speedups_list = []
-        optimization_ids = []
-        diff_strs = []
-        runtimes_list = []
-
-        for valid_opt in eval_ctx.valid_optimizations:
-            valid_opt_normalized_code = normalize_code(
-                valid_opt.candidate.source_code.flat.strip()
-            )
-            new_candidate_with_shorter_code = OptimizedCandidate(
-                source_code=eval_ctx.ast_code_to_id[valid_opt_normalized_code][
-                    "shorter_source_code"
-                ],
-                optimization_id=valid_opt.candidate.optimization_id,
-                explanation=valid_opt.candidate.explanation,
-                source=valid_opt.candidate.source,
-                parent_id=valid_opt.candidate.parent_id,
-            )
-            new_best_opt = BestOptimization(
-                candidate=new_candidate_with_shorter_code,
-                helper_functions=valid_opt.helper_functions,
-                code_context=valid_opt.code_context,
-                runtime=valid_opt.runtime,
-                line_profiler_test_results=valid_opt.line_profiler_test_results,
-                winning_behavior_test_results=valid_opt.winning_behavior_test_results,
-                replay_performance_gain=valid_opt.replay_performance_gain,
-                winning_benchmarking_test_results=valid_opt.winning_benchmarking_test_results,
-                winning_replay_benchmarking_test_results=valid_opt.winning_replay_benchmarking_test_results,
-                async_throughput=valid_opt.async_throughput,
-            )
-            valid_candidates_with_shorter_code.append(new_best_opt)
-            diff_lens_list.append(
-                diff_length(
-                    new_best_opt.candidate.source_code.flat,
-                    code_context.read_writable_code.flat,
-                )
-            )
-            diff_strs.append(
-                unified_diff_strings(
-                    code_context.read_writable_code.flat,
-                    new_best_opt.candidate.source_code.flat,
-                )
-            )
-            speedups_list.append(
-                1
-                + performance_gain(
-                    original_runtime_ns=original_code_baseline.runtime,
-                    optimized_runtime_ns=new_best_opt.runtime,
-                )
-            )
-            optimization_ids.append(new_best_opt.candidate.optimization_id)
-            runtimes_list.append(new_best_opt.runtime)
-
-        if len(optimization_ids) > 1:
-            future_ranking = self.executor.submit(
-                ai_service_client.generate_ranking,
-                diffs=diff_strs,
-                optimization_ids=optimization_ids,
-                speedups=speedups_list,
-                trace_id=self.get_trace_id(exp_type),
-                function_references=function_references,
-            )
-            concurrent.futures.wait([future_ranking])
-            ranking = future_ranking.result()
-            if ranking:
-                min_key = ranking[0]
-            else:
-                diff_lens_ranking = create_rank_dictionary_compact(diff_lens_list)
-                runtimes_ranking = create_rank_dictionary_compact(runtimes_list)
-                overall_ranking = {
-                    key: diff_lens_ranking[key] + runtimes_ranking[key]
-                    for key in diff_lens_ranking
-                }
-                min_key = min(overall_ranking, key=overall_ranking.get)
-        elif len(optimization_ids) == 1:
-            min_key = 0
-        else:
-            return None
-
-        return valid_candidates_with_shorter_code[min_key]
-
-    def log_evaluation_results(
-        self,
-        eval_ctx: CandidateEvaluationContext,
-        best_optimization: BestOptimization,
-        original_code_baseline: OriginalCodeBaseline,
-        ai_service_client: AiServiceClient,
-        exp_type: str,
-    ) -> None:
-        """Log evaluation results to the AI service."""
-        ai_service_client.log_results(
-            function_trace_id=self.get_trace_id(exp_type),
-            speedup_ratio=eval_ctx.speedup_ratios,
-            original_runtime=original_code_baseline.runtime,
-            optimized_runtime=eval_ctx.optimized_runtimes,
-            is_correct=eval_ctx.is_correct,
-            optimized_line_profiler_results=eval_ctx.optimized_line_profiler_results,
-            optimizations_post=eval_ctx.optimizations_post,
-            metadata={
-                "best_optimization_id": best_optimization.candidate.optimization_id
-            },
-        )
-
     def process_single_candidate(
         self,
         candidate_node: CandidateNode,
@@ -1172,112 +1053,31 @@ class FunctionOptimizer:
         exp_type: str,
         function_references: str,
     ) -> BestOptimization | None:
-        """Determine the best optimization candidate from a list of candidates."""
-        logger.info(
-            f"Determining best optimization candidate (out of {len(candidates)}) for "
-            f"{self.function_to_optimize.qualified_name}…"
-        )
-        rule()
-
-        # Initialize evaluation context and async tasks
-        eval_ctx = CandidateEvaluationContext()
-
-        self.future_all_refinements.clear()
-        self.future_all_code_repair.clear()
-        self.future_adaptive_optimizations.clear()
-
         self.repair_counter = 0
         self.adaptive_optimization_counter = 0
-
-        ai_service_client = (
-            self.aiservice_client if exp_type == "EXP0" else self.local_aiservice_client
-        )
-        assert ai_service_client is not None, (
-            "AI service client must be set for optimization"
-        )
-
-        future_line_profile_results = self.executor.submit(
-            ai_service_client.optimize_python_code_line_profiler,
-            source_code=code_context.read_writable_code.markdown,
-            dependency_code=code_context.read_only_context_code,
-            trace_id=self.get_trace_id(exp_type),
-            line_profiler_results=original_code_baseline.line_profile_results[
-                "str_out"
-            ],
-            n_candidates=get_effort_value(
-                EffortKeys.N_OPTIMIZER_LP_CANDIDATES, self.effort
-            ),
-            experiment_metadata=ExperimentMetadata(
-                id=self.experiment_id,
-                group="control" if exp_type == "EXP0" else "experiment",
-            )
-            if self.experiment_id
-            else None,
-        )
-
-        processor = CandidateProcessor(
-            candidates,
-            future_line_profile_results,
-            eval_ctx,
-            self.effort,
-            code_context.read_writable_code.markdown,
-            self.future_all_refinements,
-            self.future_all_code_repair,
-            self.future_adaptive_optimizations,
-        )
-        candidate_index = 0
-
-        # Process candidates using queue-based approach
-        while not processor.is_done():
-            candidate_node = processor.get_next_candidate()
-            if candidate_node is None:
-                logger.debug("everything done, exiting")
-                break
-
-            try:
-                candidate_index += 1
-                self.process_single_candidate(
-                    candidate_node=candidate_node,
-                    candidate_index=candidate_index,
-                    total_candidates=processor.candidate_len,
-                    code_context=code_context,
-                    original_code_baseline=original_code_baseline,
-                    original_helper_code=original_helper_code,
-                    file_path_to_helper_classes=file_path_to_helper_classes,
-                    eval_ctx=eval_ctx,
-                    exp_type=exp_type,
-                    function_references=function_references,
-                )
-            except KeyboardInterrupt as e:
-                logger.exception(f"Optimization interrupted: {e}")
-                raise
-            finally:
-                self.write_code_and_helpers(
-                    self.function_to_optimize_source_code,
-                    original_helper_code,
-                    self.function_to_optimize.file_path,
-                )
-
-        # Select and return the best optimization
-        best_optimization = self.select_best_optimization(
-            eval_ctx=eval_ctx,
+        return determine_best_candidate(
+            function_to_optimize=self.function_to_optimize,
+            executor=self.executor,
+            aiservice_client=self.aiservice_client,
+            local_aiservice_client=self.local_aiservice_client,
+            future_all_refinements=self.future_all_refinements,
+            future_all_code_repair=self.future_all_code_repair,
+            future_adaptive_optimizations=self.future_adaptive_optimizations,
+            experiment_id=self.experiment_id,
+            effort=self.effort,
+            function_to_optimize_source_code=self.function_to_optimize_source_code,
+            function_to_optimize_file_path=self.function_to_optimize.file_path,
             code_context=code_context,
             original_code_baseline=original_code_baseline,
-            ai_service_client=ai_service_client,
+            original_helper_code=original_helper_code,
+            file_path_to_helper_classes=file_path_to_helper_classes,
             exp_type=exp_type,
             function_references=function_references,
+            candidates=candidates,
+            get_trace_id=self.get_trace_id,
+            process_single_candidate=self.process_single_candidate,
+            write_code_and_helpers=self.write_code_and_helpers,
         )
-
-        if best_optimization:
-            self.log_evaluation_results(
-                eval_ctx=eval_ctx,
-                best_optimization=best_optimization,
-                original_code_baseline=original_code_baseline,
-                ai_service_client=ai_service_client,
-                exp_type=exp_type,
-            )
-
-        return best_optimization
 
     def call_adaptive_optimize(
         self,
@@ -1761,63 +1561,18 @@ class FunctionOptimizer:
         ],
         str,
     ]:
-        """Set up baseline context and establish original code baseline."""
-        function_to_optimize_qualified_name = self.function_to_optimize.qualified_name
-        function_to_all_tests = {
-            key: self.function_to_tests.get(key, set())
-            | function_to_concolic_tests.get(key, set())
-            for key in set(self.function_to_tests) | set(function_to_concolic_tests)
-        }
-
-        # Get a dict of file_path_to_classes of fto and helpers_of_fto
-        file_path_to_helper_classes = defaultdict(set)
-        for function_source in code_context.helper_functions:
-            if (
-                function_source.qualified_name
-                != self.function_to_optimize.qualified_name
-                and "." in function_source.qualified_name
-            ):
-                file_path_to_helper_classes[function_source.file_path].add(
-                    function_source.qualified_name.split(".")[0]
-                )
-
-        baseline_result = self.establish_original_code_baseline(
+        return setup_and_establish_baseline(
+            function_to_optimize=self.function_to_optimize,
+            function_to_tests=self.function_to_tests,
+            config=self.config,
             code_context=code_context,
             original_helper_code=original_helper_code,
-            file_path_to_helper_classes=file_path_to_helper_classes,
-        )
-
-        rule()
-        paths_to_cleanup = (
-            generated_test_paths
-            + generated_perf_test_paths
-            + list(instrumented_unittests_created_for_function)
-        )
-
-        if not baseline_result.is_ok():
-            if self.config.override_fixtures:
-                restore_conftest(original_conftest_content)
-            cleanup_paths(paths_to_cleanup)
-            return baseline_result
-
-        original_code_baseline, test_functions_to_remove = baseline_result.unwrap()
-        if isinstance(original_code_baseline, OriginalCodeBaseline) and (
-            not coverage_critic(original_code_baseline.coverage_results)
-            or not quantity_of_tests_critic(original_code_baseline)
-        ):
-            if self.config.override_fixtures:
-                restore_conftest(original_conftest_content)
-            cleanup_paths(paths_to_cleanup)
-            return Err(error="The threshold for test confidence was not met.")
-
-        return Ok(
-            (
-                function_to_optimize_qualified_name,
-                function_to_all_tests,
-                original_code_baseline,
-                test_functions_to_remove,
-                file_path_to_helper_classes,
-            )
+            function_to_concolic_tests=function_to_concolic_tests,
+            generated_test_paths=generated_test_paths,
+            generated_perf_test_paths=generated_perf_test_paths,
+            instrumented_unittests_created_for_function=instrumented_unittests_created_for_function,
+            original_conftest_content=original_conftest_content,
+            establish_baseline=self.establish_original_code_baseline,
         )
 
     def find_and_process_best_optimization(
