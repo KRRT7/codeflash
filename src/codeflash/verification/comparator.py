@@ -402,10 +402,9 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
         if hasattr(orig, "__dict__") and hasattr(new, "__dict__"):
             orig_keys = orig.__dict__
             new_keys = new.__dict__
-            if (
-                type(orig_keys) == types.MappingProxyType
-                and type(new_keys) == types.MappingProxyType
-            ):  # noqa: E721
+            if isinstance(orig_keys, types.MappingProxyType) and isinstance(
+                new_keys, types.MappingProxyType
+            ):
                 # meta class objects
                 if orig != new:
                     return False
