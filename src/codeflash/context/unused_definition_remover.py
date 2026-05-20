@@ -90,7 +90,7 @@ def _analyze_imports_in_optimized_code(
     imported_names_map = defaultdict(set)
 
     # Precompute a two-level dict: module_name -> func_name -> [helpers]
-    helpers_by_file_and_func = defaultdict(dict)
+    helpers_by_file_and_func: dict = defaultdict(dict)
     helpers_by_file = defaultdict(list)  # preserved for "import module"
     for helper in code_context.helper_functions:
         jedi_type = helper.jedi_definition.type
@@ -111,10 +111,9 @@ def _analyze_imports_in_optimized_code(
 
     for node in ast.walk(optimized_ast):
         if isinstance(node, ast.ImportFrom):
-            # Handle "from module import function" statements
-            module_name = node.module
+            module_name = node.module or ""
             if module_name:
-                file_entry = helpers_by_file_and_func_get(module_name, None)
+                file_entry = helpers_by_file_and_func.get(module_name)
                 if file_entry:
                     for alias in node.names:
                         imported_name = alias.asname if alias.asname else alias.name
@@ -205,7 +204,7 @@ def detect_unused_helper_functions(
 
     try:
         # Parse the optimized code to analyze function calls and imports
-        optimized_ast = ast.parse(optimized_code)
+        optimized_ast = ast.parse(optimized_code)  # type: ignore[arg-type]
 
         # Find the optimized entrypoint function
         entrypoint_function_ast = find_target_node(optimized_ast, function_to_optimize)

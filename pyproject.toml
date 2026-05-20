@@ -70,6 +70,8 @@ module = [
     "line_profiler.*",
     "lxml",
     "lxml.*",
+    "scipy",
+    "pandas",
 ]
 ignore_missing_imports = true
 

@@ -99,10 +99,10 @@ def _apply_deterministic_patches() -> None:
 
     import builtins
 
-    builtins._original_datetime_now = _original_datetime_now
-    builtins._original_datetime_utcnow = _original_datetime_utcnow
-    builtins._mock_datetime_now = mock_datetime_now
-    builtins._mock_datetime_utcnow = mock_datetime_utcnow
+    builtins._original_datetime_now = _original_datetime_now  # type: ignore[attr-defined]
+    builtins._original_datetime_utcnow = _original_datetime_utcnow  # type: ignore[attr-defined]
+    builtins._mock_datetime_now = mock_datetime_now  # type: ignore[attr-defined]
+    builtins._mock_datetime_utcnow = mock_datetime_utcnow  # type: ignore[attr-defined]
 
     try:
         import numpy as np

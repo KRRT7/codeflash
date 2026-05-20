@@ -119,6 +119,7 @@ def prompt_api_key() -> bool:
 
     if not api_key:
         apologize_and_exit()
+    assert api_key is not None
 
     shell_rc_path = get_shell_rc_path()
     if not shell_rc_path.exists() and os.name == "nt":
@@ -130,7 +131,7 @@ def prompt_api_key() -> bool:
         print(result.unwrap())
         print("✅ Signed in successfully and API key saved!")
     else:
-        print(result.failure())
+        print(result)
         input("Press any key to continue...")
 
     os.environ["CODEFLASH_API_KEY"] = api_key
@@ -164,7 +165,7 @@ def enter_api_key_and_save_to_rc() -> None:
     if result.is_ok():
         print(result.unwrap())
     else:
-        print(result.failure())
+        print(result)
         input("Press any key to continue...")
 
     os.environ["CODEFLASH_API_KEY"] = api_key

@@ -20,10 +20,18 @@ def get_test_file_path(
 def delete_multiple_if_name_main(test_ast: ast.Module) -> ast.Module:
     if_indexes = []
     for index, node in enumerate(test_ast.body):
-        if isinstance(node, ast.If) and (
-            node.test.comparators[0].value == "__main__"
-            and node.test.left.id == "__name__"
-            and isinstance(node.test.ops[0], ast.Eq)
+        if (
+            isinstance(node, ast.If)
+            and isinstance(node.test, ast.Compare)
+            and (
+                len(node.test.comparators) > 0
+                and isinstance(node.test.comparators[0], ast.Constant)
+                and node.test.comparators[0].value == "__main__"
+                and isinstance(node.test.left, ast.Name)
+                and node.test.left.id == "__name__"
+                and len(node.test.ops) > 0
+                and isinstance(node.test.ops[0], ast.Eq)
+            )
         ):
             if_indexes.append(index)
     for index in list(reversed(if_indexes))[1:]:
@@ -56,6 +64,7 @@ class ModifyInspiredTests(ast.NodeTransformer):
                 if (
                     isinstance(base, ast.Attribute)
                     and base.attr == "TestCase"
+                    and isinstance(base.value, ast.Name)
                     and base.value.id == "unittest"
                 ):
                     found = True

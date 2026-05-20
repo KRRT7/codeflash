@@ -31,7 +31,7 @@ def generate_tests(
     test_index: int,
     test_path: Path,
     test_perf_path: Path,
-) -> tuple[str, str, Path] | None:
+) -> tuple[str, str, str, Path, Path] | None:
     # TODO: Sometimes this recreates the original Class definition. This overrides and messes up the original
     #  class import. Remove the recreation of the class definition
     start_time = time.perf_counter()
@@ -89,7 +89,7 @@ def merge_unit_tests(
         logger.exception(f"Syntax error in code: {e}")
         return unit_test_source
     import_list: list[ast.stmt] = []
-    modified_ast = ModifyInspiredTests(import_list, test_framework).visit(
+    modified_ast = ModifyInspiredTests(import_list, test_framework).visit(  # type: ignore[arg-type]
         inspired_unit_tests_ast
     )
     if test_framework == "pytest":

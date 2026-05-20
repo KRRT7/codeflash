@@ -229,8 +229,10 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
                     return np.allclose(orig, new, equal_nan=True)
                 except Exception:
                     # fails at "ufunc 'isfinite' not supported for the input types"
-                    return np.all(
-                        [comparator(x, y, superset_obj) for x, y in zip(orig, new)]
+                    return bool(
+                        np.all(
+                            [comparator(x, y, superset_obj) for x, y in zip(orig, new)]
+                        )
                     )
 
             if isinstance(orig, (np.floating, np.complex64, np.complex128)):
@@ -242,9 +244,13 @@ def comparator(orig: Any, new: Any, superset_obj=False) -> bool:  # noqa: ANN001
             if isinstance(orig, np.void):
                 if orig.dtype != new.dtype:
                     return False
-                return all(
-                    comparator(orig[field], new[field], superset_obj)
-                    for field in orig.dtype.fields
+                fields = orig.dtype.fields
+                return bool(
+                    fields
+                    and all(
+                        comparator(orig[field], new[field], superset_obj)
+                        for field in fields
+                    )
                 )
 
             # Handle np.dtype instances (including numpy.dtypes.* classes like Float64DType, Int64DType, etc.)

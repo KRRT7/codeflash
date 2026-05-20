@@ -78,3 +78,9 @@ src/codeflash/verification/parsers/junit_parser.py
 src/codeflash/discovery/function_filter.py
 src/codeflash/verification/equivalence.py
 src/codeflash/verification/instrument_codeflash_capture.py
+src/codeflash/verification/verifier.py
+src/codeflash/cli_cmds/github_setup.py
+src/codeflash/verification/verification_utils.py
+src/codeflash/verification/deterministic_patches.py
+src/codeflash/context/unused_definition_remover.py
+src/codeflash/verification/comparator.py
