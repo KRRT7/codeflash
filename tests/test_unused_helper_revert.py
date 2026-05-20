@@ -91,7 +91,7 @@ def helper_function_2(x):
 
     # Get original code context to find helper functions
     ctx_result = optimizer.get_code_optimization_context()
-    assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+    assert ctx_result.is_ok(), f"Failed to get context: {ctx_result.failure()}"
 
     code_context = ctx_result.unwrap()
 
@@ -225,7 +225,7 @@ def helper_function_2(x):
 
     # Get original code context
     ctx_result = optimizer.get_code_optimization_context()
-    assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+    assert ctx_result.is_ok(), f"Failed to get context: {ctx_result.failure()}"
 
     code_context = ctx_result.unwrap()
 
@@ -313,7 +313,7 @@ def helper_function_2(x):
 
     # Get original code context
     ctx_result = optimizer.get_code_optimization_context()
-    assert ctx_result.is_successful(), f"Failed to get context: {ctx_result.failure()}"
+    assert ctx_result.is_ok(), f"Failed to get context: {ctx_result.failure()}"
 
     code_context = ctx_result.unwrap()
 
@@ -420,7 +420,7 @@ def entrypoint_function(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -648,7 +648,7 @@ class Calculator:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -819,7 +819,7 @@ class Processor:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -1191,7 +1191,7 @@ def entrypoint_function(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -1372,7 +1372,7 @@ def entrypoint_function(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -1633,7 +1633,7 @@ class MathUtils:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -1784,7 +1784,7 @@ async def async_entrypoint(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -1880,7 +1880,7 @@ def sync_entrypoint(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -1998,7 +1998,7 @@ async def mixed_entrypoint(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -2105,7 +2105,7 @@ class AsyncProcessor:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -2200,7 +2200,7 @@ async def async_entrypoint(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -2293,7 +2293,7 @@ def gcd_recursive(a: int, b: int) -> int:
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 
@@ -2413,7 +2413,7 @@ async def async_entrypoint_with_generators(n):
 
         # Get original code context
         ctx_result = optimizer.get_code_optimization_context()
-        assert ctx_result.is_successful(), (
+        assert ctx_result.is_ok(), (
             f"Failed to get context: {ctx_result.failure()}"
         )
 

@@ -61,9 +61,15 @@ def progress_bar(
     yield 0
 
 
+class _DummyProgress:
+    @staticmethod
+    def advance(task_id: int, advance: int = 1) -> None:
+        pass
+
+
 @contextmanager
 def test_files_progress_bar(
     total: int, description: str
-) -> Generator[tuple[None, int], None, None]:
+) -> Generator[tuple[_DummyProgress, int], None, None]:
     logger.info(f"{description}: 0/{total}")
-    yield None, 0
+    yield _DummyProgress(), 0
