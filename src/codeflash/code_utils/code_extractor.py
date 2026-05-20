@@ -18,11 +18,13 @@ from codeflash.cli_cmds.logging_config import logger
 from codeflash.models.domain import FunctionParent
 
 from codeflash.code_utils.cst_import_utils import (
-    GlobalAssignmentCollector,
-    GlobalAssignmentTransformer,
     DottedImportCollector,
     ImportInserter,
     FutureAliasedImportTransformer,
+)
+from codeflash.code_utils.global_assignment_utils import (
+    GlobalAssignmentCollector,
+    GlobalAssignmentTransformer,
 )
 from codeflash.code_utils.call_finder import (
     find_occurances,

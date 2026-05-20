@@ -46,9 +46,11 @@ from codeflash.benchmarking.utils import process_benchmark_data
 from codeflash.cli_cmds.logging_config import logger, rule
 from codeflash.code_utils import env_utils
 from codeflash.code_utils.code_extractor import get_opt_review_metrics
-from codeflash.code_utils.code_replacer import (
+from codeflash.code_utils.autouse_fixture_utils import (
     add_custom_marker_to_all_tests,
     modify_autouse_fixture,
+)
+from codeflash.code_utils.code_replacer import (
     replace_function_definitions_in_module,
 )
 from codeflash.code_utils.config_consts import (

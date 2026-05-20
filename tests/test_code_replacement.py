@@ -1,7 +1,7 @@
 from __future__ import annotations
 import re
 import libcst as cst
-from codeflash.code_utils.code_replacer import (
+from codeflash.code_utils.autouse_fixture_utils import (
     AutouseFixtureModifier,
     PytestMarkAdder,
     AddRequestArgument,
