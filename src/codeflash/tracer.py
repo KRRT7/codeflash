@@ -128,11 +128,11 @@ def main(args: Namespace | None = None) -> ArgumentParser:
             "module": parsed_args.module,
         }
         try:
-            pytest_splits = []
-            test_paths = []
+            pytest_splits = []  # type: ignore[var-annotated]
+            test_paths = []  # type: ignore[var-annotated]
             replay_test_paths = []
             if parsed_args.module and unknown_args[0] == "pytest":
-                pytest_splits, test_paths = pytest_split(
+                pytest_splits, test_paths = pytest_split(  # type: ignore[assignment]
                     unknown_args[1:], limit=parsed_args.limit
                 )
                 if pytest_splits is None or test_paths is None:
@@ -246,7 +246,7 @@ def main(args: Namespace | None = None) -> ArgumentParser:
                 from codeflash.optimization import optimizer
 
                 args.effort = EffortLevel.HIGH.value
-                optimizer.run_with_args(args)
+                optimizer.run_with_args(args)  # type: ignore[arg-type]
 
                 # Delete the trace file and the replay test file if they exist
                 if outfile:

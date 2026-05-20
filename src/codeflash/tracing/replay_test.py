@@ -78,7 +78,7 @@ from codeflash.tracing.replay_test import get_next_arg_and_return
             continue
         if function_property.is_staticmethod:
             function_imports.append(
-                f"from {function.module_name} import {function_property.staticmethod_class_name} as {get_function_alias(function.module_name, function_property.staticmethod_class_name)}"
+                f"from {function.module_name} import {function_property.staticmethod_class_name} as {get_function_alias(function.module_name, function_property.staticmethod_class_name)}"  # type: ignore[arg-type]
             )
         elif function.class_name:
             function_imports.append(
@@ -137,11 +137,11 @@ trace_file_path = r"{trace_file}"
             )
         elif func_property.is_staticmethod:
             class_name_alias = get_function_alias(
-                func.module_name, func_property.staticmethod_class_name
+                func.module_name, func_property.staticmethod_class_name  # type: ignore[arg-type]
             )
             alias = get_function_alias(
                 func.module_name,
-                func_property.staticmethod_class_name + "_" + func.function_name,
+                func_property.staticmethod_class_name + "_" + func.function_name,  # type: ignore[operator]
             )
             method_name = (
                 "." + func.function_name if func.function_name != "__init__" else ""
@@ -155,9 +155,9 @@ trace_file_path = r"{trace_file}"
                 filter_variables="",
             )
         else:
-            class_name_alias = get_function_alias(func.module_name, func.class_name)
+            class_name_alias = get_function_alias(func.module_name, func.class_name)  # type: ignore[arg-type]
             alias = get_function_alias(
-                func.module_name, func.class_name + "_" + func.function_name
+                func.module_name, func.class_name + "_" + func.function_name  # type: ignore[operator]
             )
 
             if func_property.is_classmethod:

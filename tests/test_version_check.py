@@ -3,11 +3,10 @@
 import unittest
 from unittest.mock import Mock, patch
 
+import codeflash.code_utils.version_check as vc
 from codeflash.code_utils.version_check import (
     get_latest_version_from_pypi,
     check_for_newer_minor_version,
-    _version_cache,
-    _cache_duration,
 )
 
 
@@ -16,13 +15,13 @@ class TestVersionCheck(unittest.TestCase):
 
     def setUp(self):
         """Reset version cache before each test."""
-        _version_cache["version"] = None
-        _version_cache["timestamp"] = 0
+        vc._cached_version = ""  # type: ignore[assignment]
+        vc._cached_timestamp = 0  # type: ignore[assignment]
 
     def tearDown(self):
         """Clean up after each test."""
-        _version_cache["version"] = None
-        _version_cache["timestamp"] = 0
+        vc._cached_version = ""  # type: ignore[assignment]
+        vc._cached_timestamp = 0  # type: ignore[assignment]
 
     @patch("codeflash.code_utils.version_check.requests.get")
     def test_get_latest_version_from_pypi_success(self, mock_get):
@@ -110,7 +109,7 @@ class TestVersionCheck(unittest.TestCase):
         self.assertEqual(result1, "1.2.3")
 
         # Manually expire the cache
-        _version_cache["timestamp"] = time.time() - _cache_duration - 1
+        vc._cached_timestamp = time.time() - vc._cache_duration - 1
 
         # Second call should hit the network again
         result2 = get_latest_version_from_pypi()

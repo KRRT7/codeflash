@@ -381,12 +381,12 @@ def log_optimization_context(
         weights = choose_weights(runtime=runtime_w, diff=diff_w)
 
         runtime_norm = normalize_by_max(runtimes_list)
-        diffs_norm = normalize_by_max(diff_lens_list)
+        diffs_norm = normalize_by_max(diff_lens_list)  # type: ignore[arg-type]
         # the lower the better
         score_dict = create_score_dictionary_from_metrics(
             weights, runtime_norm, diffs_norm
         )
-        top_indecies = sorted(score_dict, key=score_dict.get)[:top_n_candidates]
+        top_indecies = sorted(score_dict, key=score_dict.get)[:top_n_candidates]  # type: ignore[arg-type]
 
         return [candidates[idx] for idx in top_indecies]
 
@@ -480,7 +480,7 @@ class FunctionOptimizer:
         file_name_from_test_module_name.cache_clear()
         ctx_result = self.get_code_optimization_context()
         if not ctx_result.is_ok():
-            return ctx_result
+            return ctx_result  # type: ignore[return-value]
         code_context: CodeOptimizationContext = ctx_result.unwrap()
         log_optimization_context(self.function_to_optimize.function_name, code_context)
         original_helper_code: dict[Path, str] = {}
@@ -496,7 +496,9 @@ class FunctionOptimizer:
         if (
             random.random() > REPEAT_OPTIMIZATION_PROBABILITY
             and was_function_previously_optimized(  # noqa: S311
-                self.function_to_optimize, code_context, self.config
+                self.function_to_optimize,
+                code_context,
+                self.config,  # type: ignore[arg-type]
             )
         ):
             return Err(error="Function optimization previously attempted, skipping.")
@@ -546,7 +548,7 @@ class FunctionOptimizer:
         )
 
         if not test_results.is_ok():
-            return test_results
+            return test_results  # type: ignore[return-value]
 
         count_tests, generated_tests, function_to_concolic_tests, concolic_test_str = (
             test_results.unwrap()
@@ -587,7 +589,7 @@ class FunctionOptimizer:
         )
 
         original_conftest_content = None
-        if self.config.override_fixtures:
+        if self.config.override_fixtures:  # type: ignore[union-attr]
             logger.info(
                 "Disabling all autouse fixtures associated with the generated test files"
             )
@@ -615,7 +617,7 @@ class FunctionOptimizer:
     def optimize_function(self) -> Result[BestOptimization, str]:
         initialization_result = self.can_be_optimized()
         if not initialization_result.is_ok():
-            return initialization_result
+            return initialization_result  # type: ignore[return-value]
         should_run_experiment, code_context, original_helper_code = (
             initialization_result.unwrap()
         )
@@ -639,17 +641,17 @@ class FunctionOptimizer:
             run_experiment=should_run_experiment,
         )
 
-        concurrent.futures.wait([future_tests, future_optimizations])
+        concurrent.futures.wait([future_tests, future_optimizations])  # type: ignore[arg-type]
 
         test_setup_result = future_tests.result()
         optimization_result = future_optimizations.result()
         rule()
 
         if not test_setup_result.is_ok():
-            return test_setup_result
+            return test_setup_result  # type: ignore[return-value]
 
         if not optimization_result.is_ok():
-            return optimization_result
+            return optimization_result  # type: ignore[return-value]
 
         (
             generated_tests,
@@ -670,11 +672,11 @@ class FunctionOptimizer:
             generated_test_paths=generated_test_paths,
             generated_perf_test_paths=generated_perf_test_paths,
             instrumented_unittests_created_for_function=instrumented_unittests_created_for_function,
-            original_conftest_content=original_conftest_content,
+            original_conftest_content=original_conftest_content,  # type: ignore[arg-type]
         )
 
         if not baseline_setup_result.is_ok():
-            return baseline_setup_result
+            return baseline_setup_result  # type: ignore[return-value]
 
         (
             function_to_optimize_qualified_name,
@@ -702,8 +704,8 @@ class FunctionOptimizer:
 
         add_code_context_hash(code_context.hashing_code_context_hash)
 
-        if self.config.override_fixtures:
-            restore_conftest(original_conftest_content)
+        if self.config.override_fixtures:  # type: ignore[union-attr]
+            restore_conftest(original_conftest_content)  # type: ignore[arg-type]
         if not best_optimization:
             return Err(
                 f"No best optimizations found for function {self.function_to_optimize.qualified_name}"
@@ -736,8 +738,8 @@ class FunctionOptimizer:
         if is_successful_candidate:
             if is_async:
                 throughput_gain_value = throughput_gain(
-                    original_throughput=original_code_baseline.async_throughput,
-                    optimized_throughput=candidate_result.async_throughput,
+                    original_throughput=original_code_baseline.async_throughput,  # type: ignore[arg-type]
+                    optimized_throughput=candidate_result.async_throughput,  # type: ignore[arg-type]
                 )
                 lines.append(
                     "  This candidate has better async throughput than the original code. 🚀"
@@ -767,8 +769,8 @@ class FunctionOptimizer:
         # Not a successful optimization candidate
         elif is_async:
             throughput_gain_value = throughput_gain(
-                original_throughput=original_code_baseline.async_throughput,
-                optimized_throughput=candidate_result.async_throughput,
+                original_throughput=original_code_baseline.async_throughput,  # type: ignore[arg-type]
+                optimized_throughput=candidate_result.async_throughput,  # type: ignore[arg-type]
             )
             lines.append(
                 f"  Async throughput: {candidate_result.async_throughput} executions"
@@ -817,11 +819,11 @@ class FunctionOptimizer:
         replay_perf_gain = {}
         benchmark_tree = None
 
-        if self.config.benchmark:
+        if self.config.benchmark:  # type: ignore[union-attr]
             test_results_by_benchmark = (
                 candidate_result.benchmarking_test_results.group_by_benchmarks(
-                    self.total_benchmark_timings.keys(),
-                    self.replay_tests_dir,
+                    self.total_benchmark_timings.keys(),  # type: ignore[arg-type]
+                    self.replay_tests_dir,  # type: ignore[arg-type]
                     self.project_root,
                 )
             )
@@ -832,7 +834,7 @@ class FunctionOptimizer:
                 candidate_test_results,
             ) in test_results_by_benchmark.items():
                 original_code_replay_runtime = (
-                    original_code_baseline.replay_benchmarking_test_results[
+                    original_code_baseline.replay_benchmarking_test_results[  # type: ignore[index]
                         benchmark_key
                     ].total_passed_runtime()
                 )
@@ -854,7 +856,7 @@ class FunctionOptimizer:
             runtime=candidate_result.best_test_runtime,
             line_profiler_test_results=line_profile_test_results,
             winning_behavior_test_results=candidate_result.behavior_test_results,
-            replay_performance_gain=replay_perf_gain if self.config.benchmark else None,
+            replay_performance_gain=replay_perf_gain if self.config.benchmark else None,  # type: ignore[union-attr]
             winning_benchmarking_test_results=candidate_result.benchmarking_test_results,
             winning_replay_benchmarking_test_results=candidate_result.benchmarking_test_results,
             async_throughput=candidate_result.async_throughput,
@@ -891,14 +893,14 @@ class FunctionOptimizer:
         logger.info(f"h3|Optimization candidate {candidate_index}/{total_candidates}:")
         candidate = candidate_node.candidate
         rule()
-        print(candidate.source_code.flat)
+        print(candidate.source_code.flat)  # type: ignore[union-attr]
         rule()
 
         # Try to replace function with optimized code
         try:
             did_update = self.replace_function_and_helpers_with_optimized_code(
                 code_context=code_context,
-                optimized_code=candidate.source_code,
+                optimized_code=candidate.source_code,  # type: ignore[union-attr]
                 original_helper_code=original_helper_code,
             )
             if not did_update:
@@ -917,17 +919,19 @@ class FunctionOptimizer:
             return None
 
         # Check for duplicate candidates
-        normalized_code = normalize_code(candidate.source_code.flat.strip())
+        normalized_code = normalize_code(candidate.source_code.flat.strip())  # type: ignore[union-attr]
         if normalized_code in eval_ctx.ast_code_to_id:
             logger.info(
                 "Current candidate has been encountered before in testing, Skipping optimization candidate."
             )
             eval_ctx.handle_duplicate_candidate(
-                candidate, normalized_code, code_context
+                candidate,  # type: ignore[arg-type]
+                normalized_code,
+                code_context,  # type: ignore[arg-type]
             )
             return None
 
-        eval_ctx.register_new_candidate(normalized_code, candidate, code_context)
+        eval_ctx.register_new_candidate(normalized_code, candidate, code_context)  # type: ignore[arg-type]
 
         # Run the optimized candidate
         run_results = self.run_optimized_candidate(
@@ -937,13 +941,13 @@ class FunctionOptimizer:
             file_path_to_helper_classes=file_path_to_helper_classes,
             eval_ctx=eval_ctx,
             code_context=code_context,
-            candidate=candidate,
+            candidate=candidate,  # type: ignore[arg-type]
             exp_type=exp_type,
         )
         rule()
 
         if not run_results.is_ok():
-            eval_ctx.record_failed_candidate(candidate.optimization_id)
+            eval_ctx.record_failed_candidate(candidate.optimization_id)  # type: ignore[union-attr]
             return None
 
         candidate_result: OptimizedCandidateResult = run_results.unwrap()
@@ -952,7 +956,9 @@ class FunctionOptimizer:
             optimized_runtime_ns=candidate_result.best_test_runtime,
         )
         eval_ctx.record_successful_candidate(
-            candidate.optimization_id, candidate_result.best_test_runtime, perf_gain
+            candidate.optimization_id,  # type: ignore[union-attr]
+            candidate_result.best_test_runtime,
+            perf_gain,  # type: ignore[union-attr]
         )
 
         # Check if this is a successful optimization
@@ -977,7 +983,7 @@ class FunctionOptimizer:
 
         if is_successful_opt:
             best_optimization, benchmark_tree = self.handle_successful_candidate(
-                candidate=candidate,
+                candidate=candidate,  # type: ignore[arg-type]
                 candidate_result=candidate_result,
                 code_context=code_context,
                 original_code_baseline=original_code_baseline,
@@ -1005,7 +1011,7 @@ class FunctionOptimizer:
                     original_source_code=code_context.read_writable_code.markdown,
                     prev_candidates=current_tree_candidates,
                     eval_ctx=eval_ctx,
-                    ai_service_client=aiservice_client,
+                    ai_service_client=aiservice_client,  # type: ignore[arg-type]
                 )
                 if future_adaptive_optimization:
                     self.future_adaptive_optimizations.append(
@@ -1013,7 +1019,7 @@ class FunctionOptimizer:
                     )
             else:
                 future_refinement = self.executor.submit(
-                    aiservice_client.optimize_python_code_refinement,
+                    aiservice_client.optimize_python_code_refinement,  # type: ignore[union-attr]
                     request=[
                         AIServiceRefinerRequest(
                             optimization_id=best_optimization.candidate.optimization_id,
@@ -1039,7 +1045,7 @@ class FunctionOptimizer:
 
         # Display runtime information
         print(tree)
-        if self.config.benchmark and benchmark_tree:
+        if self.config.benchmark and benchmark_tree:  # type: ignore[union-attr]
             print(benchmark_tree)
         rule()
 
@@ -1161,7 +1167,7 @@ class FunctionOptimizer:
         print(f"📈 {explanation.perf_improvement_line}")
         print(f"Explanation: \n{explanation.__str__()}")
 
-        if self.config.no_pr:
+        if self.config.no_pr:  # type: ignore[union-attr]
             tests_source = "\n".join(
                 [
                     test.generated_original_test_source
@@ -1187,7 +1193,7 @@ class FunctionOptimizer:
         original_code: str,
         optimized_context: CodeStringsMarkdown,
     ) -> tuple[str, dict[Path, str]]:
-        should_sort_imports = not self.config.disable_imports_sorting
+        should_sort_imports = not self.config.disable_imports_sorting  # type: ignore[union-attr]
         if should_sort_imports and sort_imports(code=original_code) != original_code:
             should_sort_imports = False
 
@@ -1199,7 +1205,7 @@ class FunctionOptimizer:
             )
 
         new_code = format_code(
-            self.config.formatter_cmds,
+            self.config.formatter_cmds,  # type: ignore[arg-type, union-attr]
             path,
             optimized_code=optimized_code,
             check_diff=True,
@@ -1213,7 +1219,7 @@ class FunctionOptimizer:
             module_abspath = hp.file_path
             hp_source_code = hp.source_code
             formatted_helper_code = format_code(
-                self.config.formatter_cmds,
+                self.config.formatter_cmds,  # type: ignore[arg-type, union-attr]
                 module_abspath,
                 optimized_code=hp_source_code,
                 check_diff=True,
@@ -1307,7 +1313,7 @@ class FunctionOptimizer:
             )
         else:
             test_file_invocation_positions = defaultdict(list)
-            for tests_in_file in function_to_all_tests.get(func_qualname):
+            for tests_in_file in function_to_all_tests.get(func_qualname):  # type: ignore[union-attr]
                 test_file_invocation_positions[
                     (
                         tests_in_file.tests_in_file.test_file,
@@ -1401,7 +1407,7 @@ class FunctionOptimizer:
         n_tests = get_effort_value(EffortKeys.N_GENERATED_TESTS, self.effort)
         assert len(generated_test_paths) == n_tests
 
-        if not self.config.no_gen_tests:
+        if not self.config.no_gen_tests:  # type: ignore[union-attr]
             # Submit test generation tasks
             future_tests = self.submit_test_generation_tasks(
                 self.executor,
@@ -1414,19 +1420,19 @@ class FunctionOptimizer:
         future_concolic_tests = self.executor.submit(
             generate_concolic_tests,
             self.test_cfg,
-            self.config,  # noqa: T253
+            self.config,  # type: ignore[arg-type]  # noqa: T253
             self.function_to_optimize,
-            self.function_to_optimize_ast,
+            self.function_to_optimize_ast,  # type: ignore[arg-type]
         )
 
-        if not self.config.no_gen_tests:
+        if not self.config.no_gen_tests:  # type: ignore[union-attr]
             # Wait for test futures to complete
             concurrent.futures.wait([*future_tests, future_concolic_tests])
         else:
             concurrent.futures.wait([future_concolic_tests])
         # Process test generation results
         tests: list[GeneratedTests] = []
-        if not self.config.no_gen_tests:
+        if not self.config.no_gen_tests:  # type: ignore[union-attr]
             for future in future_tests:
                 res = future.result()
                 if res:
@@ -1511,7 +1517,7 @@ class FunctionOptimizer:
 
         if run_experiment:
             future_candidates_exp = self.executor.submit(
-                self.local_aiservice_client.optimize_python_code,
+                self.local_aiservice_client.optimize_python_code,  # type: ignore[union-attr]
                 read_writable_code.markdown,
                 read_only_context_code,
                 self.function_trace_id[:-4] + "EXP1",
@@ -1522,7 +1528,7 @@ class FunctionOptimizer:
             futures.append(future_candidates_exp)
 
         # Wait for optimization futures to complete
-        concurrent.futures.wait(futures)
+        concurrent.futures.wait(futures)  # type: ignore[arg-type]
 
         # Retrieve results - optimize_python_code returns list of candidates
         candidates = future_optimization_candidates.result()
@@ -1539,7 +1545,7 @@ class FunctionOptimizer:
         function_references = future_references.result()
 
         return Ok(
-            (
+            (  # type: ignore[arg-type]
                 OptimizationSet(control=candidates, experiment=candidates_experiment),
                 function_references,
             )
@@ -1567,7 +1573,7 @@ class FunctionOptimizer:
         return setup_and_establish_baseline(
             function_to_optimize=self.function_to_optimize,
             function_to_tests=self.function_to_tests,
-            config=self.config,
+            config=self.config,  # type: ignore[arg-type]
             code_context=code_context,
             original_helper_code=original_helper_code,
             function_to_concolic_tests=function_to_concolic_tests,
@@ -1619,9 +1625,9 @@ class FunctionOptimizer:
                 print(best_optimization.candidate.source_code.flat)
                 rule()
                 processed_benchmark_info = None
-                if self.config.benchmark:
+                if self.config.benchmark:  # type: ignore[union-attr]
                     processed_benchmark_info = process_benchmark_data(
-                        replay_performance_gain=best_optimization.replay_performance_gain,
+                        replay_performance_gain=best_optimization.replay_performance_gain,  # type: ignore[arg-type]
                         fto_benchmark_timings=self.function_benchmark_timings,
                         total_benchmark_timings=self.total_benchmark_timings,
                     )
@@ -1722,14 +1728,16 @@ class FunctionOptimizer:
         for test in generated_tests.generated_tests:
             if map_gen_test_file_to_no_of_tests[test.behavior_file_path] > 0:
                 formatted_generated_test = format_generated_code(
-                    test.generated_original_test_source, self.config.formatter_cmds
+                    test.generated_original_test_source,
+                    self.config.formatter_cmds,  # type: ignore[arg-type, union-attr]
                 )
                 generated_tests_str += f"```python\n{formatted_generated_test}\n```"
                 generated_tests_str += "\n\n"
 
         if concolic_test_str:
             formatted_generated_test = format_generated_code(
-                concolic_test_str, self.config.formatter_cmds
+                concolic_test_str,
+                self.config.formatter_cmds,  # type: ignore[arg-type, union-attr]
             )
             generated_tests_str += f"```python\n{formatted_generated_test}\n```\n\n"
 
@@ -1800,7 +1808,7 @@ class FunctionOptimizer:
             original_async_throughput=explanation.original_async_throughput,
             best_async_throughput=explanation.best_async_throughput,
         )
-        self.log_successful_optimization(new_explanation, generated_tests, exp_type)
+        self.log_successful_optimization(new_explanation, generated_tests, exp_type)  # type: ignore[call-arg]
 
         best_optimization.explanation_v2 = new_explanation.explanation_message()
 
@@ -1818,13 +1826,14 @@ class FunctionOptimizer:
             "concolic_tests": concolic_tests,
         }
 
-        raise_pr = not self.config.no_pr
-        staging_review = self.config.staging_review
+        raise_pr = not self.config.no_pr  # type: ignore[union-attr]
+        staging_review = self.config.staging_review  # type: ignore[union-attr]
         opt_review_result = OptimizationReviewResult(review="", explanation="")
         # this will now run regardless of pr, staging review flags
         try:
             opt_review_result = self.aiservice_client.get_optimization_review(
-                **data, calling_fn_details=function_references
+                **data,  # type: ignore[arg-type]
+                calling_fn_details=function_references,  # type: ignore[arg-type]
             )
         except Exception as e:
             logger.debug(f"optimization review response failed, investigate {e}")
@@ -1863,10 +1872,10 @@ class FunctionOptimizer:
             # Ensure root_dir is set for PR creation (needed for async functions that skip opt_review)
             if "root_dir" not in data:
                 data["root_dir"] = git_root_dir()
-            data["git_remote"] = self.config.git_remote
-            check_create_pr(**data)
+            data["git_remote"] = self.config.git_remote  # type: ignore[union-attr]
+            check_create_pr(**data)  # type: ignore[arg-type]
         elif staging_review:
-            response = create_staging(**data)
+            response = create_staging(**data)  # type: ignore[arg-type]
             if response.status_code == 200:
                 trace_id = (
                     self.function_trace_id[:-4] + exp_type
@@ -1886,14 +1895,14 @@ class FunctionOptimizer:
             )
 
         # If worktree mode, do not revert code and helpers, otherwise we would have an empty diff when writing the patch in the lsp
-        if self.config.worktree:
+        if self.config.worktree:  # type: ignore[union-attr]
             return
 
         if raise_pr and (
-            self.config.all
+            self.config.all  # type: ignore[union-attr]
             or env_utils.get_pr_number()
-            or self.config.replay_test
-            or (self.config.file and not self.config.function)
+            or self.config.replay_test  # type: ignore[union-attr]
+            or (self.config.file and not self.config.function)  # type: ignore[union-attr]
         ):
             self.revert_code_and_helpers(original_helper_code)
             return
@@ -1928,7 +1937,7 @@ class FunctionOptimizer:
         )
 
         if self.function_to_optimize.is_async:
-            from codeflash.code_utils.instrument_existing_tests import (
+            from codeflash.code_utils.instrument_existing_tests import (  # type: ignore[attr-defined]
                 add_async_decorator_to_function,
             )
 
@@ -1977,7 +1986,7 @@ class FunctionOptimizer:
             if not did_pass_all_tests:
                 return Err(error="Tests failed to pass for the original code.")
             return Err(
-                f"Test coverage is {coverage_results.coverage}%, which is below the required threshold of {COVERAGE_THRESHOLD}%."
+                f"Test coverage is {coverage_results.coverage}%, which is below the required threshold of {COVERAGE_THRESHOLD}%."  # type: ignore[union-attr]
             )
 
         logger.info("Running line profiler to identify performance bottlenecks...")
@@ -1989,7 +1998,7 @@ class FunctionOptimizer:
         rule()
         logger.info("Running performance benchmarks...")
         if self.function_to_optimize.is_async:
-            from codeflash.code_utils.instrument_existing_tests import (
+            from codeflash.code_utils.instrument_existing_tests import (  # type: ignore[attr-defined]
                 add_async_decorator_to_function,
             )
 
@@ -2019,14 +2028,14 @@ class FunctionOptimizer:
 
         print(
             TestResults.report_to_tree(
-                behavioral_results.get_test_pass_fail_report_by_type(),
+                behavioral_results.get_test_pass_fail_report_by_type(),  # type: ignore[union-attr]
                 title="Overall test results for original code",
             )
         )
         rule()
 
         total_timing = (
-            benchmarking_results.total_passed_runtime()
+            benchmarking_results.total_passed_runtime()  # type: ignore[union-attr]
         )  # caution: doesn't handle the loop index
         functions_to_remove = [
             result.id.test_function_name
@@ -2052,7 +2061,7 @@ class FunctionOptimizer:
             return Err(error="Failed to establish a baseline for the original code.")
 
         loop_count = max(
-            [int(result.loop_index) for result in benchmarking_results.test_results]
+            [int(result.loop_index) for result in benchmarking_results.test_results]  # type: ignore[union-attr]
         )
         logger.info(
             f"h3|⌚ Original code summed runtime measured over '{loop_count}' loop{'s' if loop_count > 1 else ''}: "
@@ -2064,25 +2073,26 @@ class FunctionOptimizer:
         async_throughput = None
         if self.function_to_optimize.is_async:
             async_throughput = calculate_function_throughput_from_test_results(
-                benchmarking_results, self.function_to_optimize.function_name
+                benchmarking_results,  # type: ignore[arg-type]
+                self.function_to_optimize.function_name,  # type: ignore[arg-type]
             )
             logger.debug(
                 f"Original async function throughput: {async_throughput} calls/second"
             )
 
-        if self.config.benchmark:
-            replay_benchmarking_test_results = benchmarking_results.group_by_benchmarks(
-                self.total_benchmark_timings.keys(),
-                self.replay_tests_dir,
+        if self.config.benchmark:  # type: ignore[union-attr]
+            replay_benchmarking_test_results = benchmarking_results.group_by_benchmarks(  # type: ignore[union-attr]
+                self.total_benchmark_timings.keys(),  # type: ignore[arg-type]
+                self.replay_tests_dir,  # type: ignore[arg-type]
                 self.project_root,
             )
         return Ok(
-            (
+            (  # type: ignore[arg-type]
                 OriginalCodeBaseline(
-                    behavior_test_results=behavioral_results,
-                    benchmarking_test_results=benchmarking_results,
+                    behavior_test_results=behavioral_results,  # type: ignore[arg-type]
+                    benchmarking_test_results=benchmarking_results,  # type: ignore[arg-type]
                     replay_benchmarking_test_results=replay_benchmarking_test_results
-                    if self.config.benchmark
+                    if self.config.benchmark  # type: ignore[union-attr]
                     else None,
                     runtime=total_timing,
                     coverage_results=coverage_results,
@@ -2162,7 +2172,7 @@ class FunctionOptimizer:
                 trace_id=self.function_trace_id[:-4] + exp_type
                 if self.experiment_id
                 else self.function_trace_id,
-                ai_service_client=ai_service_client,
+                ai_service_client=ai_service_client,  # type: ignore[arg-type]
                 optimization_id=candidate.optimization_id,
                 executor=self.executor,
             )
@@ -2200,7 +2210,7 @@ class FunctionOptimizer:
                 "utf-8"
             )
         if self.function_to_optimize.is_async:
-            from codeflash.code_utils.instrument_existing_tests import (
+            from codeflash.code_utils.instrument_existing_tests import (  # type: ignore[attr-defined]
                 add_async_decorator_to_function,
             )
 
@@ -2235,13 +2245,14 @@ class FunctionOptimizer:
             )
         print(
             TestResults.report_to_tree(
-                candidate_behavior_results.get_test_pass_fail_report_by_type(),
+                candidate_behavior_results.get_test_pass_fail_report_by_type(),  # type: ignore[union-attr]
                 title=f"Behavioral Test Results for candidate {optimization_candidate_index}",
             )
         )
         rule()
         match, diffs = compare_test_results(
-            baseline_results.behavior_test_results, candidate_behavior_results
+            baseline_results.behavior_test_results,
+            candidate_behavior_results,  # type: ignore[arg-type]
         )
         if match:
             logger.info("h3|Test results matched ✅")
@@ -2264,7 +2275,7 @@ class FunctionOptimizer:
 
         # For async functions, instrument at definition site for performance benchmarking
         if self.function_to_optimize.is_async:
-            from codeflash.code_utils.instrument_existing_tests import (
+            from codeflash.code_utils.instrument_existing_tests import (  # type: ignore[attr-defined]
                 add_async_decorator_to_function,
             )
 
@@ -2296,7 +2307,7 @@ class FunctionOptimizer:
             if (
                 all_loop_indices := {
                     result.loop_index
-                    for result in candidate_benchmarking_results.test_results
+                    for result in candidate_benchmarking_results.test_results  # type: ignore[union-attr]
                 }
             )
             else 0
@@ -2304,7 +2315,7 @@ class FunctionOptimizer:
 
         if (
             total_candidate_timing
-            := candidate_benchmarking_results.total_passed_runtime()
+            := candidate_benchmarking_results.total_passed_runtime()  # type: ignore[union-attr]
         ) == 0:
             logger.warning(
                 "The overall test runtime of the optimized function is 0, couldn't run tests."
@@ -2319,7 +2330,7 @@ class FunctionOptimizer:
         if self.function_to_optimize.is_async:
             candidate_async_throughput = (
                 calculate_function_throughput_from_test_results(
-                    candidate_benchmarking_results,
+                    candidate_benchmarking_results,  # type: ignore[arg-type]
                     self.function_to_optimize.function_name,
                 )
             )
@@ -2327,11 +2338,11 @@ class FunctionOptimizer:
                 f"Candidate async function throughput: {candidate_async_throughput} calls/second"
             )
 
-        if self.config.benchmark:
+        if self.config.benchmark:  # type: ignore[union-attr]
             candidate_replay_benchmarking_results = (
-                candidate_benchmarking_results.group_by_benchmarks(
-                    self.total_benchmark_timings.keys(),
-                    self.replay_tests_dir,
+                candidate_benchmarking_results.group_by_benchmarks(  # type: ignore[union-attr]
+                    self.total_benchmark_timings.keys(),  # type: ignore[arg-type]
+                    self.replay_tests_dir,  # type: ignore[arg-type]
                     self.project_root,
                 )
             )
@@ -2346,10 +2357,10 @@ class FunctionOptimizer:
             OptimizedCandidateResult(
                 max_loop_count=loop_count,
                 best_test_runtime=total_candidate_timing,
-                behavior_test_results=candidate_behavior_results,
-                benchmarking_test_results=candidate_benchmarking_results,
+                behavior_test_results=candidate_behavior_results,  # type: ignore[arg-type]
+                benchmarking_test_results=candidate_benchmarking_results,  # type: ignore[arg-type]
                 replay_benchmarking_test_results=candidate_replay_benchmarking_results
-                if self.config.benchmark
+                if self.config.benchmark  # type: ignore[union-attr]
                 else None,
                 optimization_candidate_index=optimization_candidate_index,
                 total_candidate_timing=total_candidate_timing,
@@ -2488,7 +2499,7 @@ class FunctionOptimizer:
         paths_to_cleanup = []
         for test_file in self.test_files:
             paths_to_cleanup.append(test_file.instrumented_behavior_file_path)
-            paths_to_cleanup.append(test_file.benchmarking_file_path)
+            paths_to_cleanup.append(test_file.benchmarking_file_path)  # type: ignore[arg-type]
 
         cleanup_paths(paths_to_cleanup)
 
@@ -2503,9 +2514,9 @@ class FunctionOptimizer:
         test_env["CODEFLASH_TRACER_DISABLE"] = str(codeflash_tracer_disable)
         test_env["CODEFLASH_LOOP_INDEX"] = str(codeflash_loop_index)
         if "PYTHONPATH" not in test_env:
-            test_env["PYTHONPATH"] = str(self.config.project_root)
+            test_env["PYTHONPATH"] = str(self.config.project_root)  # type: ignore[union-attr]
         else:
-            test_env["PYTHONPATH"] += os.pathsep + str(self.config.project_root)
+            test_env["PYTHONPATH"] += os.pathsep + str(self.config.project_root)  # type: ignore[union-attr]
         return test_env
 
     def line_profiler_step(
@@ -2571,8 +2582,8 @@ class FunctionOptimizer:
             )
             # set default value for line profiler results
             return {"timings": {}, "unit": 0, "str_out": ""}
-        if line_profile_results["str_out"] == "":
+        if line_profile_results["str_out"] == "":  # type: ignore[index]
             logger.warning(
                 f"Couldn't run line profiler for original function {self.function_to_optimize.function_name}"
             )
-        return line_profile_results
+        return line_profile_results  # type: ignore[return-value]

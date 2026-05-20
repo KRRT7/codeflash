@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import pstats
 import sqlite3
@@ -16,7 +18,7 @@ class ProfileStats(pstats.Stats):
         self.trace_file_path = trace_file_path
         self.time_unit = time_unit
         logger.debug(hasattr(self, "create_stats"))
-        super().__init__(copy(self))
+        super().__init__(copy(self))  # type: ignore[arg-type]
 
     def create_stats(self) -> None:
         self.con = sqlite3.connect(self.trace_file_path)
@@ -67,34 +69,34 @@ class ProfileStats(pstats.Stats):
                 unmapped_callers,
             )
 
-    def print_stats(self, *amount) -> pstats.Stats:  # noqa: ANN002
+    def print_stats(self, *amount) -> ProfileStats:  # noqa: ANN002
         # Copied from pstats.Stats.print_stats and modified to print the correct time unit
-        for filename in self.files:
-            print(filename, file=self.stream)
-        if self.files:
-            print(file=self.stream)
+        for filename in self.files:  # type: ignore[attr-defined]
+            print(filename, file=self.stream)  # type: ignore[attr-defined]
+        if self.files:  # type: ignore[attr-defined]
+            print(file=self.stream)  # type: ignore[attr-defined]
         indent = " " * 8
-        for func in self.top_level:
-            print(indent, func[2], file=self.stream)
+        for func in self.top_level:  # type: ignore[attr-defined]
+            print(indent, func[2], file=self.stream)  # type: ignore[attr-defined]
 
-        print(indent, self.total_calls, "function calls", end=" ", file=self.stream)
-        if self.total_calls != self.prim_calls:
-            print(f"({self.prim_calls:d} primitive calls)", end=" ", file=self.stream)
+        print(indent, self.total_calls, "function calls", end=" ", file=self.stream)  # type: ignore[attr-defined]
+        if self.total_calls != self.prim_calls:  # type: ignore[attr-defined]
+            print(f"({self.prim_calls:d} primitive calls)", end=" ", file=self.stream)  # type: ignore[attr-defined]
         time_unit = {
             "ns": "nanoseconds",
             "us": "microseconds",
             "ms": "milliseconds",
             "s": "seconds",
         }[self.time_unit]
-        print(f"in {self.total_tt:.3f} {time_unit}", file=self.stream)
-        print(file=self.stream)
+        print(f"in {self.total_tt:.3f} {time_unit}", file=self.stream)  # type: ignore[attr-defined]
+        print(file=self.stream)  # type: ignore[attr-defined]
         width, list_ = self.get_print_list(amount)
         if list_:
             self.print_title()
             for func in list_:
                 self.print_line(func)
-            print(file=self.stream)
-            print(file=self.stream)
+            print(file=self.stream)  # type: ignore[attr-defined]
+            print(file=self.stream)  # type: ignore[attr-defined]
         return self
 
 

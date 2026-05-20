@@ -52,20 +52,20 @@ def get_codeflash_github_action_command(dep_manager: DependencyManager) -> str:
 
 def get_dependency_installation_commands(
     dep_manager: DependencyManager,
-) -> tuple[str, str]:
+) -> tuple[str, str]:  # type: ignore[return-value]
     if dep_manager == DependencyManager.POETRY:
         return """|
           python -m pip install --upgrade pip
           pip install poetry
-          poetry install --all-extras"""
+          poetry install --all-extras"""  # type: ignore[return-value]
     if dep_manager == DependencyManager.UV:
         return """|
           uv sync --all-extras
-          uv pip install --upgrade codeflash"""
+          uv pip install --upgrade codeflash"""  # type: ignore[return-value]
     return """|
       python -m pip install --upgrade pip
       pip install -r requirements.txt
-      pip install codeflash"""
+      pip install codeflash"""  # type: ignore[return-value]
 
 
 def get_dependency_manager_installation_string(dep_manager: DependencyManager) -> str:
@@ -165,7 +165,7 @@ def generate_dynamic_workflow_content(
     git_root: Path,
     benchmark_mode: bool = False,
 ) -> str:
-    module_path = str(Path(config["module_root"]).relative_to(git_root) / "**")
+    module_path = str(Path(config["module_root"]).relative_to(git_root) / "**")  # type: ignore[arg-type, call-overload]
     optimize_yml_content = optimize_yml_content.replace(
         "{{ codeflash_module_path }}", module_path
     )
@@ -185,8 +185,8 @@ def generate_dynamic_workflow_content(
     try:
         repo_data = collect_repo_files_for_workflow(git_root)
         codeflash_config = {
-            "module_root": config["module_root"],
-            "tests_root": config.get("tests_root", ""),
+            "module_root": config["module_root"],  # type: ignore[call-overload]
+            "tests_root": config.get("tests_root", ""),  # type: ignore[attr-defined]
             "benchmark_mode": benchmark_mode,
         }
         aiservice_client = AiServiceClient()
@@ -263,7 +263,7 @@ def customize_codeflash_yaml_content(
     git_root: Path,
     benchmark_mode: bool = False,
 ) -> str:
-    module_path = str(Path(config["module_root"]).relative_to(git_root) / "**")
+    module_path = str(Path(config["module_root"]).relative_to(git_root) / "**")  # type: ignore[arg-type, call-overload]
     optimize_yml_content = optimize_yml_content.replace(
         "{{ codeflash_module_path }}", module_path
     )
@@ -287,7 +287,7 @@ def customize_codeflash_yaml_content(
     )
     optimize_yml_content = optimize_yml_content.replace(
         "{{ install_dependencies_command }}",
-        get_dependency_installation_commands(dep_manager),
+        get_dependency_installation_commands(dep_manager),  # type: ignore[arg-type]
     )
     codeflash_cmd = get_codeflash_github_action_command(dep_manager)
     if benchmark_mode:

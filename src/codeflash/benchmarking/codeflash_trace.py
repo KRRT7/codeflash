@@ -14,7 +14,7 @@ class CodeflashTrace:
     """Decorator class that traces and profiles function execution."""
 
     def __init__(self) -> None:
-        self.function_calls_data = []
+        self.function_calls_data = []  # type: ignore[var-annotated]
         self.function_call_count = 0
         self.pickle_count_limit = 1000
         self._connection = None
@@ -31,9 +31,9 @@ class CodeflashTrace:
 
         """
         try:
-            self._trace_path = trace_path
-            self._connection = sqlite3.connect(self._trace_path)
-            cur = self._connection.cursor()
+            self._trace_path = trace_path  # type: ignore[assignment]
+            self._connection = sqlite3.connect(self._trace_path)  # type: ignore[call-overload]
+            cur = self._connection.cursor()  # type: ignore[attr-defined]
             cur.execute("PRAGMA synchronous = OFF")
             cur.execute("PRAGMA journal_mode = MEMORY")
             cur.execute(
@@ -42,7 +42,7 @@ class CodeflashTrace:
                 "benchmark_function_name TEXT, benchmark_module_path TEXT, benchmark_line_number INTEGER,"
                 "function_time_ns INTEGER, overhead_time_ns INTEGER, args BLOB, kwargs BLOB)"
             )
-            self._connection.commit()
+            self._connection.commit()  # type: ignore[attr-defined]
         except Exception as e:
             print(f"Database setup error: {e}")
             if self._connection:
@@ -65,7 +65,7 @@ class CodeflashTrace:
             self._connection = sqlite3.connect(self._trace_path)
 
         try:
-            cur = self._connection.cursor()
+            cur = self._connection.cursor()  # type: ignore[attr-defined]
             # Insert data into the benchmark_function_timings table
             cur.executemany(
                 "INSERT INTO benchmark_function_timings"
@@ -74,7 +74,7 @@ class CodeflashTrace:
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 self.function_calls_data,
             )
-            self._connection.commit()
+            self._connection.commit()  # type: ignore[attr-defined]
             self.function_calls_data = []
         except Exception as e:
             print(f"Error writing to function timings database: {e}")
@@ -85,7 +85,7 @@ class CodeflashTrace:
     def open(self) -> None:
         """Open the database connection."""
         if self._connection is None:
-            self._connection = sqlite3.connect(self._trace_path)
+            self._connection = sqlite3.connect(self._trace_path)  # type: ignore[call-overload]
 
     def close(self) -> None:
         """Close the database connection."""

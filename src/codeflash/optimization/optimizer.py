@@ -41,7 +41,7 @@ class Optimizer:
 
         self.test_cfg = TestConfig(
             tests_root=config.tests_root,
-            tests_project_rootdir=config.test_project_root,
+            tests_project_rootdir=config.test_project_root,  # type: ignore[arg-type]
             project_root_path=config.project_root,
             pytest_cmd=config.pytest_cmd or "pytest",
             benchmark_tests_root=config.benchmarks_root if config.benchmark else None,
@@ -96,38 +96,38 @@ class Optimizer:
                 file_path_to_source_code[file] = f.read()
         try:
             instrument_codeflash_trace_decorator(file_to_funcs_to_optimize)
-            self.trace_file = Path(self.config.benchmarks_root) / "benchmarks.trace"
+            self.trace_file = Path(self.config.benchmarks_root) / "benchmarks.trace"  # type: ignore[arg-type]
             if self.trace_file.exists():
                 self.trace_file.unlink()
 
-            self.replay_tests_dir = Path(
+            self.replay_tests_dir = Path(  # type: ignore[assignment]
                 tempfile.mkdtemp(
                     prefix="codeflash_replay_tests_",
                     dir=self.config.benchmarks_root,
                 )
             )
             trace_benchmarks_pytest(
-                self.config.benchmarks_root,
+                self.config.benchmarks_root,  # type: ignore[arg-type]
                 self.config.tests_root,
                 self.config.project_root,
                 self.trace_file,
             )  # Run all tests that use pytest-benchmark
-            replay_count = generate_replay_test(self.trace_file, self.replay_tests_dir)
+            replay_count = generate_replay_test(self.trace_file, self.replay_tests_dir)  # type: ignore[arg-type]
             if replay_count == 0:
                 logger.info(
                     f"No valid benchmarks found in {self.config.benchmarks_root} for functions to optimize, continuing optimization"
                 )
             else:
                 function_benchmark_timings = (
-                    CodeFlashBenchmarkPlugin.get_function_benchmark_timings(
+                    CodeFlashBenchmarkPlugin.get_function_benchmark_timings(  # type: ignore[assignment]
                         self.trace_file
                     )
                 )
                 total_benchmark_timings = (
-                    CodeFlashBenchmarkPlugin.get_benchmark_timings(self.trace_file)
+                    CodeFlashBenchmarkPlugin.get_benchmark_timings(self.trace_file)  # type: ignore[assignment]
                 )
                 function_to_results = validate_and_format_benchmark_table(
-                    function_benchmark_timings, total_benchmark_timings
+                    function_benchmark_timings, total_benchmark_timings  # type: ignore[arg-type]
                 )
                 print_benchmark_table(function_to_results)
         except Exception as e:
@@ -150,7 +150,7 @@ class Optimizer:
         from codeflash.discovery.functions_to_optimize import get_functions_to_optimize
 
         return get_functions_to_optimize(
-            optimize_all=self.config.all,
+            optimize_all=self.config.all,  # type: ignore[arg-type]
             replay_test=self.config.replay_test,
             file=self.config.file,
             only_get_this_function=self.config.function,
@@ -210,13 +210,13 @@ class Optimizer:
         return FunctionOptimizer(
             function_to_optimize=function_to_optimize,
             test_cfg=self.test_cfg,
-            function_to_optimize_source_code=function_to_optimize_source_code,
+            function_to_optimize_source_code=function_to_optimize_source_code,  # type: ignore[arg-type]
             function_to_tests=function_to_tests,
             function_to_optimize_ast=function_to_optimize_ast,
             aiservice_client=self.aiservice_client,
             config=self.config,
-            function_benchmark_timings=function_specific_timings,
-            total_benchmark_timings=total_benchmark_timings
+            function_benchmark_timings=function_specific_timings,  # type: ignore[arg-type]
+            total_benchmark_timings=total_benchmark_timings  # type: ignore[arg-type]
             if function_specific_timings
             else None,
             replay_tests_dir=self.replay_tests_dir,
@@ -420,10 +420,10 @@ class Optimizer:
                             ]
                             patch_path = create_diff_patch_from_worktree(
                                 self.current_worktree,
-                                relative_file_paths,
+                                relative_file_paths,  # type: ignore[arg-type]
                                 fto_name=function_to_optimize.qualified_name,
                             )
-                            self.patch_files.append(patch_path)
+                            self.patch_files.append(patch_path)  # type: ignore[arg-type]
                             if i < len(globally_ranked_functions) - 1:
                                 _, next_func = globally_ranked_functions[i + 1]
                                 create_worktree_snapshot_commit(
@@ -431,7 +431,7 @@ class Optimizer:
                                     f"Optimizing {next_func.qualified_name}",
                                 )
                     else:
-                        logger.warning(best_optimization.failure())
+                        logger.warning(best_optimization.failure())  # type: ignore[attr-defined]
                         rule()
                         continue
                 finally:
@@ -501,7 +501,7 @@ class Optimizer:
             del get_run_tmp_file.tmpdir
 
         # Always clean up concolic test directory
-        cleanup_paths([self.test_cfg.concolic_test_root_dir])
+        cleanup_paths([self.test_cfg.concolic_test_root_dir])  # type: ignore[list-item]
 
         if self.current_worktree:
             remove_worktree(self.current_worktree)
@@ -511,12 +511,12 @@ class Optimizer:
             self.current_function_optimizer.cleanup_generated_files()
         paths_to_cleanup = [self.replay_tests_dir]
         if self.trace_file:
-            paths_to_cleanup.append(self.trace_file)
+            paths_to_cleanup.append(self.trace_file)  # type: ignore[arg-type]
         if self.test_cfg.tests_root.exists():
             for trace_file in self.test_cfg.tests_root.glob("*.trace"):
                 if trace_file not in paths_to_cleanup:
-                    paths_to_cleanup.append(trace_file)
-        cleanup_paths(paths_to_cleanup)
+                    paths_to_cleanup.append(trace_file)  # type: ignore[arg-type]
+        cleanup_paths(paths_to_cleanup)  # type: ignore[arg-type]
 
     def worktree_mode(self) -> None:
         if self.current_worktree:
@@ -574,7 +574,7 @@ class Optimizer:
 
         # mirror tests project root
         self.config.test_project_root = mirror_path(
-            self.config.test_project_root, original_git_root, worktree_dir
+            self.config.test_project_root, original_git_root, worktree_dir  # type: ignore[arg-type]
         )
         self.test_cfg.tests_project_rootdir = mirror_path(
             self.test_cfg.tests_project_rootdir, original_git_root, worktree_dir

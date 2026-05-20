@@ -82,7 +82,7 @@ class FunctionVisitor(cst.CSTVisitor):
             self.functions.append(
                 FunctionToOptimize(
                     function_name=node.name.value,
-                    file_path=self.file_path,
+                    file_path=self.file_path,  # type: ignore[arg-type]
                     parents=list(reversed(ast_parents)),
                     starting_line=pos.start.line,
                     ending_line=pos.end.line,
@@ -198,14 +198,14 @@ def get_functions_to_optimize(
             rule()
             functions = get_all_files_and_functions(Path(optimize_all))
         elif replay_test:
-            functions, trace_file_path = get_all_replay_test_functions(
+            functions, trace_file_path = get_all_replay_test_functions(  # type: ignore[assignment, call-arg]
                 replay_test=replay_test, test_cfg=test_cfg, project_root=project_root
             )
         elif file is not None:
             logger.info("Finding all functions in the file '%s'…", file)
             rule()
             file = Path(file) if isinstance(file, str) else file
-            functions: dict[Path, list[FunctionToOptimize]] = (
+            functions: dict[Path, list[FunctionToOptimize]] = (  # type: ignore[no-redef]
                 find_all_functions_in_file(file)
             )
             if only_get_this_function is not None:
@@ -220,14 +220,14 @@ def get_functions_to_optimize(
                     class_name = None
                     only_function_name = split_function[0]
                 found_function = None
-                for fn in functions.get(file, []):
+                for fn in functions.get(file, []):  # type: ignore[call-overload]
                     if only_function_name == fn.function_name and (
                         class_name is None or class_name == fn.top_level_parent_name
                     ):
                         found_function = fn
                 if found_function is None:
                     found = closest_matching_file_function_name(
-                        only_get_this_function, functions
+                        only_get_this_function, functions  # type: ignore[arg-type]
                     )
                     if found is not None:
                         file, found_function = found
@@ -239,13 +239,13 @@ def get_functions_to_optimize(
                     exit_with_message(
                         f"Function {only_get_this_function} not found in file {file}\nor the function does not have a 'return' statement or is a property"
                     )
-                functions[file] = [found_function]
+                functions[file] = [found_function]  # type: ignore[index, list-item]
         else:
             logger.info("Finding all functions modified in the current git diff ...")
             rule()
             functions = get_functions_within_git_diff(uncommitted_changes=False)
         filtered_modified_functions, functions_count = filter_functions(
-            functions,
+            functions,  # type: ignore[arg-type]
             test_cfg.tests_root,
             ignore_paths,
             project_root,
@@ -304,7 +304,7 @@ def closest_matching_file_function_name(
                 closest_file = file_path
 
     if closest_match is not None:
-        return closest_file, closest_match
+        return closest_file, closest_match  # type: ignore[return-value]
     return None
 
 
@@ -377,7 +377,7 @@ def get_all_files_and_functions(
     functions: dict[str, list[FunctionToOptimize]] = {}
     for file_path in module_root_path.rglob("*.py"):
         # Find all the functions in the file
-        functions.update(find_all_functions_in_file(file_path).items())
+        functions.update(find_all_functions_in_file(file_path).items())  # type: ignore[arg-type]
     # Randomize the order of the files to optimize to avoid optimizing the same file in the same order every time.
     # Helpful if an optimize-all run is stuck and we restart it.
     files_list = list(functions.items())
@@ -430,7 +430,7 @@ def get_all_replay_test_functions(
         logger.error("Could not find trace_file_path in replay test files.")
         exit_with_message("Could not find trace_file_path in replay test files.")
 
-    if not trace_file_path.exists():
+    if not trace_file_path.exists():  # type: ignore[union-attr]
         logger.error(f"Trace file not found: {trace_file_path}")
         exit_with_message(
             f"Trace file not found: {trace_file_path}\n"
@@ -490,7 +490,7 @@ def get_all_replay_test_functions(
         if filtered_list:
             filtered_valid_functions[file_path] = filtered_list
 
-    return filtered_valid_functions, trace_file_path
+    return filtered_valid_functions, trace_file_path  # type: ignore[return-value]
 
 
 class TopLevelFunctionOrMethodVisitor(ast.NodeVisitor):
@@ -513,7 +513,7 @@ class TopLevelFunctionOrMethodVisitor(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         if self.class_name is None and node.name == self.function_name:
             self.is_top_level = True
-            self.function_has_args = any(
+            self.function_has_args = any(  # type: ignore[assignment]
                 (
                     bool(node.args.args),
                     bool(node.args.kwonlyargs),
@@ -526,7 +526,7 @@ class TopLevelFunctionOrMethodVisitor(ast.NodeVisitor):
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         if self.class_name is None and node.name == self.function_name:
             self.is_top_level = True
-            self.function_has_args = any(
+            self.function_has_args = any(  # type: ignore[assignment]
                 (
                     bool(node.args.args),
                     bool(node.args.kwonlyargs),
@@ -617,7 +617,7 @@ def function_has_return_statement(
         node = stack.pop()
         if isinstance(node, ast.Return):
             return True
-        stack.extend(ast.iter_child_nodes(node))
+        stack.extend(ast.iter_child_nodes(node))  # type: ignore[arg-type]
     return False
 
 

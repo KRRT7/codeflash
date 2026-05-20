@@ -31,8 +31,8 @@ def get_extension_info() -> dict[str, Any]:
         return {}
 
 
-@contextmanager
-def download_and_extract_extension(download_url: str) -> Path:
+@contextmanager  # type: ignore[arg-type]
+def download_and_extract_extension(download_url: str) -> Path:  # type: ignore[misc]
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
         zip_path = tmpdir_path / "extension.zip"
@@ -53,10 +53,10 @@ def download_and_extract_extension(download_url: str) -> Path:
         yield extension_path
 
 
-@contextmanager
-def download_and_extract_extension_with_progress(download_url: str) -> Path:
+@contextmanager  # type: ignore[arg-type]
+def download_and_extract_extension_with_progress(download_url: str) -> Path:  # type: ignore[misc]
     logger.info("Downloading CodeFlash extension from open-vsx.org...")
-    with download_and_extract_extension(download_url) as extension_path:
+    with download_and_extract_extension(download_url) as extension_path:  # type: ignore[var-annotated]
         yield extension_path
 
 
@@ -125,7 +125,7 @@ def write_cf_extension_metadata(editor_path: Path, version: str) -> bool:
     installed_extensions = [
         ext
         for ext in installed_extensions
-        if ext.get("identifier", {}).get("id") != data["identifier"]["id"]
+        if ext.get("identifier", {}).get("id") != data["identifier"]["id"]  # type: ignore[index]
     ]
     installed_extensions.append(data)
     with get_metadata_file_path(editor_path).open("w", encoding="utf-8") as f:
@@ -157,7 +157,7 @@ def manually_install_vscode_extension(
         return
 
     successful_installs = []
-    with download_and_extract_extension_with_progress(download_url) as extension_path:
+    with download_and_extract_extension_with_progress(download_url) as extension_path:  # type: ignore[var-annotated]
         for editor_path, editor in downloadable_paths:
             try:
                 did_copy = copy_extension_artifacts(

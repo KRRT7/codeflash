@@ -34,14 +34,14 @@ def create_trace_replay_test_code(
         class_name = func.get("class_name", "")
         if class_name:
             function_imports.append(
-                f"from {module_name} import {class_name} as {get_function_alias(module_name, class_name)}"
+                f"from {module_name} import {class_name} as {get_function_alias(module_name, class_name)}"  # type: ignore[arg-type]
             )
         else:
             function_imports.append(
-                f"from {module_name} import {function_name} as {get_function_alias(module_name, function_name)}"
+                f"from {module_name} import {function_name} as {get_function_alias(module_name, function_name)}"  # type: ignore[arg-type]
             )
     imports += "\n".join(function_imports)
-    functions_to_optimize = sorted(
+    functions_to_optimize = sorted(  # type: ignore[type-var]
         {
             func.get("function_name")
             for func in functions_data
@@ -88,11 +88,11 @@ def create_trace_replay_test_code(
         module_name = func.get("module_name")
         function_name = func.get("function_name")
         class_name = func.get("class_name")
-        file_path = Path(func.get("file_path")).as_posix()
+        file_path = Path(func.get("file_path")).as_posix()  # type: ignore[arg-type]
         benchmark_function_name = func.get("benchmark_function_name")
         function_properties = func.get("function_properties")
         if not class_name:
-            alias = get_function_alias(module_name, function_name)
+            alias = get_function_alias(module_name, function_name)  # type: ignore[arg-type]
             test_body = test_function_body.format(
                 benchmark_function_name=benchmark_function_name,
                 orig_function_name=function_name,
@@ -101,10 +101,10 @@ def create_trace_replay_test_code(
                 max_run_count=max_run_count,
             )
         else:
-            class_name_alias = get_function_alias(module_name, class_name)
+            class_name_alias = get_function_alias(module_name, class_name)  # type: ignore[arg-type]
             filter_variables = ""
-            method_name = "." + function_name if function_name != "__init__" else ""
-            if function_properties.is_classmethod:
+            method_name = "." + function_name if function_name != "__init__" else ""  # type: ignore[operator]
+            if function_properties.is_classmethod:  # type: ignore[union-attr]
                 test_body = test_class_method_body.format(
                     benchmark_function_name=benchmark_function_name,
                     orig_function_name=function_name,
@@ -115,7 +115,7 @@ def create_trace_replay_test_code(
                     max_run_count=max_run_count,
                     filter_variables=filter_variables,
                 )
-            elif function_properties.is_staticmethod:
+            elif function_properties.is_staticmethod:  # type: ignore[union-attr]
                 test_body = test_static_method_body.format(
                     benchmark_function_name=benchmark_function_name,
                     orig_function_name=function_name,
@@ -139,7 +139,7 @@ def create_trace_replay_test_code(
                 )
         formatted_test_body = textwrap.indent(test_body, "    ")
         unique_test_name = get_unique_test_name(
-            module_name, function_name, benchmark_function_name, class_name
+            module_name, function_name, benchmark_function_name, class_name  # type: ignore[arg-type]
         )
         test_template += f"def test_{unique_test_name}():\n{formatted_test_body}\n"
     return imports + "\n" + metadata + "\n" + test_template

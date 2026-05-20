@@ -21,8 +21,8 @@ def get_run_tmp_file(
     file_path: Path,
 ) -> Path:  # moved from codeflash/code_utils/code_utils.py
     if not hasattr(get_run_tmp_file, "tmpdir"):
-        get_run_tmp_file.tmpdir = TemporaryDirectory(prefix="codeflash_")
-    return Path(get_run_tmp_file.tmpdir.name) / file_path
+        get_run_tmp_file.tmpdir = TemporaryDirectory(prefix="codeflash_")  # type: ignore[attr-defined]
+    return Path(get_run_tmp_file.tmpdir.name) / file_path  # type: ignore[attr-defined]
 
 
 def extract_test_context_from_env() -> tuple[str, str | None, str]:
@@ -52,13 +52,13 @@ def codeflash_behavior_async(func: F) -> F:
         )
 
         if not hasattr(async_wrapper, "index"):
-            async_wrapper.index = {}
-        if test_id in async_wrapper.index:
-            async_wrapper.index[test_id] += 1
+            async_wrapper.index = {}  # type: ignore[attr-defined]
+        if test_id in async_wrapper.index:  # type: ignore[attr-defined]
+            async_wrapper.index[test_id] += 1  # type: ignore[attr-defined]
         else:
-            async_wrapper.index[test_id] = 0
+            async_wrapper.index[test_id] = 0  # type: ignore[attr-defined]
 
-        codeflash_test_index = async_wrapper.index[test_id]
+        codeflash_test_index = async_wrapper.index[test_id]  # type: ignore[attr-defined]
         invocation_id = f"{line_id}_{codeflash_test_index}"
         test_stdout_tag = f"{test_module_name}:{(test_class_name + '.' if test_class_name else '')}{test_name}:{function_name}:{loop_index}:{invocation_id}"
 
@@ -117,7 +117,7 @@ def codeflash_behavior_async(func: F) -> F:
             raise exception
         return return_value
 
-    return async_wrapper
+    return async_wrapper  # type: ignore[return-value]
 
 
 def codeflash_performance_async(func: F) -> F:
@@ -135,13 +135,13 @@ def codeflash_performance_async(func: F) -> F:
         )
 
         if not hasattr(async_wrapper, "index"):
-            async_wrapper.index = {}
-        if test_id in async_wrapper.index:
-            async_wrapper.index[test_id] += 1
+            async_wrapper.index = {}  # type: ignore[attr-defined]
+        if test_id in async_wrapper.index:  # type: ignore[attr-defined]
+            async_wrapper.index[test_id] += 1  # type: ignore[attr-defined]
         else:
-            async_wrapper.index[test_id] = 0
+            async_wrapper.index[test_id] = 0  # type: ignore[attr-defined]
 
-        codeflash_test_index = async_wrapper.index[test_id]
+        codeflash_test_index = async_wrapper.index[test_id]  # type: ignore[attr-defined]
         invocation_id = f"{line_id}_{codeflash_test_index}"
         test_stdout_tag = f"{test_module_name}:{(test_class_name + '.' if test_class_name else '')}{test_name}:{function_name}:{loop_index}:{invocation_id}"
 
@@ -167,4 +167,4 @@ def codeflash_performance_async(func: F) -> F:
             raise exception
         return return_value
 
-    return async_wrapper
+    return async_wrapper  # type: ignore[return-value]

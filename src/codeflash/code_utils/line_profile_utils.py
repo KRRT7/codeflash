@@ -34,7 +34,7 @@ class LineProfilerDecoratorAdder(cst.CSTTransformer):
         self.decorator_name = decorator_name
 
         # Track our current context path, only add when we encounter a class
-        self.context_stack = []
+        self.context_stack = []  # type: ignore[var-annotated]
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         # Track when we enter a class
@@ -58,7 +58,7 @@ class LineProfilerDecoratorAdder(cst.CSTTransformer):
         if self.context_stack == self.qualified_name_parts:
             # Check if the decorator is already present
             has_decorator = any(
-                self._is_target_decorator(decorator.decorator)
+                self._is_target_decorator(decorator.decorator)  # type: ignore[arg-type]
                 for decorator in original_node.decorators
             )
 
@@ -110,9 +110,9 @@ class ProfileEnableTransformer(cst.CSTTransformer):
                 name.name.value == "profile"
                 and (
                     not name.asname
-                    or name.asname.name.value == "codeflash_line_profile"
+                    or name.asname.name.value == "codeflash_line_profile"  # type: ignore[union-attr]
                 )
-                for name in original_node.names
+                for name in original_node.names  # type: ignore[union-attr]
             )
         ):
             self.found_import = True
@@ -123,7 +123,7 @@ class ProfileEnableTransformer(cst.CSTTransformer):
                     if original_node.leading_lines
                     else ""
                 )
-                self.import_indentation = leading_whitespace
+                self.import_indentation = leading_whitespace  # type: ignore[assignment]
 
         return updated_node
 
@@ -148,9 +148,9 @@ class ProfileEnableTransformer(cst.CSTTransformer):
                             name.name.value == "profile"
                             and (
                                 not name.asname
-                                or name.asname.name.value == "codeflash_line_profile"
+                                or name.asname.name.value == "codeflash_line_profile"  # type: ignore[union-attr]
                             )
-                            for name in small_stmt.names
+                            for name in small_stmt.names  # type: ignore[union-attr]
                         )
                     ):
                         import_index = i

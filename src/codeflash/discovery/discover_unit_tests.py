@@ -166,9 +166,9 @@ def discover_tests_pytest(
             and test_obj.test_file not in discover_only_these_tests
         ):
             continue
-        file_to_test_map[test_obj.test_file].append(test_obj)
+        file_to_test_map[test_obj.test_file].append(test_obj)  # type: ignore[arg-type]
     # Within these test files, find the project functions they are referring to and return their names/locations
-    return process_test_files(file_to_test_map, cfg, functions_to_optimize)
+    return process_test_files(file_to_test_map, cfg, functions_to_optimize)  # type: ignore[arg-type]
 
 
 def discover_tests_unittest(
@@ -209,7 +209,7 @@ def discover_tests_unittest(
         )
 
     for _test_suite in tests._tests:
-        for test_suite_2 in _test_suite._tests:
+        for test_suite_2 in _test_suite._tests:  # type: ignore[attr-defined]
             if not hasattr(test_suite_2, "_tests"):
                 logger.warning(f"Didn't find tests for {test_suite_2}")
                 continue
@@ -371,9 +371,9 @@ def process_test_files(
                         and def_name.full_name is not None
                         and f".{matched_name}." in def_name.full_name
                     ):
-                        for function in functions_to_search:
+                        for function in functions_to_search:  # type: ignore[assignment]
                             (is_parameterized, new_function, parameters) = (
-                                discover_parameters_unittest(function)
+                                discover_parameters_unittest(function)  # type: ignore[arg-type]
                             )
 
                             if is_parameterized and new_function == def_name.name:

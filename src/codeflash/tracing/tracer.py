@@ -68,7 +68,7 @@ class Tracer:
         self.con = None
         self.functions = functions
         self.function_modules: list[FunctionModules] = []
-        self.function_count = defaultdict(int)
+        self.function_count = defaultdict(int)  # type: ignore[var-annotated]
         self.current_file_path = Path(__file__).resolve()
         self.ignored_qualified_functions = {
             f"{self.current_file_path}:Tracer.__exit__",
@@ -87,7 +87,7 @@ class Tracer:
             "<module>",
         }
 
-        self.sanitized_filename = self.sanitize_to_filename(command)
+        self.sanitized_filename = self.sanitize_to_filename(command)  # type: ignore[attr-defined]
         # Place trace file next to replay tests in the tests directory
         from codeflash.verification.verification_utils import get_test_file_path
 
@@ -106,16 +106,16 @@ class Tracer:
         self.timeout = timeout
         self.next_insert = 1000
         self.trace_count = 0
-        self.path_cache = {}  # Cache for resolved file paths
+        self.path_cache: dict[Path, str] = {}
 
         # Profiler variables
         self.bias = 0  # calibration constant
-        self.timings = {}
+        self.timings = {}  # type: ignore[var-annotated]
         self.cur = None
         self.start_time = None
         self.timer = time.process_time_ns
         self.total_tt = 0
-        self.simulate_call("profiler")
+        self.simulate_call("profiler")  # type: ignore[attr-defined]
         self.t = self.timer()
 
         # Store command information for metadata table
@@ -131,15 +131,15 @@ class Tracer:
             )
             self.disable = True
             return
-        Tracer.used_once = True
+        Tracer.used_once = True  # type: ignore[attr-defined]
 
         if Path(self.output_file).exists():
             rule("Removing existing trace file")
             rule()
         Path(self.output_file).unlink(missing_ok=True)
 
-        self.con = sqlite3.connect(self.output_file, check_same_thread=False)
-        cur = self.con.cursor()
+        self.con = sqlite3.connect(self.output_file, check_same_thread=False)  # type: ignore[assignment]
+        cur = self.con.cursor()  # type: ignore[attr-defined]
         cur.execute("""PRAGMA synchronous = OFF""")
         cur.execute("""PRAGMA journal_mode = WAL""")
         # TODO: Check out if we need to export the function test name as well
@@ -176,10 +176,10 @@ class Tracer:
         frame = sys._getframe(
             0
         )  # Get this frame and simulate a call to it  # noqa: SLF001
-        self.dispatch["call"](self, frame, 0)
-        self.start_time = time.time()
-        sys.setprofile(self.trace_callback)
-        threading.setprofile(self.trace_callback)
+        self.dispatch["call"](self, frame, 0)  # type: ignore[attr-defined]
+        self.start_time = time.time()  # type: ignore[assignment]
+        sys.setprofile(self.trace_callback)  # type: ignore[attr-defined]
+        threading.setprofile(self.trace_callback)  # type: ignore[attr-defined]
 
     def __exit__(
         self,
@@ -273,8 +273,8 @@ class FakeFrame:
 
 def patch_ap_scheduler() -> None:
     if find_spec("apscheduler"):
-        import apscheduler.schedulers.background as bg
-        import apscheduler.schedulers.blocking as bb
+        import apscheduler.schedulers.background as bg  # type: ignore[import-not-found]
+        import apscheduler.schedulers.blocking as bb  # type: ignore[import-not-found]
         from apscheduler.schedulers import base
 
         bg.BackgroundScheduler.start = lambda _, *_a, **_k: None

@@ -297,7 +297,7 @@ def collect_setup_info() -> CLISetupInfo:
                 print("Please enter a valid relative directory path.")
                 print()
                 continue
-            module_root = Path(custom_path_str)
+            module_root = Path(custom_path_str)  # type: ignore[assignment]
     else:
         module_root = module_root_answer
 
@@ -348,9 +348,9 @@ def collect_setup_info() -> CLISetupInfo:
     else:
         tests_root = Path(curdir) / Path(cast("str", tests_root_answer))
 
-    tests_root = tests_root.relative_to(curdir)
+    tests_root = tests_root.relative_to(curdir)  # type: ignore[union-attr]
 
-    resolved_module_root = (Path(curdir) / Path(module_root)).resolve()
+    resolved_module_root = (Path(curdir) / Path(module_root)).resolve()  # type: ignore[arg-type]
     resolved_tests_root = (Path(curdir) / Path(tests_root)).resolve()
     if resolved_module_root == resolved_tests_root:
         logger.warning(
@@ -512,9 +512,9 @@ def configure_pyproject_toml(
     else:
         codeflash_section["module-root"] = setup_info.module_root
         codeflash_section["tests-root"] = setup_info.tests_root
-        codeflash_section["ignore-paths"] = setup_info.ignore_paths
-        if setup_info.git_remote not in ["", "origin"]:
-            codeflash_section["git-remote"] = setup_info.git_remote
+        codeflash_section["ignore-paths"] = setup_info.ignore_paths  # type: ignore[union-attr]
+        if setup_info.git_remote not in ["", "origin"]:  # type: ignore[union-attr]
+            codeflash_section["git-remote"] = setup_info.git_remote  # type: ignore[union-attr]
         codeflash_section.add(tomlkit.nl())
 
     formatter = setup_info.formatter

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import git
-from unidiff import PatchSet
+from unidiff import PatchSet  # type: ignore[import-untyped]
 
 from codeflash.cli_cmds.logging_config import logger
 
@@ -72,7 +72,7 @@ def get_git_diff(
 
         logger.debug(f"deleted lines: {del_line_no}")
 
-        change_list[file_path] = add_line_no
+        change_list[file_path] = add_line_no  # type: ignore[index]
     return change_list
 
 
@@ -120,7 +120,7 @@ def get_current_branch(repo: Repo | None = None) -> str:
 
 def get_remote_url(repo: Repo | None = None, git_remote: str | None = "origin") -> str:
     repository: Repo = repo if repo else git.Repo(search_parent_directories=True)
-    return repository.remote(name=git_remote).url
+    return repository.remote(name=git_remote).url  # type: ignore[arg-type]
 
 
 def get_git_remotes(repo: Repo) -> list[str]:
@@ -163,7 +163,7 @@ def check_running_in_git_repo(module_root: str | Path) -> bool:
 
 
 def confirm_proceeding_with_no_git_repo() -> str | bool:
-    if sys.__stdin__.isatty():
+    if sys.__stdin__.isatty():  # type: ignore[union-attr]
         response = input(
             "WARNING: I did not find a git repository for your code. If you proceed with running codeflash, "
             "optimized code will be written over your current code and you could irreversibly lose your current code. Proceed? (y/N): "
@@ -190,14 +190,14 @@ def check_and_push_branch(
         logger.warning(f"⚠️ Could not determine active branch: {e}. Cannot push branch.")
         return False
 
-    remote = repo.remote(name=git_remote)
+    remote = repo.remote(name=git_remote)  # type: ignore[arg-type]
 
     # Check if the branch is pushed
     if f"{git_remote}/{current_branch_name}" not in repo.refs:
         logger.warning(
             f"⚠️ The branch '{current_branch_name}' is not pushed to the remote repository."
         )
-        if not sys.__stdin__.isatty():
+        if not sys.__stdin__.isatty():  # type: ignore[union-attr]
             logger.warning("Non-interactive shell detected. Branch will not be pushed.")
             return False
         response = input(

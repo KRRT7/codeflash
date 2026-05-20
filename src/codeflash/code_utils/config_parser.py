@@ -5,8 +5,8 @@ from typing import Any
 
 import tomlkit
 
-PYPROJECT_TOML_CACHE = {}
-ALL_CONFIG_FILES = {}  # map path to closest config file
+PYPROJECT_TOML_CACHE = {}  # type: ignore[var-annotated]
+ALL_CONFIG_FILES: dict[Path, dict[str, Path]] = {}
 
 
 def find_pyproject_toml(config_file: Path | None = None) -> Path:
@@ -124,7 +124,7 @@ def parse_config_file(
             config[key] = str(config[key])
         else:
             config[key] = default_value
-    for key, default_value in bool_keys.items():
+    for key, default_value in bool_keys.items():  # type: ignore[assignment]
         if key in config:
             config[key] = bool(config[key])
         else:
@@ -134,7 +134,7 @@ def parse_config_file(
             config[key] = str(
                 (Path(config_file_path).parent / Path(config[key])).resolve()
             )
-    for key, default_value in list_str_keys.items():
+    for key, default_value in list_str_keys.items():  # type: ignore[assignment]
         if key in config:
             config[key] = [str(cmd) for cmd in config[key]]
         else:
@@ -152,10 +152,10 @@ def parse_config_file(
     # see if this is happening during GitHub actions setup
     if (
         config.get("formatter-cmds")
-        and len(config.get("formatter-cmds")) > 0
+        and len(config.get("formatter-cmds")) > 0  # type: ignore[arg-type]
         and not override_formatter_check
     ):
-        assert config.get("formatter-cmds")[0] != "your-formatter $file", (
+        assert config.get("formatter-cmds")[0] != "your-formatter $file", (  # type: ignore[index]
             "The formatter command is not set correctly in pyproject.toml. Please set the "
             "formatter command in the 'formatter-cmds' key. More info - https://docs.codeflash.ai/configuration"
         )

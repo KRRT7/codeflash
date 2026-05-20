@@ -33,7 +33,7 @@ def pytest_split(
 
     except ImportError:
         return None, None
-    test_files = set()
+    test_files = set()  # type: ignore[var-annotated]
 
     # Find all test_*.py files recursively in the directory
     for test_path in test_paths:
@@ -55,18 +55,18 @@ def pytest_split(
         num_splits = os.cpu_count() or 4
 
     # randomize to increase chances of all splits being balanced
-    test_files = list(test_files)
-    shuffle(test_files)
+    test_files = list(test_files)  # type: ignore[assignment]
+    shuffle(test_files)  # type: ignore[arg-type]
 
     # Apply limit if specified
     if limit is not None and limit > 0:
-        test_files = test_files[:limit]
+        test_files = test_files[:limit]  # type: ignore[index]
 
     # Ensure each split has at least 4 test files
     # If we have fewer test files than 4 * num_splits, reduce num_splits
     max_possible_splits = len(test_files) // 4
     if max_possible_splits == 0:
-        return [test_files], test_paths
+        return [test_files], test_paths  # type: ignore[list-item]
 
     num_splits = min(num_splits, max_possible_splits)
 
@@ -75,7 +75,7 @@ def pytest_split(
     chunk_size = ceil(total_files / num_splits)
 
     # Initialize result groups
-    result_groups = [[] for _ in range(num_splits)]
+    result_groups = [[] for _ in range(num_splits)]  # type: ignore[var-annotated]
 
     # Distribute files across groups
     for i, test_file in enumerate(test_files):

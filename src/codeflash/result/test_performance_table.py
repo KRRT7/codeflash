@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from tabulate import tabulate
+from tabulate import tabulate  # type: ignore[import-untyped]
 
 from codeflash.code_utils.time_utils import format_perf, format_time
 from codeflash.result.critic import performance_gain
@@ -52,20 +52,20 @@ def existing_tests_source_for(
         if abs_path not in optimized_tests_to_runtimes:
             optimized_tests_to_runtimes[abs_path] = {}
         qualified_name = (
-            invocation_id.test_class_name + "." + invocation_id.test_function_name
+            invocation_id.test_class_name + "." + invocation_id.test_function_name  # type: ignore[operator]
             if invocation_id.test_class_name
             else invocation_id.test_function_name
         )
         if qualified_name not in original_tests_to_runtimes[abs_path]:
-            original_tests_to_runtimes[abs_path][qualified_name] = 0
+            original_tests_to_runtimes[abs_path][qualified_name] = 0  # type: ignore[index]
         if qualified_name not in optimized_tests_to_runtimes[abs_path]:
-            optimized_tests_to_runtimes[abs_path][qualified_name] = 0
+            optimized_tests_to_runtimes[abs_path][qualified_name] = 0  # type: ignore[index]
         if invocation_id in original_runtimes_all:
-            original_tests_to_runtimes[abs_path][qualified_name] += min(
+            original_tests_to_runtimes[abs_path][qualified_name] += min(  # type: ignore[index]
                 original_runtimes_all[invocation_id]
             )
         if invocation_id in optimized_runtimes_all:
-            optimized_tests_to_runtimes[abs_path][qualified_name] += min(
+            optimized_tests_to_runtimes[abs_path][qualified_name] += min(  # type: ignore[index]
                 optimized_runtimes_all[invocation_id]
             )
     all_abs_paths = original_tests_to_runtimes.keys()

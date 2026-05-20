@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import dill as pickle
 
-from tabulate import tabulate
+from tabulate import tabulate  # type: ignore[import-untyped]
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -58,7 +58,7 @@ def show_func(
     empty = ("", "", "", "")
     table_cols = ("Hits", "Time", "Per Hit", "% Time", "Line Contents")
     for lineno, line in zip(linenos, sublines):
-        nhits, time, per_hit, percent = display.get(lineno, empty)
+        nhits, time, per_hit, percent = display.get(lineno, empty)  # type: ignore[assignment]
         line_ = line.rstrip("\n").rstrip("\r")
         if "def" in line_ or nhits != "":
             table_rows.append((nhits, time, per_hit, percent, line_))
@@ -88,14 +88,14 @@ def show_text(stats: dict) -> str:
 
 
 def parse_line_profile_results(line_profiler_output_file: Path | None) -> dict:
-    line_profiler_output_file = line_profiler_output_file.with_suffix(".lprof")
+    line_profiler_output_file = line_profiler_output_file.with_suffix(".lprof")  # type: ignore[union-attr]
     stats_dict = {}
     if not line_profiler_output_file.exists():
-        return {"timings": {}, "unit": 0, "str_out": ""}, None
+        return {"timings": {}, "unit": 0, "str_out": ""}, None  # type: ignore[return-value]
     with line_profiler_output_file.open("rb") as f:
         stats = pickle.load(f)
         stats_dict["timings"] = stats.timings
         stats_dict["unit"] = stats.unit
         str_out = show_text(stats_dict)
         stats_dict["str_out"] = str_out
-    return stats_dict, None
+    return stats_dict, None  # type: ignore[return-value]

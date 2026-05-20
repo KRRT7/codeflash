@@ -104,9 +104,6 @@ def _analyze_imports_in_optimized_code(
             else:
                 file_entry[func_name] = [helper]
             helpers_by_file[module_name].append(helper)
-
-    # Optimize attribute lookups and method binding outside the loop
-    helpers_by_file_and_func_get = helpers_by_file_and_func.get
     helpers_by_file_get = helpers_by_file.get
 
     for node in ast.walk(optimized_ast):

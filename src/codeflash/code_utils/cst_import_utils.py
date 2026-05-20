@@ -8,7 +8,7 @@ class GlobalStatementCollector(cst.CSTVisitor):
 
     def __init__(self) -> None:
         super().__init__()
-        self.global_statements = []
+        self.global_statements = []  # type: ignore[var-annotated]
         self.in_function_or_class = False
 
     def visit_ClassDef(self, node: cst.ClassDef) -> bool:  # noqa: ARG002
@@ -84,7 +84,7 @@ class DottedImportCollector(cst.CSTVisitor):
                         for alias in child.names:
                             module = self.get_full_dotted_name(alias.name)
                             asname = (
-                                alias.asname.name.value
+                                alias.asname.name.value  # type: ignore[union-attr]
                                 if alias.asname
                                 else alias.name.value
                             )
@@ -105,13 +105,13 @@ class DottedImportCollector(cst.CSTVisitor):
                             if isinstance(alias, cst.ImportAlias):
                                 name = alias.name.value
                                 asname = (
-                                    alias.asname.name.value if alias.asname else name
+                                    alias.asname.name.value if alias.asname else name  # type: ignore[union-attr]
                                 )
                                 self.imports.add(f"{module}.{asname}")
 
     def visit_Module(self, node: cst.Module) -> None:
         self.depth = 0
-        self._collect_imports_from_block(node)
+        self._collect_imports_from_block(node)  # type: ignore[arg-type]
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:  # noqa: ARG002
         self.depth += 1
@@ -127,11 +127,11 @@ class DottedImportCollector(cst.CSTVisitor):
 
     def visit_If(self, node: cst.If) -> None:
         if self.depth == 0:
-            self._collect_imports_from_block(node.body)
+            self._collect_imports_from_block(node.body)  # type: ignore[arg-type]
 
     def visit_Try(self, node: cst.Try) -> None:
         if self.depth == 0:
-            self._collect_imports_from_block(node.body)
+            self._collect_imports_from_block(node.body)  # type: ignore[arg-type]
 
 
 class ImportInserter(cst.CSTTransformer):
@@ -146,7 +146,7 @@ class ImportInserter(cst.CSTTransformer):
         self.current_line = 0
         self.inserted = False
 
-    def leave_SimpleStatementLine(
+    def leave_SimpleStatementLine(  # type: ignore[override]
         self,
         original_node: cst.SimpleStatementLine,  # noqa: ARG002
         updated_node: cst.SimpleStatementLine,
@@ -205,9 +205,9 @@ class FutureAliasedImportTransformer(cst.CSTTransformer):
         if (
             (updated_node_module := updated_node.module)
             and updated_node_module.value == "__future__"
-            and all(m.matches(name, m.ImportAlias()) for name in updated_node.names)
+            and all(m.matches(name, m.ImportAlias()) for name in updated_node.names)  # type: ignore[union-attr]
         ):
-            if names := [name for name in updated_node.names if name.asname is None]:
+            if names := [name for name in updated_node.names if name.asname is None]:  # type: ignore[union-attr]
                 return updated_node.with_changes(names=names)
             return cst.RemoveFromParent()
         return updated_node

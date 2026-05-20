@@ -33,7 +33,7 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
             self.class_name = function.top_level_parent_name
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
-        return self.generic_visit(node)
+        return self.generic_visit(node)  # type: ignore[return-value]
 
     def visit_AsyncFunctionDef(
         self, node: ast.AsyncFunctionDef
@@ -41,14 +41,14 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
         if not node.name.startswith("test_"):
             return node
 
-        return self._process_test_function(node)
+        return self._process_test_function(node)  # type: ignore[return-value]
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         # Only process test functions
         if not node.name.startswith("test_"):
             return node
 
-        return self._process_test_function(node)
+        return self._process_test_function(node)  # type: ignore[return-value]
 
     def _process_test_function(
         self, node: ast.AsyncFunctionDef | ast.FunctionDef
@@ -87,9 +87,9 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
                 new_body.append(env_assignment)
                 self.did_instrument = True
 
-            new_body.append(transformed_stmt)
+            new_body.append(transformed_stmt)  # type: ignore[arg-type]
 
-        node.body = new_body
+        node.body = new_body  # type: ignore[assignment]
         return node
 
     def _instrument_statement(
@@ -145,7 +145,7 @@ class AsyncCallInstrumenter(ast.NodeTransformer):
                 if isinstance(child, list):
                     stack.extend(child)
                 elif isinstance(child, ast.AST):
-                    stack.append(child)
+                    stack.append(child)  # type: ignore[arg-type]
         return stmt, False
 
 

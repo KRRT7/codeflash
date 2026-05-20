@@ -177,22 +177,22 @@ class PicklePatcher:
         # Try standard pickling
         success, result = PicklePatcher._pickle(obj, path, protocol, **kwargs)
         if success:
-            return result
+            return result  # type: ignore[return-value]
 
         error_msg = result  # Error message from pickling attempt
 
         # Handle different container types
         if isinstance(obj, dict):
             return PicklePatcher._handle_dict(
-                obj, max_depth, error_msg, path, protocol=protocol, **kwargs
+                obj, max_depth, error_msg, path, protocol=protocol, **kwargs  # type: ignore[arg-type]
             )
         if isinstance(obj, (list, tuple, set)):
             return PicklePatcher._handle_sequence(
-                obj, max_depth, error_msg, path, protocol=protocol, **kwargs
+                obj, max_depth, error_msg, path, protocol=protocol, **kwargs  # type: ignore[arg-type]
             )
         if hasattr(obj, "__dict__"):
             result = PicklePatcher._handle_object(
-                obj, max_depth, error_msg, path, protocol=protocol, **kwargs
+                obj, max_depth, error_msg, path, protocol=protocol, **kwargs  # type: ignore[arg-type]
             )
 
             # If this was a failure, add the type to the cache
@@ -202,7 +202,7 @@ class PicklePatcher:
             return result
 
         # For other unpicklable objects, use a placeholder
-        placeholder = PicklePatcher._create_placeholder(obj, error_msg, path)
+        placeholder = PicklePatcher._create_placeholder(obj, error_msg, path)  # type: ignore[arg-type]
         return dill.dumps(placeholder, protocol=protocol, **kwargs)
 
     @staticmethod
@@ -328,12 +328,12 @@ class PicklePatcher:
 
         # Convert back to the original type
         if isinstance(obj_seq, tuple):
-            result = tuple(result)
+            result = tuple(result)  # type: ignore[assignment]
         elif isinstance(obj_seq, set):
             # Try to create a set from the result
 
             with contextlib.suppress(Exception):
-                result = set(result)
+                result = set(result)  # type: ignore[assignment]
 
         return dill.dumps(result, protocol=protocol, **kwargs)
 
@@ -400,7 +400,7 @@ class PicklePatcher:
             # Try to pickle the patched object
             success, result = PicklePatcher._pickle(new_obj, path, protocol, **kwargs)
             if success:
-                return result
+                return result  # type: ignore[return-value]
             # Fall through to placeholder creation
         except Exception:  # noqa: S110
             pass  # Fall through to placeholder creation

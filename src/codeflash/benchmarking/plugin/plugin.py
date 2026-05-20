@@ -24,15 +24,15 @@ class CodeFlashBenchmarkPlugin:
         self._trace_path = None
         self._connection = None
         self.project_root = None
-        self.benchmark_timings = []
+        self.benchmark_timings = []  # type: ignore[var-annotated]
 
     def setup(self, trace_path: str, project_root: str) -> None:
         try:
             # Open connection
-            self.project_root = project_root
-            self._trace_path = trace_path
-            self._connection = sqlite3.connect(self._trace_path)
-            cur = self._connection.cursor()
+            self.project_root = project_root  # type: ignore[assignment]
+            self._trace_path = trace_path  # type: ignore[assignment]
+            self._connection = sqlite3.connect(self._trace_path)  # type: ignore[call-overload]
+            cur = self._connection.cursor()  # type: ignore[attr-defined]
             cur.execute("PRAGMA synchronous = OFF")
             cur.execute("PRAGMA journal_mode = MEMORY")
             cur.execute(
@@ -40,7 +40,7 @@ class CodeFlashBenchmarkPlugin:
                 "benchmark_module_path TEXT, benchmark_function_name TEXT, benchmark_line_number INTEGER,"
                 "benchmark_time_ns INTEGER)"
             )
-            self._connection.commit()
+            self._connection.commit()  # type: ignore[attr-defined]
             self.close()  # Reopen only at the end of pytest session
         except Exception as e:
             print(f"Database setup error: {e}")
@@ -54,20 +54,20 @@ class CodeFlashBenchmarkPlugin:
             return  # No data to write
 
         if self._connection is None:
-            self._connection = sqlite3.connect(self._trace_path)
+            self._connection = sqlite3.connect(self._trace_path)  # type: ignore[call-overload]
 
         try:
-            cur = self._connection.cursor()
+            cur = self._connection.cursor()  # type: ignore[attr-defined]
             # Insert data into the benchmark_timings table
             cur.executemany(
                 "INSERT INTO benchmark_timings (benchmark_module_path, benchmark_function_name, benchmark_line_number, benchmark_time_ns) VALUES (?, ?, ?, ?)",
                 self.benchmark_timings,
             )
-            self._connection.commit()
+            self._connection.commit()  # type: ignore[attr-defined]
             self.benchmark_timings = []  # Clear the benchmark timings list
         except Exception as e:
             print(f"Error writing to benchmark timings database: {e}")
-            self._connection.rollback()
+            self._connection.rollback()  # type: ignore[attr-defined]
             raise
 
     def close(self) -> None:
@@ -96,7 +96,7 @@ class CodeFlashBenchmarkPlugin:
 
         """
         # Initialize the result dictionary
-        result = {}
+        result = {}  # type: ignore[var-annotated]
 
         # Connect to the SQLite database
         connection = sqlite3.connect(trace_path)

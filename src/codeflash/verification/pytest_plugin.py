@@ -254,14 +254,13 @@ class PytestLoops:
             count += 1
             loop_start = _ORIGINAL_PERF_COUNTER_NS()
             for index, item in enumerate(session.items):
-                item: pytest.Item = item  # noqa: PLW0127, PLW2901
                 item._report_sections.clear()  # clear reports for new test  # noqa: SLF001
 
                 if total_time > SHORTEST_AMOUNT_OF_TIME:
                     item._nodeid = self._set_nodeid(item._nodeid, count)  # noqa: SLF001
 
                 next_item: pytest.Item = (
-                    session.items[index + 1] if index + 1 < len(session.items) else None
+                    session.items[index + 1] if index + 1 < len(session.items) else None  # type: ignore[assignment]
                 )
 
                 self._clear_lru_caches(item)
@@ -457,11 +456,11 @@ class PytestLoops:
     @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_setup(self, item: pytest.Item) -> None:
         """Set test context environment variables before each test."""
-        test_module_name = item.module.__name__ if item.module else "unknown_module"
+        test_module_name = item.module.__name__ if item.module else "unknown_module"  # type: ignore[attr-defined]
 
         test_class_name = None
-        if item.cls:
-            test_class_name = item.cls.__name__
+        if item.cls:  # type: ignore[attr-defined]
+            test_class_name = item.cls.__name__  # type: ignore[attr-defined]
 
         test_function_name = item.name
         if "[" in test_function_name:

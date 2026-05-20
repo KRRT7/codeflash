@@ -59,12 +59,12 @@ class ImportAnalyzer(ast.NodeVisitor):
 
             if module_name in self.function_names_to_find:
                 self.found_any_target_function = True
-                self.found_qualified_name = module_name
+                self.found_qualified_name = module_name  # type: ignore[assignment]
                 return
             for target_func in self.function_names_to_find:
                 if target_func.startswith(f"{module_name}."):
                     self.found_any_target_function = True
-                    self.found_qualified_name = target_func
+                    self.found_qualified_name = target_func  # type: ignore[assignment]
                     return
 
     def visit_Assign(self, node: ast.Assign) -> None:
@@ -114,11 +114,11 @@ class ImportAnalyzer(ast.NodeVisitor):
 
             if aname in fnames:
                 self.found_any_target_function = True
-                self.found_qualified_name = aname
+                self.found_qualified_name = aname  # type: ignore[assignment]
                 return
             if qname in fnames:
                 self.found_any_target_function = True
-                self.found_qualified_name = qname
+                self.found_qualified_name = qname  # type: ignore[assignment]
                 return
 
             for target_func in fnames:
@@ -126,7 +126,7 @@ class ImportAnalyzer(ast.NodeVisitor):
                     class_name, _method_name = target_func.split(".", 1)
                     if aname == class_name and not alias.asname:
                         self.found_any_target_function = True
-                        self.found_qualified_name = target_func
+                        self.found_qualified_name = target_func  # type: ignore[assignment]
                         return
 
             prefix = qname + "."
@@ -134,7 +134,7 @@ class ImportAnalyzer(ast.NodeVisitor):
             for target_func in candidates:
                 if target_func.startswith(prefix):
                     self.found_any_target_function = True
-                    self.found_qualified_name = target_func
+                    self.found_qualified_name = target_func  # type: ignore[assignment]
                     return
 
     def visit_Attribute(self, node: ast.Attribute) -> None:
@@ -148,7 +148,7 @@ class ImportAnalyzer(ast.NodeVisitor):
         if val_id is not None and val_id in self.imported_modules:
             if node_attr in self.function_names_to_find:
                 self.found_any_target_function = True
-                self.found_qualified_name = node_attr
+                self.found_qualified_name = node_attr  # type: ignore[assignment]
                 return
             roots_possible = self._dot_methods.get(node_attr)
             if roots_possible:
@@ -156,13 +156,13 @@ class ImportAnalyzer(ast.NodeVisitor):
                 original_name = self.alias_mapping.get(imported_name, imported_name)
                 if original_name in roots_possible:
                     self.found_any_target_function = True
-                    self.found_qualified_name = self._class_method_to_target[
+                    self.found_qualified_name = self._class_method_to_target[  # type: ignore[assignment]
                         (original_name, node_attr)
                     ]
                     return
                 if imported_name in roots_possible:
                     self.found_any_target_function = True
-                    self.found_qualified_name = self._class_method_to_target.get(
+                    self.found_qualified_name = self._class_method_to_target.get(  # type: ignore[assignment]
                         (imported_name, node_attr), f"{imported_name}.{node_attr}"
                     )
                     return
@@ -172,14 +172,14 @@ class ImportAnalyzer(ast.NodeVisitor):
             roots_possible = self._dot_methods.get(node_attr)
             if roots_possible and class_name in roots_possible:
                 self.found_any_target_function = True
-                self.found_qualified_name = self._class_method_to_target[
+                self.found_qualified_name = self._class_method_to_target[  # type: ignore[assignment]
                     (class_name, node_attr)
                 ]
                 return
 
         if self.has_dynamic_imports and node_attr in self.function_names_to_find:
             self.found_any_target_function = True
-            self.found_qualified_name = node_attr
+            self.found_qualified_name = node_attr  # type: ignore[assignment]
             return
 
         if not self.found_any_target_function:
@@ -203,7 +203,7 @@ class ImportAnalyzer(ast.NodeVisitor):
 
         if node.id in self.function_names_to_find:
             self.found_any_target_function = True
-            self.found_qualified_name = node.id
+            self.found_qualified_name = node.id  # type: ignore[assignment]
             return
 
         for wildcard_module in self.wildcard_modules:
@@ -212,7 +212,7 @@ class ImportAnalyzer(ast.NodeVisitor):
                     f"{wildcard_module}."
                 ) and target_func.endswith(f".{node.id}"):
                     self.found_any_target_function = True
-                    self.found_qualified_name = target_func
+                    self.found_qualified_name = target_func  # type: ignore[assignment]
                     return
 
         self.generic_visit(node)

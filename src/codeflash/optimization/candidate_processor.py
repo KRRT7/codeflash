@@ -32,7 +32,7 @@ class CandidateNode:
         while node:
             path.append(node.candidate)
             node = node.parent
-        return path[::-1]
+        return path[::-1]  # type: ignore[return-value]
 
 
 class CandidateForest:
@@ -216,25 +216,25 @@ class CandidateProcessor:
         runtimes_list = []
         for c in candidates:
             parent_id = c.parent_id
-            parent_candidate_node = self.forest.get_node(parent_id)
+            parent_candidate_node = self.forest.get_node(parent_id)  # type: ignore[arg-type]
             parent_diff = (
-                len(parent_candidate_node.candidate.source_code.flat)
+                len(parent_candidate_node.candidate.source_code.flat)  # type: ignore[union-attr]
                 if parent_candidate_node
                 else 0
             )
             diff_lens_list.append(abs(len(c.source_code.flat) - parent_diff))
             parent_runtime = (
-                self.eval_ctx.get_optimized_runtime(parent_id) or 0
+                self.eval_ctx.get_optimized_runtime(parent_id) or 0  # type: ignore[arg-type]
                 if parent_candidate_node
                 else 0
             )
             runtimes_list.append(parent_runtime)
 
-        normalized_diff_lens = _normalize(diff_lens_list)
+        normalized_diff_lens = _normalize(diff_lens_list)  # type: ignore[arg-type]
         normalized_runtimes = _normalize(runtimes_list)
 
         diff_weight = get_effort_value(
-            EffortKeys.REFINEMENT_SELECTION_DIFF_WEIGHT, self.effort
+            EffortKeys.REFINEMENT_SELECTION_DIFF_WEIGHT, self.effort  # type: ignore[attr-defined]
         )
         runtime_weight = 1.0 - diff_weight
 

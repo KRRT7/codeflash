@@ -75,7 +75,7 @@ class OptimFunctionCollector(cst.CSTVisitor):
         self.modified_init_functions: dict[str, cst.FunctionDef] = {}
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
-        if (self.current_class, node.name.value) in self.function_names:
+        if (self.current_class, node.name.value) in self.function_names:  # type: ignore[operator]
             self.modified_functions[(self.current_class, node.name.value)] = node
         elif self.current_class and node.name.value == "__init__":
             self.modified_init_functions[self.current_class] = node
@@ -90,7 +90,7 @@ class OptimFunctionCollector(cst.CSTVisitor):
     def visit_ClassDef(self, node: cst.ClassDef) -> bool:
         if self.current_class:
             return False  # If already in a class, do not recurse deeper
-        self.current_class = node.name.value
+        self.current_class = node.name.value  # type: ignore[assignment]
 
         parents = (FunctionParent(name=node.name.value, type="ClassDef"),)
 
@@ -152,14 +152,14 @@ class OptimFunctionReplacer(cst.CSTTransformer):
             original_node.name.value == "__init__"
             and self.current_class in self.modified_init_functions
         ):
-            return self.modified_init_functions[self.current_class]
+            return self.modified_init_functions[self.current_class]  # type: ignore[index]
 
         return updated_node
 
     def visit_ClassDef(self, node: cst.ClassDef) -> bool:
         if self.current_class:
             return False  # If already in a class, do not recurse deeper
-        self.current_class = node.name.value
+        self.current_class = node.name.value  # type: ignore[assignment]
         return True
 
     def leave_ClassDef(
@@ -353,13 +353,13 @@ def replace_optimized_code(
     project_root: Path,
 ) -> tuple[set[Path], dict[str, dict[Path, str]]]:
     initial_optimized_code = {
-        candidate.optimization_id: replace_functions_and_add_imports(
+        candidate.optimization_id: replace_functions_and_add_imports(  # type: ignore[call-arg]
             validated_original_code[function_to_optimize.file_path].source_code,
             [function_to_optimize.qualified_name],
-            candidate.source_code,
+            candidate.source_code,  # type: ignore[arg-type]
             function_to_optimize.file_path,
-            function_to_optimize.file_path,
-            code_context.preexisting_objects,
+            function_to_optimize.file_path,  # type: ignore[arg-type]
+            code_context.preexisting_objects,  # type: ignore[arg-type]
             project_root,
         )
         for candidate in candidates
@@ -382,7 +382,7 @@ def replace_optimized_code(
     module_paths = callee_module_paths | {function_to_optimize.file_path}
     optimized_code = {
         candidate.optimization_id: {
-            module_path: replace_functions_and_add_imports(
+            module_path: replace_functions_and_add_imports(  # type: ignore[call-arg]
                 intermediate_original_code[candidate.optimization_id][module_path],
                 (
                     [
@@ -392,10 +392,10 @@ def replace_optimized_code(
                         and callee.jedi_definition.type != "class"
                     ]
                 ),
-                candidate.source_code,
+                candidate.source_code,  # type: ignore[arg-type]
                 function_to_optimize.file_path,
-                module_path,
-                [],
+                module_path,  # type: ignore[arg-type]
+                [],  # type: ignore[arg-type]
                 project_root,
             )
             for module_path in module_paths
@@ -434,7 +434,7 @@ def candidates_with_diffs(
         for candidate in candidates
         if not all(
             is_optimized_module_code_zero_diff(
-                candidates, validated_original_code, optimized_code, module_paths
+                candidates, validated_original_code, optimized_code, module_paths  # type: ignore[arg-type]
             )[candidate.optimization_id].values()
         )
     ]

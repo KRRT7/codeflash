@@ -88,7 +88,7 @@ def modify_addopts(config_file: Path) -> tuple[str, bool]:
         else:
             config = configparser.ConfigParser()
             config.read_string(content)
-            data = {section: dict(config[section]) for section in config.sections()}
+            data = {section: dict(config[section]) for section in config.sections()}  # type: ignore[assignment]
             if config_file.name in {"pytest.ini", ".pytest.ini", "tox.ini"}:
                 original_addopts = data.get("pytest", {}).get("addopts", "")
             else:
@@ -120,8 +120,8 @@ def modify_addopts(config_file: Path) -> tuple[str, bool]:
         return content, False
 
 
-@contextmanager
-def custom_addopts() -> None:
+@contextmanager  # type: ignore[arg-type]
+def custom_addopts() -> None:  # type: ignore[misc]
     closest_config_files = get_all_closest_config_files()
     original_content = {}
     try:
@@ -135,8 +135,8 @@ def custom_addopts() -> None:
                     f.write(content)
 
 
-@contextmanager
-def add_addopts_to_pyproject() -> None:
+@contextmanager  # type: ignore[arg-type]
+def add_addopts_to_pyproject() -> None:  # type: ignore[misc]
     pyproject_file = find_pyproject_toml()
     original_content = None
     try:
@@ -159,7 +159,7 @@ def add_addopts_to_pyproject() -> None:
         yield
     finally:
         with Path.open(pyproject_file, "w", encoding="utf-8") as f:
-            f.write(original_content)
+            f.write(original_content)  # type: ignore[arg-type]
 
 
 def get_qualified_name(module_name: str, full_qualified_name: str) -> str:

@@ -47,7 +47,7 @@ def collect_top_level_definitions(
 
     node_type = type(node)
     if node_type is FunctionDef:
-        name = node.name.value
+        name = node.name.value  # type: ignore[attr-defined]
         definitions[name] = UsageInfo(
             name=name,
             used_by_qualified_function=False,
@@ -55,7 +55,7 @@ def collect_top_level_definitions(
         return definitions
 
     if node_type is ClassDef:
-        name = node.name.value
+        name = node.name.value  # type: ignore[attr-defined]
         definitions[name] = UsageInfo(name=name)
         body = getattr(node, "body", None)
         if body is not None and type(body) is IndentedBlock:
@@ -68,7 +68,7 @@ def collect_top_level_definitions(
         return definitions
 
     if node_type is Assign:
-        targets = node.targets
+        targets = node.targets  # type: ignore[attr-defined]
         append_def = definitions.__setitem__
         for target in targets:
             names = extract_names_from_targets(target.target)
@@ -77,7 +77,7 @@ def collect_top_level_definitions(
         return definitions
 
     if node_type is AnnAssign or node_type is AugAssign:
-        tgt = node.target
+        tgt = node.target  # type: ignore[attr-defined]
         if type(tgt) is cst.Name:
             name = tgt.value
             definitions[name] = UsageInfo(name=name)
@@ -102,7 +102,7 @@ def collect_top_level_definitions(
 
 
 class DependencyCollector(cst.CSTVisitor):
-    METADATA_DEPENDENCIES = (cst.metadata.ParentNodeProvider,)
+    METADATA_DEPENDENCIES = (cst.metadata.ParentNodeProvider,)  # type: ignore[attr-defined]
 
     def __init__(self, definitions: dict[str, UsageInfo]) -> None:
         super().__init__()
@@ -112,7 +112,7 @@ class DependencyCollector(cst.CSTVisitor):
         self.current_top_level_name = ""
         self.current_class = ""
         self.processing_variable = False
-        self.current_variable_names = set()
+        self.current_variable_names = set()  # type: ignore[var-annotated]
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
         function_name = node.name.value
@@ -218,7 +218,7 @@ class DependencyCollector(cst.CSTVisitor):
             return
         if name in self.definitions and name != self.current_top_level_name:
             if self.class_depth > 0:
-                parent = self.get_metadata(cst.metadata.ParentNodeProvider, node)
+                parent = self.get_metadata(cst.metadata.ParentNodeProvider, node)  # type: ignore[attr-defined]
                 if parent is not None and isinstance(parent, cst.Attribute):
                     return
             self.definitions[self.current_top_level_name].dependencies.add(name)
@@ -329,9 +329,9 @@ def remove_unused_definitions_recursively(
                                 method_or_var_used = True
                                 break
                     if var_used or class_has_dependencies:
-                        new_statements.append(statement)
+                        new_statements.append(statement)  # type: ignore[arg-type]
                 else:
-                    new_statements.append(statement)
+                    new_statements.append(statement)  # type: ignore[arg-type]
 
             new_body = node.body.with_changes(body=new_statements)
             updates["body"] = new_body
@@ -377,14 +377,14 @@ def remove_unused_definitions_recursively(
 
             if new_children or section_found_used:
                 found_used |= section_found_used
-                updates[section] = new_children
+                updates[section] = new_children  # type: ignore[assignment]
         elif original_content is not None:
             filtered, used = remove_unused_definitions_recursively(
                 original_content, definitions
             )
             found_used |= used
             if filtered:
-                updates[section] = filtered
+                updates[section] = filtered  # type: ignore[assignment]
     if not found_used:
         return None, False
     if updates:
@@ -421,7 +421,7 @@ def remove_unused_definitions_by_function_names(
         modified_module, _ = remove_unused_definitions_recursively(
             module, defs_with_usages
         )
-        return modified_module.code if modified_module else ""
+        return modified_module.code if modified_module else ""  # type: ignore[attr-defined]
     except Exception as e:
         logger.debug(
             f"Error processing code to remove unused definitions: {type(e).__name__}: {e}"

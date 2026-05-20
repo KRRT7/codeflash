@@ -63,11 +63,11 @@ def merge_test_results(
     for result in xml_test_results:
         if test_framework == "pytest":
             if (
-                result.id.test_function_name.endswith("]")
-                and "[" in result.id.test_function_name
+                result.id.test_function_name.endswith("]")  # type: ignore[union-attr]
+                and "[" in result.id.test_function_name  # type: ignore[operator]
             ):  # parameterized test
-                test_function_name = result.id.test_function_name[
-                    : result.id.test_function_name.index("[")
+                test_function_name = result.id.test_function_name[  # type: ignore[index]
+                    : result.id.test_function_name.index("[")  # type: ignore[union-attr]
                 ]
             else:
                 test_function_name = result.id.test_function_name
@@ -75,7 +75,7 @@ def merge_test_results(
         if test_framework == "unittest":
             test_function_name = result.id.test_function_name
             is_parameterized, new_test_function_name, _ = discover_parameters_unittest(
-                test_function_name
+                test_function_name  # type: ignore[arg-type]
             )
             if is_parameterized:  # handle parameterized test
                 test_function_name = new_test_function_name
@@ -315,14 +315,14 @@ def parse_test_results(
         all_args = True
         coverage = CoverageUtils.load_from_sqlite_database(
             database_path=coverage_database_file,
-            config_path=coverage_config_file,
+            config_path=coverage_config_file,  # type: ignore[arg-type]
             source_code_path=source_file,
             code_context=code_context,
             function_name=function_name,
         )
         coverage.log_coverage()
     try:
-        failures = parse_test_failures_from_stdout(run_result.stdout)
+        failures = parse_test_failures_from_stdout(run_result.stdout)  # type: ignore[union-attr]
         results.test_failures = failures
     except Exception as e:
         logger.exception(e)

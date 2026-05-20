@@ -42,7 +42,7 @@ def get_test_info_from_stack(tests_root: str) -> tuple[str, str | None, str, str
             test_name = function_name
             test_module = inspect.getmodule(frame)
             if hasattr(test_module, "__name__"):
-                test_module_name = test_module.__name__
+                test_module_name = test_module.__name__  # type: ignore[union-attr]
             line_id = str(lineno)
 
             # Check if it's a method in a class
@@ -87,7 +87,7 @@ def get_test_info_from_stack(tests_root: str) -> tuple[str, str | None, str, str
                 env_class = os.environ.get("CODEFLASH_TEST_CLASS")
                 test_class_name = env_class if env_class else None
 
-    return test_module_name, test_class_name, test_name, line_id
+    return test_module_name, test_class_name, test_name, line_id  # type: ignore[return-value]
 
 
 def codeflash_capture(
@@ -112,15 +112,15 @@ def codeflash_capture(
 
             # Initialize index tracking if needed, handles multiple instances created in the same test line number
             if not hasattr(wrapper, "index"):
-                wrapper.index = {}
+                wrapper.index = {}  # type: ignore[attr-defined]
 
             # Update index for this test
-            if test_id in wrapper.index:
-                wrapper.index[test_id] += 1
+            if test_id in wrapper.index:  # type: ignore[attr-defined]
+                wrapper.index[test_id] += 1  # type: ignore[attr-defined]
             else:
-                wrapper.index[test_id] = 0
+                wrapper.index[test_id] = 0  # type: ignore[attr-defined]
 
-            codeflash_test_index = wrapper.index[test_id]
+            codeflash_test_index = wrapper.index[test_id]  # type: ignore[attr-defined]
 
             # Generate invocation id
             invocation_id = f"{line_id}_{codeflash_test_index}"

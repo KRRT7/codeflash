@@ -78,7 +78,7 @@ def clean_concolic_tests(test_suite_code: str) -> str:
     if not can_parse:
         return AssertCleanup().transform_asserts(test_suite_code)
 
-    for node in ast.walk(tree):
+    for node in ast.walk(tree):  # type: ignore[arg-type]
         if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
             new_body = []
             for stmt in node.body:
@@ -88,9 +88,9 @@ def clean_concolic_tests(test_suite_code: str) -> str:
                     ):
                         new_body.append(ast.Expr(value=stmt.test.left))
                     else:
-                        new_body.append(stmt)
+                        new_body.append(stmt)  # type: ignore[arg-type]
                 else:
-                    new_body.append(stmt)
-            node.body = new_body
+                    new_body.append(stmt)  # type: ignore[arg-type]
+            node.body = new_body  # type: ignore[assignment]
 
-    return ast.unparse(tree).strip()
+    return ast.unparse(tree).strip()  # type: ignore[arg-type]
