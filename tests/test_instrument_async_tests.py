@@ -6,7 +6,9 @@ import sys
 import pytest
 
 from codeflash.code_utils.async_instrumentation import add_async_decorator_to_function
-from codeflash.code_utils.instrument_existing_tests import inject_profiling_into_existing_test
+from codeflash.code_utils.instrument_existing_tests import (
+    inject_profiling_into_existing_test
+)
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
 from codeflash.models.coverage import TestingMode
 from codeflash.models.domain import CodePosition
@@ -85,7 +87,9 @@ async def async_function(x: int, y: int) -> int:
         function_name="async_function", file_path=test_file, parents=[], is_async=True
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(
+        test_file, func, TestingMode.BEHAVIOR
+    )
 
     assert decorator_added
     modified_code = test_file.read_text()
@@ -126,7 +130,9 @@ async def async_function(x: int, y: int) -> int:
         function_name="async_function", file_path=test_file, parents=[], is_async=True
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func.PERFORMANCE)
+    decorator_added = add_async_decorator_to_function(
+        test_file, func, TestingMode.PERFORMANCE
+    )
 
     assert decorator_added
     modified_code = test_file.read_text()
@@ -184,7 +190,9 @@ class Calculator:
         is_async=True,
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(
+        test_file, func, TestingMode.BEHAVIOR
+    )
 
     assert decorator_added
     modified_code = test_file.read_text()
@@ -213,7 +221,9 @@ async def async_function(x: int, y: int) -> int:
         function_name="async_function", file_path=test_file, parents=[], is_async=True
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(
+        test_file, func, TestingMode.BEHAVIOR
+    )
 
     # Should not add duplicate decorator
     assert not decorator_added
@@ -265,7 +275,9 @@ async def test_async_function():
         add_async_decorator_to_function,
     )
 
-    source_success = add_async_decorator_to_function(source_file, func.BEHAVIOR)
+    source_success = add_async_decorator_to_function(
+        source_file, func, TestingMode.BEHAVIOR
+    )
 
     assert source_success is True
 
@@ -336,7 +348,9 @@ async def test_async_function():
         add_async_decorator_to_function,
     )
 
-    source_success = add_async_decorator_to_function(source_file, func.PERFORMANCE)
+    source_success = add_async_decorator_to_function(
+        source_file, func, TestingMode.PERFORMANCE
+    )
 
     assert source_success is True
 
@@ -410,7 +424,9 @@ async def test_mixed_functions():
         add_async_decorator_to_function,
     )
 
-    source_success = add_async_decorator_to_function(source_file, async_func.BEHAVIOR)
+    source_success = add_async_decorator_to_function(
+        source_file, async_func, TestingMode.BEHAVIOR
+    )
 
     assert source_success
 
@@ -466,7 +482,9 @@ class OuterClass:
         is_async=True,
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(
+        test_file, func, TestingMode.BEHAVIOR
+    )
 
     expected_output = """import asyncio
 
@@ -517,7 +535,9 @@ async def async_function(x: int, y: int) -> int:
         function_name="async_function", file_path=test_file, parents=[], is_async=True
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, func.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(
+        test_file, func, TestingMode.BEHAVIOR
+    )
 
     assert decorator_added
     modified_code = test_file.read_text()
@@ -550,7 +570,9 @@ def sync_function(x: int, y: int) -> int:
         is_async=False,
     )
 
-    decorator_added = add_async_decorator_to_function(test_file, sync_func.BEHAVIOR)
+    decorator_added = add_async_decorator_to_function(
+        test_file, sync_func, TestingMode.BEHAVIOR
+    )
 
     assert not decorator_added
     # File should not be modified for sync functions
@@ -610,7 +632,9 @@ async def test_multiple_calls():
         add_async_decorator_to_function,
     )
 
-    source_success = add_async_decorator_to_function(source_file, func.BEHAVIOR)
+    source_success = add_async_decorator_to_function(
+        source_file, func, TestingMode.BEHAVIOR
+    )
 
     assert source_success
 

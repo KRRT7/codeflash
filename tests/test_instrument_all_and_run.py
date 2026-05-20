@@ -4,7 +4,7 @@ from codeflash.code_utils.cleanup import get_run_tmp_file
 import os
 import sys
 import tempfile
-from argparse import Namespace
+from codeflash.models.config import AppConfig
 from pathlib import Path
 
 from codeflash.code_utils.instrument_existing_tests import (
@@ -154,12 +154,11 @@ def test_sort():
         instrument_codeflash_capture(func, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -341,12 +340,11 @@ def test_sort():
         instrument_codeflash_capture(fto, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -458,12 +456,11 @@ class BubbleSorter:
         # Add codeflash capture
         instrument_codeflash_capture(fto, {}, tests_root)
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -620,12 +617,11 @@ def test_sort():
         instrument_codeflash_capture(fto, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -804,12 +800,11 @@ def test_sort():
         instrument_codeflash_capture(fto, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from dataclasses import dataclass
 from pathlib import Path
 
 from codeflash.models.domain import CodePosition
@@ -10,6 +11,8 @@ from collections.abc import Iterable
 from codeflash.code_utils.cleanup import get_run_tmp_file
 from codeflash._constants import TEST_RESULTS_TABLE_SCHEMA
 
+
+@dataclass
 class FunctionCallNodeArguments:
     args: list[ast.expr]
     keywords: list[ast.keyword]
@@ -514,5 +517,3 @@ class InjectPerfOnly(ast.NodeTransformer):
                     ),
                 ]
         return node
-
-

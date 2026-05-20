@@ -3,7 +3,7 @@ from codeflash.code_utils.cleanup import get_run_tmp_file
 
 import os
 import sys
-from argparse import Namespace
+from codeflash.models.config import AppConfig
 from pathlib import Path
 
 import isort
@@ -156,12 +156,11 @@ def test_single_element_list():
             f.write(instrumented_behavior_test_source)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -311,12 +310,11 @@ def test_single_element_list():
         # Add codeflash capture decorator
         instrument_codeflash_capture(function_to_optimize, {}, tests_root)
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -401,12 +399,11 @@ class BubbleSorter:
         # Add codeflash capture
         instrument_codeflash_capture(function_to_optimize, {}, tests_root)
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -460,12 +457,11 @@ class BubbleSorter:
         importlib.reload(sys.modules[module_name])
         instrument_codeflash_capture(function_to_optimize, {}, tests_root)
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )

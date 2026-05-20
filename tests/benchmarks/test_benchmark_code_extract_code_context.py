@@ -1,4 +1,4 @@
-from argparse import Namespace
+from codeflash.models.config import AppConfig
 from pathlib import Path
 
 from codeflash.context.code_context_extractor import get_code_optimization_context
@@ -10,12 +10,11 @@ from codeflash.optimization.optimizer import Optimizer
 def test_benchmark_extract(benchmark) -> None:
     file_path = Path(__file__).parent.parent.parent.resolve() / "src" / "codeflash"
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.resolve(),
+            module_root=Path("."),
             tests_root=(file_path.parent.parent / "tests").resolve(),
-            test_framework="pytest",
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path.cwd(),
         )
     )
@@ -28,5 +27,5 @@ def test_benchmark_extract(benchmark) -> None:
     )
 
     benchmark(
-        get_code_optimization_context, function_to_optimize, opt.args.project_root
+        get_code_optimization_context, function_to_optimize, opt.config.project_root
     )

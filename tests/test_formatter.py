@@ -1,4 +1,4 @@
-import argparse
+from codeflash.models.config import AppConfig
 import tempfile
 from pathlib import Path
 
@@ -233,7 +233,10 @@ def _run_formatting_test(
             tests_project_rootdir=test_dir,
         )
 
-        args = argparse.Namespace(
+        config = AppConfig(
+            module_root=Path("."),
+            project_root=test_dir,
+            tests_root=test_dir,
             disable_imports_sorting=False,
             formatter_cmds=["ruff check --exit-zero --fix $file", "ruff format $file"],
         )
@@ -241,7 +244,7 @@ def _run_formatting_test(
         optimizer = FunctionOptimizer(
             function_to_optimize=function_to_optimize,
             test_cfg=test_cfg,
-            args=args,
+            config=config,
         )
 
         optimizer.reformat_code_and_helpers(

@@ -3171,16 +3171,16 @@ def test_sort():
 
 def test_class_method_instrumentation(tmp_path: Path) -> None:
     code = """from codeflash.optimization.optimizer import Optimizer
+from codeflash.models.config import AppConfig
 def test_code_replacement10() -> None:
     get_code_output = '''random code'''
     file_path = Path(__file__).resolve()
     opt = Optimizer(
-        Namespace(
-            project_root=str(file_path.parent.resolve()),
-            tests_root="tests",
-            test_framework="pytest",
+        AppConfig(
+            project_root=file_path.parent.resolve(),
+            module_root=Path('.'),
+            tests_root=Path('tests'),
             pytest_cmd="pytest",
-            experiment_id=None,
         ),
     )
     func_top_optimize = FunctionToOptimize(
@@ -3213,6 +3213,7 @@ import time
 
 import dill as pickle
 
+from codeflash.models.config import AppConfig
 from codeflash.optimization.optimizer import Optimizer
 
 
@@ -3227,7 +3228,7 @@ def test_code_replacement10() -> None:
     codeflash_cur.execute('CREATE TABLE IF NOT EXISTS test_results (test_module_path TEXT, test_class_name TEXT, test_function_name TEXT, function_getting_tested TEXT, loop_index INTEGER, iteration_id TEXT, runtime INTEGER, return_value BLOB, verification_type TEXT)')
     get_code_output = 'random code'
     file_path = Path(__file__).resolve()
-    opt = Optimizer(Namespace(project_root=str(file_path.parent.resolve()), tests_root='tests', test_framework='pytest', pytest_cmd='pytest', experiment_id=None))
+    opt = Optimizer(AppConfig(project_root=file_path.parent.resolve(), module_root=Path('.'), tests_root=Path('tests'), pytest_cmd='pytest'))
     func_top_optimize = FunctionToOptimize(function_name='main_method', file_path=str(file_path), parents=[FunctionParent('MainClass', 'ClassDef')])
     with open(file_path) as f:
         original_code = f.read()

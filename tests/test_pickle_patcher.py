@@ -3,7 +3,7 @@ import pickle
 import shutil
 import socket
 import sqlite3
-from argparse import Namespace
+from codeflash.models.config import AppConfig
 from pathlib import Path
 
 import dill
@@ -442,11 +442,11 @@ def test_run_and_parse_picklepatch() -> None:
         replay_test_path.write_text(new_test)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root,
+                module_root=Path("."),
                 tests_root=tests_root,
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root,
             )
         )

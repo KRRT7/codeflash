@@ -1,5 +1,5 @@
 import tempfile
-from argparse import Namespace
+from codeflash.models.config import AppConfig
 from pathlib import Path
 
 import pytest
@@ -25,12 +25,11 @@ def OptimizeMe(a, b, c):
 def test_get_outside_method_helper() -> None:
     file_path = Path(__file__).resolve()
     opt = Optimizer(
-        Namespace(
-            project_root=str(file_path.parent.resolve()),
-            tests_root="tests",
-            test_framework="pytest",
+        AppConfig(
+            project_root=file_path.parent.resolve(),
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
         )
     )
 
@@ -44,7 +43,7 @@ def test_get_outside_method_helper() -> None:
     with open(file_path) as f:
         original_code = f.read()
     ctx_result = opt.get_code_optimization_context(
-        function_to_optimize, opt.args.project_root, original_code
+        function_to_optimize, opt.config.project_root, original_code
     )
     if not ctx_result.is_ok():
         pytest.fail()

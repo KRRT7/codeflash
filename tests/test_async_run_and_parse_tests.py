@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
-from argparse import Namespace
+from codeflash.models.config import AppConfig
 from pathlib import Path
 
 import pytest
@@ -77,7 +77,9 @@ async def test_async_sort():
         )
 
         # For async functions, instrument the source module directly with decorators
-        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
+        source_success = add_async_decorator_to_function(
+            fto_path, func, TestingMode.BEHAVIOR
+        )
 
         assert source_success
 
@@ -93,12 +95,11 @@ async def test_async_sort():
 
         # Create optimizer
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -215,7 +216,9 @@ async def test_async_class_sort():
             is_async=True,
         )
 
-        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
+        source_success = add_async_decorator_to_function(
+            fto_path, func, TestingMode.BEHAVIOR
+        )
 
         assert source_success
 
@@ -226,12 +229,11 @@ async def test_async_class_sort():
         instrument_codeflash_capture(func, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -342,7 +344,9 @@ async def test_async_perf():
         )
 
         # Instrument the source module with async performance decorators
-        source_success = add_async_decorator_to_function(fto_path, func.PERFORMANCE)
+        source_success = add_async_decorator_to_function(
+            fto_path, func, TestingMode.PERFORMANCE
+        )
 
         assert source_success
 
@@ -356,12 +360,11 @@ async def test_async_perf():
         instrument_codeflash_capture(func, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -464,7 +467,9 @@ async def async_error_function(lst):
             is_async=True,
         )
 
-        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
+        source_success = add_async_decorator_to_function(
+            fto_path, func, TestingMode.BEHAVIOR
+        )
 
         assert source_success
 
@@ -529,12 +534,11 @@ async def async_error_function(lst):
         instrument_codeflash_capture(func, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -637,18 +641,19 @@ async def test_async_multi():
             is_async=True,
         )
 
-        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
+        source_success = add_async_decorator_to_function(
+            fto_path, func, TestingMode.BEHAVIOR
+        )
 
         assert source_success
         instrument_codeflash_capture(func, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -776,18 +781,19 @@ async def test_async_edge_cases():
             is_async=True,
         )
 
-        source_success = add_async_decorator_to_function(fto_path, func.BEHAVIOR)
+        source_success = add_async_decorator_to_function(
+            fto_path, func, TestingMode.BEHAVIOR
+        )
 
         assert source_success
         instrument_codeflash_capture(func, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -946,12 +952,11 @@ def test_sync_sort():
         instrument_codeflash_capture(func, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )
@@ -1124,7 +1129,7 @@ async def test_mixed_sorting():
         )
 
         source_success = add_async_decorator_to_function(
-            mixed_fto_path, async_func.BEHAVIOR
+            mixed_fto_path, async_func, TestingMode.BEHAVIOR
         )
 
         assert source_success
@@ -1139,12 +1144,11 @@ async def test_mixed_sorting():
         instrument_codeflash_capture(async_func, {}, tests_root)
 
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root_path,
+                module_root=Path("."),
                 tests_root=tests_root,
-                test_framework="pytest",
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=project_root_path,
             )
         )

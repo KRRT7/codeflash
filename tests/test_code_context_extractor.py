@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
-from argparse import Namespace
+from codeflash.models.config import AppConfig
 from collections import defaultdict
 from pathlib import Path
 
@@ -464,12 +464,11 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -482,7 +481,7 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     read_write_context, read_only_context = (
         code_ctx.read_writable_code,
@@ -490,7 +489,7 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
     )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 _P = ParamSpec("_P")
 _KEY_T = TypeVar("_KEY_T")
 _STORE_T = TypeVar("_STORE_T")
@@ -595,7 +594,7 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
 ```
 """
     expected_read_only_context = f'''
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 _P = ParamSpec("_P")
 _KEY_T = TypeVar("_KEY_T")
 _STORE_T = TypeVar("_STORE_T")
@@ -653,7 +652,7 @@ class _PersistentCache(Generic[_P, _R, _CacheBackendT]):
 ```
 '''
     expected_hashing_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class AbstractCacheBackend(CacheBackend, Protocol[_KEY_T, _STORE_T]):
 
     def get_cache_or_call(self, *, func: Callable[_P, Any], args: tuple[Any, ...], kwargs: dict[str, Any], lifespan: datetime.timedelta) -> Any:
@@ -718,12 +717,11 @@ class HelperClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -736,7 +734,7 @@ class HelperClass:
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     read_write_context, read_only_context = (
         code_ctx.read_writable_code,
@@ -745,7 +743,7 @@ class HelperClass:
     hashing_context = code_ctx.hashing_code_context
 
     expected_read_write_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
     def __init__(self):
         self.x = 1
@@ -761,7 +759,7 @@ class HelperClass:
 ```
 """
     expected_read_only_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
     \"\"\"A class with a helper method.\"\"\"
 
@@ -773,7 +771,7 @@ class HelperClass:
 ```
 """
     expected_hashing_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
 
     def target_method(self):
@@ -823,12 +821,11 @@ class HelperClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -841,7 +838,7 @@ class HelperClass:
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     read_write_context, read_only_context = (
         code_ctx.read_writable_code,
@@ -850,7 +847,7 @@ class HelperClass:
     hashing_context = code_ctx.hashing_code_context
     # In this scenario, the read-only code context is too long, so the read-only docstrings are removed.
     expected_read_write_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
     def __init__(self):
         self.x = 1
@@ -867,7 +864,7 @@ class HelperClass:
 ```
 """
     expected_read_only_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
     pass
 
@@ -877,7 +874,7 @@ class HelperClass:
 ```
 """
     expected_hashing_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
 
     def target_method(self):
@@ -926,12 +923,11 @@ class HelperClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -944,7 +940,7 @@ class HelperClass:
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root, 8000, 100000
+        function_to_optimize, opt.config.project_root, 8000, 100000
     )
     read_write_context, read_only_context = (
         code_ctx.read_writable_code,
@@ -953,7 +949,7 @@ class HelperClass:
     hashing_context = code_ctx.hashing_code_context
     # In this scenario, the read-only code context is too long even after removing docstrings, hence we remove it completely.
     expected_read_write_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
     def __init__(self):
         self.x = 1
@@ -969,7 +965,7 @@ class HelperClass:
         return self.x
 ```
 """
-    expected_read_only_context = f'''```python:{file_path.relative_to(opt.args.project_root)}
+    expected_read_only_context = f'''```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
     """A class with a helper method. """
 
@@ -981,7 +977,7 @@ class HelperClass:
 ```
 '''
     expected_hashing_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
 
     def target_method(self):
@@ -1029,12 +1025,11 @@ class HelperClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -1049,7 +1044,7 @@ class HelperClass:
     with pytest.raises(
         ValueError, match="Read-writable code has exceeded token limit, cannot proceed"
     ):
-        get_code_optimization_context(function_to_optimize, opt.args.project_root)
+        get_code_optimization_context(function_to_optimize, opt.config.project_root)
 
 
 def test_example_class_token_limit_4(tmp_path: Path) -> None:
@@ -1085,12 +1080,11 @@ class HelperClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -1106,7 +1100,7 @@ class HelperClass:
     with pytest.raises(
         ValueError, match="Read-writable code has exceeded token limit, cannot proceed"
     ):
-        get_code_optimization_context(function_to_optimize, opt.args.project_root)
+        get_code_optimization_context(function_to_optimize, opt.config.project_root)
 
 
 def test_example_class_token_limit_5(tmp_path: Path) -> None:
@@ -1141,12 +1135,11 @@ class HelperClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -1159,7 +1152,7 @@ class HelperClass:
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
 
     # the global x variable shouldn't be included in any context type
@@ -1761,12 +1754,11 @@ def outside_method():
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -1779,7 +1771,7 @@ def outside_method():
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     read_write_context, read_only_context = (
         code_ctx.read_writable_code,
@@ -1787,7 +1779,7 @@ def outside_method():
     )
     hashing_context = code_ctx.hashing_code_context
     expected_read_write_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
     def __init__(self):
         self.x = 1
@@ -1797,13 +1789,13 @@ class MyClass:
 ```
 """
     expected_read_only_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 def outside_method():
     return 1
 ```
 """
     expected_hashing_context = f"""
-```python:{file_path.relative_to(opt.args.project_root)}
+```python:{file_path.relative_to(opt.config.project_root)}
 class MyClass:
 
     def target_method(self):
@@ -2042,12 +2034,11 @@ def get_system_details():
         file_path = main_file_path.resolve()
         project_root = package_dir.resolve()
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root,
-                tests_root="tests",
-                test_framework="pytest",
+                module_root=Path("."),
+                tests_root=Path("tests"),
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=Path().resolve(),
             )
         )
@@ -2063,7 +2054,7 @@ def get_system_details():
 
         # Get the code optimization context
         code_ctx = get_code_optimization_context(
-            function_to_optimize, opt.args.project_root
+            function_to_optimize, opt.config.project_root
         )
         read_write_context, read_only_context = (
             code_ctx.read_writable_code,
@@ -2074,7 +2065,7 @@ def get_system_details():
         # Resolve both paths to handle symlink issues on macOS
         file_path.relative_to(project_root)
         expected_read_write_context = f"""
-```python:{main_file_path.resolve().relative_to(opt.args.project_root.resolve())}
+```python:{main_file_path.resolve().relative_to(opt.config.project_root.resolve())}
 import utility_module
 
 class Calculator:
@@ -2296,12 +2287,11 @@ def get_system_details():
         file_path = main_file_path.resolve()
         project_root = package_dir.resolve()
         opt = Optimizer(
-            Namespace(
+            AppConfig(
                 project_root=project_root,
-                tests_root="tests",
-                test_framework="pytest",
+                module_root=Path("."),
+                tests_root=Path("tests"),
                 pytest_cmd="pytest",
-                experiment_id=None,
                 test_project_root=Path().resolve(),
             )
         )
@@ -2317,7 +2307,7 @@ def get_system_details():
 
         # Get the code optimization context
         code_ctx = get_code_optimization_context(
-            function_to_optimize, opt.args.project_root
+            function_to_optimize, opt.config.project_root
         )
         read_write_context, read_only_context = (
             code_ctx.read_writable_code,
@@ -2360,7 +2350,7 @@ def select_precision(precision, fallback_precision):
     else:
         return DEFAULT_PRECISION
 ```
-```python:{main_file_path.resolve().relative_to(opt.args.project_root.resolve())}
+```python:{main_file_path.resolve().relative_to(opt.config.project_root.resolve())}
 import utility_module
 
 class Calculator:
@@ -2438,12 +2428,11 @@ def standalone_function():
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -2456,7 +2445,7 @@ def standalone_function():
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     hashing_context = code_ctx.hashing_code_context
 
@@ -2521,12 +2510,11 @@ class OuterClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -2539,7 +2527,7 @@ class OuterClass:
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     hashing_context = code_ctx.hashing_code_context
 
@@ -2580,12 +2568,11 @@ class TestClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -2599,10 +2586,10 @@ class TestClass:
 
     # Generate context twice
     code_ctx1 = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     code_ctx2 = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
 
     # Hash should be consistent
@@ -2638,22 +2625,20 @@ class TestClass:
     file_path2.write_text(code2, encoding="utf-8")
 
     opt1 = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path1.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
     opt2 = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path2.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -2674,10 +2659,10 @@ class TestClass:
     )
 
     code_ctx1 = get_code_optimization_context(
-        function_to_optimize1, opt1.args.project_root
+        function_to_optimize1, opt1.config.project_root
     )
     code_ctx2 = get_code_optimization_context(
-        function_to_optimize2, opt2.args.project_root
+        function_to_optimize2, opt2.config.project_root
     )
 
     # Different code should produce different hashes
@@ -2696,12 +2681,11 @@ class SimpleClass:
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -2714,7 +2698,7 @@ class SimpleClass:
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     hashing_context = code_ctx.hashing_code_context
 
@@ -2723,7 +2707,7 @@ class SimpleClass:
     assert hashing_context.endswith("```")
 
     # Should contain the relative file path in the markdown header
-    relative_path = file_path.relative_to(opt.args.project_root)
+    relative_path = file_path.relative_to(opt.config.project_root)
     assert str(relative_path) in hashing_context
 
     # Should contain the actual code between the markdown markers
@@ -2944,12 +2928,11 @@ def target_function():
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -2962,7 +2945,7 @@ def target_function():
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
 
     # The __init__ method should be tracked as a helper since DataDumper() instantiates the class
@@ -3027,12 +3010,11 @@ def dump_layout(layout_type, layout):
     file_path = tmp_path / "test_code.py"
     file_path.write_text(code, encoding="utf-8")
     opt = Optimizer(
-        Namespace(
+        AppConfig(
             project_root=file_path.parent.resolve(),
-            tests_root="tests",
-            test_framework="pytest",
+            module_root=Path("."),
+            tests_root=Path("tests"),
             pytest_cmd="pytest",
-            experiment_id=None,
             test_project_root=Path().resolve(),
         )
     )
@@ -3045,7 +3027,7 @@ def dump_layout(layout_type, layout):
     )
 
     code_ctx = get_code_optimization_context(
-        function_to_optimize, opt.args.project_root
+        function_to_optimize, opt.config.project_root
     )
     qualified_names = {func.qualified_name for func in code_ctx.helper_functions}
 

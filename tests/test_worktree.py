@@ -1,4 +1,5 @@
 from argparse import Namespace
+from codeflash.models.config import AppConfig
 from pathlib import Path
 
 import pytest
@@ -31,16 +32,17 @@ def test_mirror_paths_for_worktree_mode(monkeypatch: pytest.MonkeyPatch):
 
     new_args = process_pyproject_config(args)
 
-    optimizer = Optimizer(new_args)
+    config = AppConfig.from_namespace(new_args)
+    optimizer = Optimizer(config)
 
     worktree_dir = repo_root / "worktree"
     optimizer.mirror_paths_for_worktree_mode(worktree_dir)
 
-    assert optimizer.args.project_root == worktree_dir / "src"
-    assert optimizer.args.test_project_root == worktree_dir / "src"
-    assert optimizer.args.module_root == worktree_dir / "src" / "app"
-    assert optimizer.args.tests_root == worktree_dir / "src" / "tests"
-    assert optimizer.args.file == worktree_dir / "src" / "app" / "main.py"
+    assert optimizer.config.project_root == worktree_dir / "src"
+    assert optimizer.config.test_project_root == worktree_dir / "src"
+    assert optimizer.config.module_root == worktree_dir / "src" / "app"
+    assert optimizer.config.tests_root == worktree_dir / "src" / "tests"
+    assert optimizer.config.file == worktree_dir / "src" / "app" / "main.py"
 
     assert optimizer.test_cfg.tests_root == worktree_dir / "src" / "tests"
     assert (
@@ -64,18 +66,19 @@ def test_mirror_paths_for_worktree_mode(monkeypatch: pytest.MonkeyPatch):
     args.worktree = True
 
     new_args = process_pyproject_config(args)
-
-    optimizer = Optimizer(new_args)
+    config = AppConfig.from_namespace(new_args)
+    optimizer = Optimizer(config)
 
     worktree_dir = repo_root / "worktree"
     optimizer.mirror_paths_for_worktree_mode(worktree_dir)
 
-    assert optimizer.args.project_root == worktree_dir / "src"
-    assert optimizer.args.test_project_root == worktree_dir
-    assert optimizer.args.module_root == worktree_dir / "src" / "codeflash"
-    assert optimizer.args.tests_root == worktree_dir / "tests"
+    assert optimizer.config.project_root == worktree_dir / "src"
+    assert optimizer.config.test_project_root == worktree_dir
+    assert optimizer.config.module_root == worktree_dir / "src" / "codeflash"
+    assert optimizer.config.tests_root == worktree_dir / "tests"
     assert (
-        optimizer.args.file == worktree_dir / "src/codeflash/optimization/optimizer.py"
+        optimizer.config.file
+        == worktree_dir / "src/codeflash/optimization/optimizer.py"
     )
 
     assert optimizer.test_cfg.tests_root == worktree_dir / "tests"
