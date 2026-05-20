@@ -86,7 +86,7 @@ async def test_async_sort():
         # Verify the file was modified
         instrumented_source = fto_path.read_text("utf-8")
         assert (
-            '''import asyncio\nfrom typing import List, Union\n\nfrom codeflash.code_utils.codeflash_wrap_decorator import \\\n    codeflash_behavior_async\n\n\n@codeflash_behavior_async\nasync def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:\n    """\n    Async bubble sort implementation for testing.\n    """\n    print("codeflash stdout: Async sorting list")\n    \n    await asyncio.sleep(0.01)\n    \n    n = len(lst)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if lst[j] > lst[j + 1]:\n                lst[j], lst[j + 1] = lst[j + 1], lst[j]\n    \n    result = lst.copy()\n    print(f"result: {result}")\n    return result\n\n\nclass AsyncBubbleSorter:\n    """Class with async sorting method for testing."""\n    \n    async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:\n        """\n        Async bubble sort implementation within a class.\n        """\n        print("codeflash stdout: AsyncBubbleSorter.sorter() called")\n        \n        # Add some async delay\n        await asyncio.sleep(0.005)\n        \n        n = len(lst)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if lst[j] > lst[j + 1]:\n                    lst[j], lst[j + 1] = lst[j + 1], lst[j]\n        \n        result = lst.copy()\n        return result\n'''
+            '''import asyncio\nfrom typing import List, Union\n\nfrom codeflash.code_utils.codeflash_wrap_decorator import \\\n    codeflash_behavior_async\n\n\n@codeflash_behavior_async\nasync def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:\n    """\n    Async bubble sort implementation for testing.\n    """\n    print("codeflash stdout: Async sorting list")\n\n    await asyncio.sleep(0.01)\n\n    n = len(lst)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if lst[j] > lst[j + 1]:\n                lst[j], lst[j + 1] = lst[j + 1], lst[j]\n\n    result = lst.copy()\n    print(f"result: {result}")\n    return result\n\n\nclass AsyncBubbleSorter:\n    """Class with async sorting method for testing."""\n\n    async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:\n        """\n        Async bubble sort implementation within a class.\n        """\n        print("codeflash stdout: AsyncBubbleSorter.sorter() called")\n\n        # Add some async delay\n        await asyncio.sleep(0.005)\n\n        n = len(lst)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if lst[j] > lst[j + 1]:\n                    lst[j], lst[j + 1] = lst[j + 1], lst[j]\n\n        result = lst.copy()\n        return result\n'''
             in instrumented_source
         )
 
@@ -353,7 +353,7 @@ async def test_async_perf():
         # Verify the file was modified
         instrumented_source = fto_path.read_text("utf-8")
         assert (
-            '''import asyncio\nfrom typing import List, Union\n\nfrom codeflash.code_utils.codeflash_wrap_decorator import \\\n    codeflash_performance_async\n\n\n@codeflash_performance_async\nasync def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:\n    """\n    Async bubble sort implementation for testing.\n    """\n    print("codeflash stdout: Async sorting list")\n    \n    await asyncio.sleep(0.01)\n    \n    n = len(lst)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if lst[j] > lst[j + 1]:\n                lst[j], lst[j + 1] = lst[j + 1], lst[j]\n    \n    result = lst.copy()\n    print(f"result: {result}")\n    return result\n\n\nclass AsyncBubbleSorter:\n    """Class with async sorting method for testing."""\n    \n    async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:\n        """\n        Async bubble sort implementation within a class.\n        """\n        print("codeflash stdout: AsyncBubbleSorter.sorter() called")\n        \n        # Add some async delay\n        await asyncio.sleep(0.005)\n        \n        n = len(lst)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if lst[j] > lst[j + 1]:\n                    lst[j], lst[j + 1] = lst[j + 1], lst[j]\n        \n        result = lst.copy()\n        return result\n'''
+            '''import asyncio\nfrom typing import List, Union\n\nfrom codeflash.code_utils.codeflash_wrap_decorator import \\\n    codeflash_performance_async\n\n\n@codeflash_performance_async\nasync def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:\n    """\n    Async bubble sort implementation for testing.\n    """\n    print("codeflash stdout: Async sorting list")\n\n    await asyncio.sleep(0.01)\n\n    n = len(lst)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if lst[j] > lst[j + 1]:\n                lst[j], lst[j + 1] = lst[j + 1], lst[j]\n\n    result = lst.copy()\n    print(f"result: {result}")\n    return result\n\n\nclass AsyncBubbleSorter:\n    """Class with async sorting method for testing."""\n\n    async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:\n        """\n        Async bubble sort implementation within a class.\n        """\n        print("codeflash stdout: AsyncBubbleSorter.sorter() called")\n\n        # Add some async delay\n        await asyncio.sleep(0.005)\n\n        n = len(lst)\n        for i in range(n):\n            for j in range(0, n - i - 1):\n                if lst[j] > lst[j + 1]:\n                    lst[j], lst[j + 1] = lst[j + 1], lst[j]\n\n        result = lst.copy()\n        return result\n'''
             == instrumented_source
         )
 
@@ -488,15 +488,15 @@ async def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:
     Async bubble sort implementation for testing.
     \"\"\"
     print("codeflash stdout: Async sorting list")
-    
+
     await asyncio.sleep(0.01)
-    
+
     n = len(lst)
     for i in range(n):
         for j in range(0, n - i - 1):
             if lst[j] > lst[j + 1]:
                 lst[j], lst[j + 1] = lst[j + 1], lst[j]
-    
+
     result = lst.copy()
     print(f"result: {result}")
     return result
@@ -504,22 +504,22 @@ async def async_sorter(lst: List[Union[int, float]]) -> List[Union[int, float]]:
 
 class AsyncBubbleSorter:
     \"\"\"Class with async sorting method for testing.\"\"\"
-    
+
     async def sorter(self, lst: List[Union[int, float]]) -> List[Union[int, float]]:
         \"\"\"
         Async bubble sort implementation within a class.
         \"\"\"
         print("codeflash stdout: AsyncBubbleSorter.sorter() called")
-        
+
         # Add some async delay
         await asyncio.sleep(0.005)
-        
+
         n = len(lst)
         for i in range(n):
             for j in range(0, n - i - 1):
                 if lst[j] > lst[j + 1]:
                     lst[j], lst[j + 1] = lst[j + 1], lst[j]
-        
+
         result = lst.copy()
         return result
 

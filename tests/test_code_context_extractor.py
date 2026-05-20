@@ -184,7 +184,7 @@ class Graph:
         visited[v] = True
 
         for i in self.graph[v]:
-            if visited[i] == False:
+            if not visited[i]:
                 self.topologicalSortUtil(i, visited, stack)
 
         stack.insert(0, v)
@@ -194,7 +194,7 @@ class Graph:
         stack = []
 
         for i in range(self.V):
-            if visited[i] == False:
+            if not visited[i]:
                 self.topologicalSortUtil(i, visited, stack)
 
         # Print contents of stack
@@ -210,7 +210,7 @@ class Graph:
     def topologicalSortUtil(self, v, visited, stack):
         visited[v] = True
         for i in self.graph[v]:
-            if visited[i] == False:
+            if not visited[i]:
                 self.topologicalSortUtil(i, visited, stack)
         stack.insert(0, v)
 
@@ -218,7 +218,7 @@ class Graph:
         visited = [False] * self.V
         stack = []
         for i in range(self.V):
-            if visited[i] == False:
+            if not visited[i]:
                 self.topologicalSortUtil(i, visited, stack)
         return stack
 ```

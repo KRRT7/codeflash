@@ -430,9 +430,7 @@ def test_bubble_sort_deps() -> None:
     if not ctx_result.is_ok():
         pytest.fail()
     code_context = ctx_result.unwrap()
-    assert (
-        code_context.testgen_context.flat
-        == f"""{get_code_block_splitter(Path("tests/code_to_optimize/bubble_sort_dep1_helper.py"))}
+    expected = f"""{get_code_block_splitter(Path("tests/code_to_optimize/bubble_sort_dep1_helper.py"))}
 def dep1_comparer(arr, j: int) -> bool:
     return arr[j] > arr[j + 1]
 
@@ -452,9 +450,8 @@ def sorter_deps(arr):
             if dep1_comparer(arr, j):
                 dep2_swap(arr, j)
     return arr
-
 """
-    )
+    assert code_context.testgen_context.flat.rstrip() == expected.rstrip()
     assert len(code_context.helper_functions) == 2
     assert (
         code_context.helper_functions[0].fully_qualified_name

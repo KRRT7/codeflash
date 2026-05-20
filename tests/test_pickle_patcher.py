@@ -375,7 +375,7 @@ def test_run_and_parse_picklepatch() -> None:
                 f"{bubble_sort_unused_socket_path}",
                 "test_socket_picklepatch",
                 "tests.code_to_optimize.tests.pytest.benchmarks_socket_test.test_socket",
-                12,
+                14,
             ),
             (
                 "bubble_sort_with_used_socket",

@@ -82,6 +82,7 @@ test = [
     "jax",
     "numpy",
     "pandas",
+    "parameterized",
     "pyrsistent",
     "scipy",
     "sqlalchemy",
