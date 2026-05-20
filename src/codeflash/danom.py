@@ -48,25 +48,25 @@ class Ok(Result[T, E]):
         return True
 
     def map(self, func: Callable[[T], U]) -> Ok[U, E]:
-        return Ok(func(self.inner))
+        return Ok(func(self.inner))  # type: ignore[arg-type]
 
     def map_err(self, func: Callable[[E], F]) -> Ok[T, F]:
-        return self
+        return self  # type: ignore[return-value]
 
     def and_then(self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
-        result = func(self.inner)
+        result = func(self.inner)  # type: ignore[arg-type]
         while isinstance(result, Ok) and isinstance(result.inner, Result):
             result = result.inner
         return result
 
     def or_else(self, func: Callable[[E], Result[T, F]]) -> Ok[T, F]:
-        return self
+        return self  # type: ignore[return-value]
 
     def unwrap(self) -> T:
-        return self.inner
+        return self.inner  # type: ignore[return-value]
 
     def unwrap_or(self, default: T) -> T:
-        return self.inner
+        return self.inner  # type: ignore[return-value]
 
     def __repr__(self) -> str:
         return f"Ok({self.inner!r})"
@@ -90,16 +90,16 @@ class Err(Result[T, E]):
         return False
 
     def map(self, func: Callable[[T], U]) -> Err[U, E]:
-        return self
+        return self  # type: ignore[return-value]
 
     def map_err(self, func: Callable[[E], F]) -> Err[T, F]:
-        return Err(func(self.error))
+        return Err(func(self.error))  # type: ignore[arg-type]
 
     def and_then(self, func: Callable[[T], Result[U, E]]) -> Err[U, E]:
-        return self
+        return self  # type: ignore[return-value]
 
     def or_else(self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
-        result = func(self.error)
+        result = func(self.error)  # type: ignore[arg-type]
         while isinstance(result, Err) and isinstance(result.error, Result):
             result = result.error
         return result

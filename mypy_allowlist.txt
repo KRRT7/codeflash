@@ -31,3 +31,13 @@ src/codeflash/cli_cmds/logging_config.py
 src/codeflash/cli_cmds/__init__.py
 src/codeflash/cli_cmds/cli_common.py
 src/codeflash/cli_cmds/cli.py
+src/codeflash/models/api.py
+src/codeflash/models/candidate_evaluation_context.py
+src/codeflash/models/config.py
+src/codeflash/models/coverage.py
+src/codeflash/models/domain.py
+src/codeflash/models/invocation_id.py
+src/codeflash/models/test_results.py
+src/codeflash/models/test_type.py
+src/codeflash/_constants.py
+src/codeflash/danom.py

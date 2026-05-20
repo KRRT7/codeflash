@@ -108,6 +108,7 @@ class CodeStringsMarkdown(BaseModel):
         self._cache["flat"] = "\n".join(
             get_code_block_splitter(block.file_path) + "\n" + block.code
             for block in self.code_strings
+            if block.file_path is not None
         )
         return self._cache["flat"]
 
@@ -192,7 +193,7 @@ class GeneratedTestsList(BaseModel):
 
 class TestFile(BaseModel):
     instrumented_behavior_file_path: Path
-    benchmarking_file_path: Path = None
+    benchmarking_file_path: Path | None = None
     original_file_path: Path | None = None
     original_source: str | None = None
     test_type: TestType
@@ -242,7 +243,7 @@ class TestFiles(BaseModel):
             None,
         )
 
-    def __iter__(self) -> Iterator[TestFile]:
+    def __iter__(self) -> Iterator[TestFile]:  # type: ignore[override]
         return iter(self.test_files)
 
     def __len__(self) -> int:

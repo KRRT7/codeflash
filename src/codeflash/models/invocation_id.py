@@ -50,6 +50,8 @@ class InvocationId:
                     isinstance(stmt, cst.ClassDef)
                     and stmt.name.value == self.test_class_name
                 ):
+                    if self.test_function_name is None:
+                        return None
                     func_node = self.find_func_in_class(stmt, self.test_function_name)
                     if func_node:
                         return module_node.code_for_node(func_node).strip()

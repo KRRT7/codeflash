@@ -51,7 +51,9 @@ class TestResults(BaseModel):
         benchmark_replay_test_dir: Path,
         project_root: Path,
     ) -> dict[BenchmarkKey, TestResults]:
-        test_results_by_benchmark = defaultdict(TestResults)
+        test_results_by_benchmark: dict[BenchmarkKey, TestResults] = defaultdict(
+            TestResults
+        )
         benchmark_module_path = {}
         for benchmark_key in benchmark_keys:
             benchmark_module_path[benchmark_key] = module_name_from_file_path(
@@ -131,7 +133,7 @@ class TestResults(BaseModel):
         )
 
     def file_to_no_of_tests(self, test_functions_to_remove: list[str]) -> Counter[Path]:
-        map_gen_test_file_to_no_of_tests = Counter()
+        map_gen_test_file_to_no_of_tests: Counter[Path] = Counter()
         for gen_test_result in self.test_results:
             if (
                 gen_test_result.test_type == TestType.GENERATED_REGRESSION
@@ -141,7 +143,7 @@ class TestResults(BaseModel):
                 map_gen_test_file_to_no_of_tests[gen_test_result.file_name] += 1
         return map_gen_test_file_to_no_of_tests
 
-    def __iter__(self) -> Iterator[FunctionTestInvocation]:
+    def __iter__(self) -> Iterator[FunctionTestInvocation]:  # type: ignore[override]
         return iter(self.test_results)
 
     def __len__(self) -> int:
