@@ -11,7 +11,8 @@ from codeflash.cli_cmds.logging_config import logger
 from codeflash.version import __version__
 
 # Simple cache to avoid checking too frequently
-_version_cache = {"version": "0.0.0", "timestamp": float(0)}
+_cached_version: str = "0.0.0"
+_cached_timestamp: float = 0.0
 _cache_duration = 3600  # 1 hour cache
 
 
@@ -23,12 +24,13 @@ def get_latest_version_from_pypi() -> str | None:
 
     """
     # Check cache first
+    global _cached_version, _cached_timestamp
     current_time = time.time()
     if (
-        _version_cache["version"] is not None
-        and current_time - _version_cache["timestamp"] < _cache_duration
+        _cached_version is not None
+        and current_time - _cached_timestamp < _cache_duration
     ):
-        return _version_cache["version"]
+        return _cached_version
 
     try:
         response = requests.get("https://pypi.org/pypi/codeflash/json", timeout=2)
@@ -37,8 +39,8 @@ def get_latest_version_from_pypi() -> str | None:
             latest_version = data["info"]["version"]
 
             # Update cache
-            _version_cache["version"] = latest_version
-            _version_cache["timestamp"] = current_time
+            _cached_version = latest_version
+            _cached_timestamp = current_time
 
             return latest_version
         logger.debug(f"Failed to fetch version from PyPI: {response.status_code}")

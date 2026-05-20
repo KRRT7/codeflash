@@ -100,11 +100,12 @@ class JitDecoratorDetector(ast.NodeVisitor):
         current = node
         while isinstance(current, ast.Attribute):
             parts.append(current.attr)
-            current = current.value
+            current = current.value  # type: ignore[assignment]
         if isinstance(current, ast.Name):
             parts.append(current.id)
             parts.reverse()
             return parts
+        return parts
         return []
 
     def _is_known_jit_decorator(self, module: str, decorator_name: str) -> bool:

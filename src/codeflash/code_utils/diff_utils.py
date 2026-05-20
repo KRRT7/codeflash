@@ -38,7 +38,7 @@ def normalize_by_max(values: list[float]) -> list[float]:
 
 def create_score_dictionary_from_metrics(
     weights: list[float], *metrics: list[float]
-) -> dict[int, int]:
+) -> dict[int, float]:
     if len(weights) != len(metrics):
         raise ValueError("Number of weights must match number of metrics")
     combined: dict[int, float] = {}

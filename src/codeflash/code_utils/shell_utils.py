@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -16,7 +16,7 @@ def get_cross_platform_subprocess_run_args(
     check: bool = False,  # noqa: FBT001, FBT002
     text: bool = True,  # noqa: FBT001, FBT002
     capture_output: bool = True,  # noqa: FBT001, FBT002 (only for non-Windows)
-) -> dict[str, str]:
+) -> dict[str, Any]:
     run_args = {
         "cwd": cwd,
         "env": env,

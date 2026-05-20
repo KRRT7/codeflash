@@ -11,7 +11,7 @@ class VariableNormalizer(ast.NodeTransformer):
     def __init__(self) -> None:
         self.var_counter = 0
         self.var_mapping: dict[str, str] = {}
-        self.scope_stack = []
+        self.scope_stack: list[dict[str, str]] = []
         self.builtins = set(dir(__builtins__))
         self.imports: set[str] = set()
         self.global_vars: set[str] = set()
