@@ -58,3 +58,16 @@ src/codeflash/benchmarking/instrument_codeflash_trace.py
 src/codeflash/benchmarking/replay_test.py
 src/codeflash/benchmarking/utils.py
 src/codeflash/cli_cmds/install_github_actions.py
+src/codeflash/benchmarking/trace_benchmarks.py
+src/codeflash/benchmarking/pytest_new_process_trace_benchmarks.py
+src/codeflash/code_utils/async_decorator_utils.py
+src/codeflash/code_utils/code_extractor.py
+src/codeflash/context/optimization_context.py
+src/codeflash/optimization/baseline_manager.py
+src/codeflash/optimization/function_context.py
+src/codeflash/verification/coverage_utils.py
+src/codeflash/verification/test_runner.py
+src/codeflash/discovery/tests_cache.py
+src/codeflash/discovery/pytest_new_process_discovery.py
+src/codeflash/optimization/ranking.py
+src/codeflash/verification/concolic_testing.py

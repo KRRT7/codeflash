@@ -18,7 +18,7 @@ class AsyncDecoratorAdder(cst.CSTTransformer):
         self.function = function
         self.mode = mode
         self.qualified_name_parts = function.qualified_name.split(".")
-        self.context_stack = []
+        self.context_stack: list[str] = []
         self.added_decorator = False
         self.decorator_name = (
             "codeflash_behavior_async"
@@ -46,7 +46,7 @@ class AsyncDecoratorAdder(cst.CSTTransformer):
             and self.context_stack == self.qualified_name_parts
         ):
             has_decorator = any(
-                self._is_target_decorator(decorator.decorator)
+                self._is_target_decorator(decorator.decorator)  # type: ignore[arg-type]
                 for decorator in original_node.decorators
             )
             if not has_decorator:

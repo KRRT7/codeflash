@@ -28,7 +28,7 @@ def generate_concolic_tests(
     function_to_optimize_ast: ast.AST,
 ) -> tuple[dict[str, set[FunctionCalledInTest]], str]:
     start_time = time.perf_counter()
-    function_to_concolic_tests = {}
+    function_to_concolic_tests: dict[str, set[FunctionCalledInTest]] = {}
     concolic_test_suite_code = ""
 
     if (
@@ -71,9 +71,7 @@ def generate_concolic_tests(
 
         if cover_result.returncode == 0:
             generated_concolic_test: str = cover_result.stdout
-            concolic_test_suite_code: str = clean_concolic_tests(
-                generated_concolic_test
-            )
+            concolic_test_suite_code = clean_concolic_tests(generated_concolic_test)
             concolic_test_suite_dir = Path(
                 tempfile.mkdtemp(dir=test_cfg.concolic_test_root_dir)
             )

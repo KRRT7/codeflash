@@ -9,7 +9,7 @@ import pickle
 cwd = sys.argv[1]
 tests_root = sys.argv[2]
 pickle_path = sys.argv[3]
-collected_tests = []
+collected_tests: list[Any] = []
 pytest_rootdir = None
 sys.path.insert(1, str(cwd))
 

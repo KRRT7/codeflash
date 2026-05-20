@@ -16,7 +16,7 @@ if __name__ == "__main__":
     sys.setrecursionlimit(orig_recursion_limit * 2)
 
     try:
-        codeflash_benchmark_plugin.setup(trace_file, project_root)
+        codeflash_benchmark_plugin.setup(str(trace_file), str(project_root))
         codeflash_trace.setup(trace_file)
         exitcode = pytest.main(
             [

@@ -228,7 +228,7 @@ def get_opt_review_metrics(
     qualified_name: str,
     project_root: Path,
     tests_root: Path,
-) -> str:
+) -> list[str]:
     start_time = time.perf_counter()
     try:
         qualified_name_split = qualified_name.rsplit(".", maxsplit=1)
@@ -246,7 +246,7 @@ def get_opt_review_metrics(
             qualified_name, str(file_path), matches, project_root, tests_root
         )
     except Exception as e:
-        calling_fns_details = ""
+        calling_fns_details = []
         logger.debug(f"Investigate {e}")
     end_time = time.perf_counter()
     logger.debug(f"Got function references in {end_time - start_time:.2f} seconds")

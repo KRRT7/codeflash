@@ -64,7 +64,9 @@ class TestsCache:
             "ON discovered_tests (project_root_path, file_path, file_hash)"
         )
 
-        self.memory_cache = {}
+        self.memory_cache: dict[
+            tuple[str, str, str], dict[str, set[FunctionCalledInTest]] | None
+        ] = {}
 
     def insert_test(
         self,

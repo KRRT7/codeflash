@@ -96,9 +96,9 @@ def rank_all_functions_globally(
         globally_ranked = []
         for func in ranked_functions:
             key = (func.file_path, func.qualified_name, func.starting_line)
-            file_path = func_to_file_map.get(key)
-            if file_path:
-                globally_ranked.append((file_path, func))
+            func_file_path: Path | None = func_to_file_map.get(key)
+            if func_file_path:
+                globally_ranked.append((func_file_path, func))
 
         rule()
         logger.info(
