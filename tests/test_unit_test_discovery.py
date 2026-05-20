@@ -3,9 +3,9 @@ import os
 import tempfile
 from pathlib import Path
 
-from codeflash.discovery.discover_unit_tests import (
+from codeflash.discovery.discover_unit_tests import discover_unit_tests
+from codeflash.discovery.import_analyzer import (
     analyze_imports_in_test_file,
-    discover_unit_tests,
     filter_test_files_by_imports,
 )
 from codeflash.discovery.functions_to_optimize import FunctionToOptimize
