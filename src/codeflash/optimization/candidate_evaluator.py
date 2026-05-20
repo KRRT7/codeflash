@@ -114,7 +114,7 @@ def select_best_optimization(
                 key: diff_lens_ranking[key] + runtimes_ranking[key]
                 for key in diff_lens_ranking
             }
-            min_key = min(overall_ranking, key=overall_ranking.get)
+            min_key = min(overall_ranking, key=overall_ranking.get)  # type: ignore[arg-type]
     elif len(optimization_ids) == 1:
         min_key = 0
     else:

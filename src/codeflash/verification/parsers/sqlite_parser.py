@@ -66,8 +66,9 @@ def parse_sqlite_test_results(
             }:
                 test_type = TestType.INIT_STATE_TEST
             else:
-                test_type = test_files.get_test_type_by_original_file_path(
-                    test_file_path
+                test_type = (
+                    test_files.get_test_type_by_original_file_path(test_file_path)
+                    or TestType.INIT_STATE_TEST
                 )
             try:
                 ret_val = (pickle.loads(val[7]) if loop_index == 1 else None,)

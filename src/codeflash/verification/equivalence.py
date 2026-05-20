@@ -46,17 +46,16 @@ def compare_test_results(
 
         if cdd_test_result is not None and original_test_result is None:
             continue
+        if original_test_result is None or cdd_test_result is None:
+            continue
         # If helper function instance_state verification is not present, that's ok. continue
         if (
             original_test_result.verification_type
             and original_test_result.verification_type
             == VerificationType.INIT_STATE_HELPER
-            and cdd_test_result is None
         ):
             continue
-        if original_test_result is None or cdd_test_result is None:
-            continue
-        did_all_timeout = did_all_timeout and original_test_result.timed_out
+        did_all_timeout = did_all_timeout and bool(original_test_result.timed_out)
         if original_test_result.timed_out:
             continue
         superset_obj = False

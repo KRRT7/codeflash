@@ -37,7 +37,7 @@ def ignored_submodule_paths(module_root: str) -> list[Path]:
         git_repo = git.Repo(module_root, search_parent_directories=True)
         try:
             return [
-                Path(git_repo.working_tree_dir, submodule.path).resolve()
+                Path(git_repo.working_tree_dir, submodule.path).resolve()  # type: ignore[arg-type]
                 for submodule in git_repo.submodules
             ]
         except Exception as e:
@@ -60,12 +60,12 @@ def was_function_previously_optimized(
     if not owner or not repo or pr_number is None or config.no_pr:
         return False
 
-    code_contexts = []
+    code_contexts: list[dict[str, str]] = []
     func_hash = code_context.hashing_code_context_hash
 
     code_contexts.append(
         {
-            "file_path": function_to_optimize.file_path,
+            "file_path": str(function_to_optimize.file_path),
             "function_name": function_to_optimize.qualified_name,
             "code_hash": func_hash,
         }

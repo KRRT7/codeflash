@@ -71,3 +71,10 @@ src/codeflash/discovery/tests_cache.py
 src/codeflash/discovery/pytest_new_process_discovery.py
 src/codeflash/optimization/ranking.py
 src/codeflash/verification/concolic_testing.py
+src/codeflash/optimization/candidate_evaluator.py
+src/codeflash/verification/parsers/binary_parser.py
+src/codeflash/verification/parsers/sqlite_parser.py
+src/codeflash/verification/parsers/junit_parser.py
+src/codeflash/discovery/function_filter.py
+src/codeflash/verification/equivalence.py
+src/codeflash/verification/instrument_codeflash_capture.py

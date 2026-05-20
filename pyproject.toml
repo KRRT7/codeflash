@@ -68,6 +68,8 @@ module = [
     "crosshair_tool.*",
     "line_profiler",
     "line_profiler.*",
+    "lxml",
+    "lxml.*",
 ]
 ignore_missing_imports = true
 
