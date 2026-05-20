@@ -37,7 +37,6 @@ def mock_git_info() -> MagicMock:
             return_value=("test-owner", "test-repo"),
         ),
         patch("codeflash.api.cfapi.get_pr_number", return_value=42),
-        patch("codeflash.api.cfapi.get_current_branch", return_value="main"),
     ):
         yield
 

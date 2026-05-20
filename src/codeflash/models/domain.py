@@ -6,7 +6,7 @@ import re
 from collections.abc import Iterator
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from jedi.api.classes import Name
 from pydantic import (
@@ -20,12 +20,9 @@ from pydantic.dataclasses import dataclass
 
 from codeflash.code_utils.validation import validate_python_code
 from codeflash.models.api import OptimizedCandidateSource
-from codeflash.models.coverage import CoverageData
+from codeflash.models.coverage import BenchmarkKey, CoverageData
 from codeflash.models.test_results import TestResults
 from codeflash.models.test_type import TestType
-
-if TYPE_CHECKING:
-    from codeflash.models.coverage import BenchmarkKey
 
 
 class ExperimentMetadata(BaseModel):
@@ -72,6 +69,7 @@ class FunctionSource:
 
 
 class BestOptimization(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     candidate: OptimizedCandidate
     explanation_v2: str | None = None
     helper_functions: list[FunctionSource]
@@ -169,6 +167,7 @@ class OptimizedCandidate:
 
 
 class OptimizedCandidateResult(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     max_loop_count: int
     best_test_runtime: int
     behavior_test_results: TestResults
@@ -282,6 +281,7 @@ class FunctionParent:
 
 
 class OriginalCodeBaseline(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     behavior_test_results: TestResults
     benchmarking_test_results: TestResults
     replay_benchmarking_test_results: dict[BenchmarkKey, TestResults] | None = None

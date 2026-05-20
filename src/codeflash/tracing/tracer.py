@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import datetime
-import os
 import json
+import os
+import re
 import sqlite3
 import sys
 import threading
@@ -23,6 +24,11 @@ class Tracer:
 
     Traces function calls, input arguments, and profiling info.
     """
+
+    @staticmethod
+    def _sanitize_to_filename(command: str) -> str:
+        sanitized = re.sub(r"[^a-zA-Z0-9_\-.]", "_", command)
+        return sanitized.strip("_") or "unknown"
 
     def __init__(
         self,
@@ -87,7 +93,7 @@ class Tracer:
             "<module>",
         }
 
-        self.sanitized_filename = self.sanitize_to_filename(command)  # type: ignore[attr-defined]
+        self.sanitized_filename = Tracer._sanitize_to_filename(command)
         # Place trace file next to replay tests in the tests directory
         from codeflash.verification.verification_utils import get_test_file_path
 
